@@ -1,0 +1,28 @@
+# Health OS Code Owners
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default — BDFL reviews everything not covered below
+* @igindin
+
+# Core — BDFL only (requires 2 reviews)
+/core/ @igindin
+
+# Root docs — BDFL reviews
+/*.md @igindin
+
+# Architecture decisions
+/rfcs/ @igindin
+
+# CI and GitHub config
+/.github/ @igindin
+
+# Connectors — each connector owner is added here as they're claimed
+# Example:
+# /connectors/oura/ @contributor-username
+# /connectors/garmin/ @another-contributor
+
+# Hypotheses — lightweight review
+/hypotheses/ @igindin
+
+# UI
+/ui/ @igindin

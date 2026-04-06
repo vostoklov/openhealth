@@ -1,0 +1,32 @@
+{
+  "name": "health-os",
+  "version": "0.1.0",
+  "description": "Open-source, local-first personal health operating system",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "health",
+    "quantified-self",
+    "local-first",
+    "open-source"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  }
+}

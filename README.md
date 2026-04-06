@@ -114,7 +114,7 @@ health-os/
 ### Quick start
 
 ```bash
-git clone https://github.com/health-os/health-os.git
+git clone https://github.com/igindin/health-os.git
 cd health-os
 pip install -e .
 python -m unittest discover

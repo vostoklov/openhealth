@@ -42,128 +42,153 @@ Health OS is a **local-first, plugin-based** system. Data lives on the user's ma
                  └──────────────────┘
 ```
 
-## Tech Stack (Proposed)
+## Tech Stack
 
 | Layer | Technology | Rationale |
 |-------|-----------|-----------|
-| Language | TypeScript | Accessible for AI-assisted coders, strong typing, huge ecosystem |
-| Runtime | Node.js / Bun | Local execution, fast startup |
-| Local storage | SQLite (via better-sqlite3 or Drizzle) | Zero-config, portable, fast |
-| Schema validation | Zod | Runtime + compile-time type safety |
-| Plugin system | Dynamic imports with standard interface | Simple, no framework lock-in |
-| CLI | Commander.js or similar | First UI — simple, universal |
-| Web dashboard | React + Vite (optional) | Later phase, not MVP |
-| Testing | Vitest | Fast, TypeScript-native |
+| Language | Python 3.10+ (core, connectors) / TypeScript (UI, future) | Python for health/data science ecosystem; TypeScript for web UI |
+| Runtime | Python / Node.js (UI) | Local execution, fast startup |
+| Local storage | SQLite (via sqlite3 stdlib) | Zero-config, portable, fast |
+| Schema validation | JSON Schema + dataclasses | Runtime validation + type safety |
+| Plugin system | Dynamic imports with Protocol class | Simple, no framework lock-in |
+| CLI | argparse | First UI — simple, stdlib, universal |
+| Web dashboard | Next.js (future, separate) | Later phase, not MVP |
+| Testing | unittest | Stdlib, no extra dependencies |
 | CI | GitHub Actions | Free for open source |
-
-> **Open question:** Should we use Python instead of / in addition to TypeScript? Many health/data science libraries are Python-first. This is a good RFC topic.
 
 ## Core Concepts
 
-### Health Event
+### Core Data Models
 
-The fundamental unit of data. Everything is an event:
+The fundamental data models. Built with Python dataclasses:
 
-```typescript
-interface HealthEvent {
-  id: string;                    // UUID
-  source: string;                // connector name, e.g. "apple-health"
-  category: HealthCategory;      // e.g. "sleep", "activity", "nutrition", "vital"
-  type: string;                  // e.g. "sleep_session", "heart_rate", "weight"
-  timestamp: Date;               // when it happened
-  duration?: number;             // in seconds, if applicable
-  value?: number;                // numeric value if applicable
-  unit?: string;                 // e.g. "bpm", "kg", "hours"
-  metadata: Record<string, unknown>; // connector-specific data
-  tags?: string[];               // user-defined tags
-}
+```python
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Literal
 
-type HealthCategory =
-  | "sleep"
-  | "activity"
-  | "nutrition"
-  | "vital"        // heart rate, HRV, blood pressure, etc.
-  | "body"         // weight, body fat, measurements
-  | "mental"       // mood, stress, journal entries
-  | "lab"          // blood tests, DNA, biomarkers
-  | "medication"
-  | "environment"  // temperature, air quality, light
-  | "calendar"     // schedule, meetings, screen time
-  | "custom";
+
+class HealthCategory(str, Enum):
+    SLEEP = "sleep"
+    ACTIVITY = "activity"
+    NUTRITION = "nutrition"
+    VITAL = "vital"            # heart rate, HRV, blood pressure, etc.
+    BODY = "body"              # weight, body fat, measurements
+    MENTAL = "mental"          # mood, stress, journal entries
+    LAB = "lab"                # blood tests, DNA, biomarkers
+    MEDICATION = "medication"
+    ENVIRONMENT = "environment"  # temperature, air quality, light
+    CALENDAR = "calendar"      # schedule, meetings, screen time
+    CUSTOM = "custom"
+
+
+@dataclass
+class RecordBase:
+    """Base class for all health records."""
+    id: str                          # UUID
+    source: str                      # connector name, e.g. "apple-health"
+    timestamp: datetime              # when it happened
+    metadata: dict[str, object] = field(default_factory=dict)
+    tags: list[str] = field(default_factory=list)
+
+
+@dataclass
+class Observation(RecordBase):
+    """A single health observation (heart rate, weight, mood, etc.)."""
+    category: HealthCategory = HealthCategory.CUSTOM
+    type: str = ""                   # e.g. "heart_rate", "weight"
+    value: float | None = None
+    unit: str | None = None          # e.g. "bpm", "kg"
+
+
+@dataclass
+class TimelineEvent(RecordBase):
+    """A health event with duration (sleep session, workout, etc.)."""
+    category: HealthCategory = HealthCategory.CUSTOM
+    type: str = ""                   # e.g. "sleep_session", "run"
+    duration_seconds: float | None = None
+    value: float | None = None
+    unit: str | None = None
+
+
+@dataclass
+class Intervention(RecordBase):
+    """A deliberate action taken (medication, supplement, protocol change)."""
+    name: str = ""
+    dosage: str | None = None
+    frequency: str | None = None
+    notes: str | None = None
 ```
 
 ### Connector Interface
 
-Every connector must implement this interface:
+Every connector must implement this Protocol:
 
-```typescript
-interface HealthConnector {
-  /** Unique identifier for this connector */
-  readonly id: string;
+```python
+from typing import Protocol, Sequence
+from datetime import datetime
 
-  /** Human-readable name */
-  readonly name: string;
 
-  /** What categories of data this connector provides */
-  readonly categories: HealthCategory[];
+class HealthConnector(Protocol):
+    """Protocol that all connectors must implement."""
 
-  /** Description for the plugin registry */
-  readonly description: string;
+    @property
+    def id(self) -> str: ...
 
-  /** Initialize the connector (auth, setup, etc.) */
-  init(config: ConnectorConfig): Promise<void>;
+    @property
+    def name(self) -> str: ...
 
-  /** Fetch events within a date range */
-  fetchEvents(from: Date, to: Date): Promise<HealthEvent[]>;
+    @property
+    def categories(self) -> Sequence[str]: ...
 
-  /** Check if the connector is properly configured */
-  validate(): Promise<{ valid: boolean; errors?: string[] }>;
-}
+    @property
+    def description(self) -> str: ...
 
-interface ConnectorConfig {
-  /** Connector-specific configuration (API keys, file paths, etc.) */
-  [key: string]: unknown;
-}
+    async def init(self, config: dict) -> None: ...
+
+    async def fetch_events(self, from_date: datetime, to_date: datetime) -> list[dict]: ...
+
+    async def validate(self) -> tuple[bool, list[str] | None]: ...
 ```
 
 ### Hypothesis
 
 A community health experiment:
 
-```typescript
-interface Hypothesis {
-  id: string;
-  title: string;                  // e.g. "Caffeine cutoff at 2pm improves deep sleep"
-  description: string;            // detailed explanation
-  author: string;                 // GitHub username
-  status: "proposed" | "active" | "completed" | "archived";
+```python
+@dataclass
+class HypothesisProtocol:
+    """The experiment design."""
+    intervention: str              # what to do differently
+    duration_days: int             # how long to run it
+    metrics: list[str]             # what to measure
+    control_period_days: int | None = None  # baseline measurement period
 
-  // The experiment design
-  protocol: {
-    intervention: string;         // what to do differently
-    duration_days: number;        // how long to run it
-    metrics: string[];            // what to measure
-    control_period_days?: number; // baseline measurement period
-  };
 
-  // Required data categories to participate
-  required_categories: HealthCategory[];
+@dataclass
+class AnonymizedResult:
+    """Anonymized result from a hypothesis participant."""
+    participant_hash: str          # pseudonymized identifier
+    started_at: datetime
+    completed_at: datetime
+    baseline_metrics: dict[str, float]
+    experiment_metrics: dict[str, float]
+    notes: str | None = None
 
-  // Anonymized results (opt-in contributions)
-  results?: AnonymizedResult[];
 
-  created_at: Date;
-  updated_at: Date;
-}
-
-interface AnonymizedResult {
-  participant_hash: string;       // pseudonymized identifier
-  started_at: Date;
-  completed_at: Date;
-  baseline_metrics: Record<string, number>;
-  experiment_metrics: Record<string, number>;
-  notes?: string;
-}
+@dataclass
+class Hypothesis:
+    id: str
+    title: str                     # e.g. "Caffeine cutoff at 2pm improves deep sleep"
+    description: str               # detailed explanation
+    author: str                    # GitHub username
+    status: Literal["proposed", "active", "completed", "archived"]
+    protocol: HypothesisProtocol
+    required_categories: list[HealthCategory]
+    created_at: datetime
+    updated_at: datetime
+    results: list[AnonymizedResult] = field(default_factory=list)
 ```
 
 ## Directory Structure
@@ -174,28 +199,29 @@ health-os/
 ├── ARCHITECTURE.md         # this document
 ├── CONTRIBUTING.md
 ├── CLAUDE.md               # AI development rules
-├── package.json
-├── tsconfig.json
+├── pyproject.toml
+├── requirements.txt
 │
 ├── core/
-│   ├── schema/             # Zod schemas for HealthEvent, Hypothesis, etc.
-│   ├── storage/            # SQLite storage layer
-│   ├── plugin-loader/      # Dynamic connector loading
-│   ├── hypothesis-engine/  # Hypothesis management and anonymization
+│   ├── __init__.py
+│   ├── schema/             # Dataclasses, JSON Schema definitions
+│   ├── storage/            # SQLite storage layer (stdlib sqlite3)
+│   ├── plugin_loader/      # Dynamic connector loading
+│   ├── hypothesis_engine/  # Hypothesis management and anonymization
 │   └── privacy/            # Data anonymization utilities
 │
 ├── connectors/
 │   ├── _template/          # Template for new connectors
-│   ├── apple-health/
+│   ├── apple_health/
 │   ├── garmin/
 │   ├── oura/
-│   ├── google-calendar/
-│   ├── manual-input/
+│   ├── google_calendar/
+│   ├── manual_input/
 │   └── ... (community-contributed)
 │
 ├── ui/
-│   ├── cli/                # Command-line interface
-│   └── web/                # Web dashboard (future)
+│   ├── cli/                # Command-line interface (Python, argparse)
+│   └── web/                # Web dashboard (Next.js, future, separate)
 │
 ├── hypotheses/
 │   ├── _template/          # Template for proposing hypotheses
@@ -225,7 +251,7 @@ health-os/
 
 ## Open Questions (for community RFCs)
 
-- [ ] TypeScript vs Python vs both? Multi-language connector support?
+- [x] ~~TypeScript vs Python vs both?~~ **Decided:** Python for core + connectors, TypeScript/Next.js for UI (future)
 - [ ] Should the web dashboard be a separate repo or monorepo?
 - [ ] How to handle real-time data (continuous glucose monitors, etc.)?
 - [ ] Mobile app strategy — PWA, React Native, or just CLI + web?

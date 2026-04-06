@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IntakeEnvelope",
+  "type": "object",
+  "required": ["submission_id", "submitted_at", "channel", "author"],
+  "properties": {
+    "submission_id": { "type": "string" },
+    "submitted_at": { "type": "string" },
+    "channel": { "type": "string" },
+    "author": { "type": "string" },
+    "text": { "type": ["string", "null"] },
+    "location": { "type": ["string", "null"] },
+    "attachments": { "type": "array", "items": { "type": "object" } },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "metadata": { "type": "object" }
+  }
+}

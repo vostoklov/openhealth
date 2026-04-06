@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ArtifactManifest",
+  "type": "object",
+  "required": ["artifact_id", "source_id", "source_type", "original_path", "archived_path", "checksum", "mime_type", "size_bytes", "provenance", "privacy"],
+  "properties": {
+    "artifact_id": { "type": "string" },
+    "source_id": { "type": "string" },
+    "source_type": { "type": "string" },
+    "original_path": { "type": "string" },
+    "archived_path": { "type": "string" },
+    "checksum": { "type": "string" },
+    "mime_type": { "type": "string" },
+    "size_bytes": { "type": "integer" },
+    "provenance": { "type": "object" },
+    "privacy": { "type": "object" },
+    "parser_notes": { "type": "array", "items": { "type": "string" } },
+    "metadata": { "type": "object" }
+  }
+}

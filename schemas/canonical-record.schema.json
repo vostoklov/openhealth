@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CanonicalRecord",
+  "type": "object",
+  "required": ["id", "record_type", "source_id", "title", "summary", "artifact_ids", "evidence_class", "confidence"],
+  "properties": {
+    "id": { "type": "string" },
+    "record_type": { "type": "string" },
+    "source_id": { "type": "string" },
+    "title": { "type": "string" },
+    "summary": { "type": "string" },
+    "artifact_ids": { "type": "array", "items": { "type": "string" } },
+    "evidence_class": { "type": "string" },
+    "confidence": { "type": "number" },
+    "captured_at": { "type": ["string", "null"] },
+    "date": { "type": ["string", "null"] },
+    "start_date": { "type": ["string", "null"] },
+    "end_date": { "type": ["string", "null"] },
+    "location": { "type": ["string", "null"] },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "metadata": { "type": "object" }
+  }
+}

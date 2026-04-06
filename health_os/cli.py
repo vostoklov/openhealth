@@ -1,0 +1,158 @@
+import argparse
+import json
+import secrets
+from pathlib import Path
+from typing import List, Optional
+
+from . import index
+from .contexts import refresh_contexts
+from .ingest import ingest_path, init_workspace
+from .storage import ensure_repo_structure
+from .whoop import (
+    CAPABILITIES,
+    build_authorization_url,
+    exchange_code_for_tokens,
+    extract_code_from_redirect_url,
+    latest_whoop_summary,
+    load_credentials_from_env,
+    save_tokens,
+    sync_whoop,
+    verify_webhook_signature,
+)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="health-os", description="Local-first Health OS workspace.")
+    parser.add_argument("--repo-root", default=".", help="Path to the Health OS repository root.")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    subparsers.add_parser("init", help="Create folders and initialize the SQLite index.")
+
+    ingest = subparsers.add_parser("ingest", help="Ingest a file or directory into Health OS.")
+    ingest.add_argument("--source", required=True, help="Source type, for example whoop or messages.")
+    ingest.add_argument("--path", required=True, help="File or directory to ingest.")
+    ingest.add_argument("--owner", default="user", help="Owner label stored in the manifest.")
+    ingest.add_argument("--label", help="Human-readable label for this source batch.")
+    ingest.add_argument("--location", help="Default location when metadata is missing.")
+
+    subparsers.add_parser("refresh-contexts", help="Rebuild contexts and insights from indexed records.")
+    subparsers.add_parser("show-summary", help="Print a lightweight JSON summary of indexed data.")
+
+    whoop_auth = subparsers.add_parser("whoop-auth-url", help="Generate a WHOOP OAuth authorization URL.")
+    whoop_auth.add_argument("--state", help="Eight-character CSRF state. Generated automatically if omitted.")
+
+    whoop_exchange = subparsers.add_parser("whoop-exchange-code", help="Exchange a WHOOP OAuth code for tokens.")
+    whoop_exchange.add_argument("--code", required=True, help="Authorization code returned by WHOOP.")
+
+    whoop_exchange_url = subparsers.add_parser(
+        "whoop-exchange-redirect-url",
+        help="Parse a full WHOOP redirect URL, extract the code, and exchange it for tokens.",
+    )
+    whoop_exchange_url.add_argument("--url", required=True, help="Full redirect URL captured after WHOOP OAuth.")
+    whoop_exchange_url.add_argument("--expected-state", help="Optional OAuth state to verify.")
+
+    whoop_sync = subparsers.add_parser("whoop-sync", help="Sync WHOOP API data into Health OS.")
+    whoop_sync.add_argument("--start", help="ISO-8601 UTC start timestamp, for example 2026-03-01T00:00:00Z.")
+    whoop_sync.add_argument("--end", help="ISO-8601 UTC end timestamp, for example 2026-03-13T12:00:00Z.")
+    whoop_sync.add_argument("--days-back", type=int, default=30, help="Fallback lookback window when no start is provided.")
+    whoop_sync.add_argument("--owner", default="user", help="Owner label stored in the WHOOP source manifest.")
+    whoop_sync.add_argument("--no-profile", action="store_true", help="Skip syncing WHOOP profile.")
+    whoop_sync.add_argument("--no-body-measurements", action="store_true", help="Skip syncing WHOOP body measurements.")
+
+    subparsers.add_parser("whoop-capabilities", help="Show WHOOP collections and gaps in the public API.")
+    subparsers.add_parser("whoop-latest", help="Show the latest WHOOP timestamps from local Health OS data.")
+
+    whoop_verify = subparsers.add_parser("whoop-verify-webhook", help="Verify a WHOOP webhook signature for a saved payload file.")
+    whoop_verify.add_argument("--body-file", required=True, help="Path to the raw webhook body file.")
+    whoop_verify.add_argument("--signature", required=True, help="Value of the X-WHOOP-Signature header.")
+    whoop_verify.add_argument("--timestamp", required=True, help="Value of the X-WHOOP-Signature-Timestamp header.")
+
+    subparsers.add_parser("bot-start", help="Start the Telegram intake bot (polling mode).")
+
+    return parser
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    repo_root = Path(args.repo_root).resolve()
+    if args.command == "init":
+        result = init_workspace(repo_root)
+    elif args.command == "ingest":
+        result = ingest_path(
+            root=repo_root,
+            source_type=args.source,
+            path=Path(args.path).resolve(),
+            owner=args.owner,
+            label=args.label,
+            location=args.location,
+        )
+    elif args.command == "refresh-contexts":
+        paths = ensure_repo_structure(repo_root)
+        index.init_db(paths.db_path)
+        result = refresh_contexts(paths, index)
+    elif args.command == "whoop-auth-url":
+        credentials = load_credentials_from_env()
+        state = args.state or secrets.token_hex(4)
+        result = {"authorization_url": build_authorization_url(credentials, state), "state": state}
+    elif args.command == "whoop-exchange-code":
+        paths = ensure_repo_structure(repo_root)
+        credentials = load_credentials_from_env()
+        tokens = exchange_code_for_tokens(credentials, args.code)
+        save_tokens(paths.whoop_tokens_path, tokens)
+        result = {
+            "token_path": str(paths.whoop_tokens_path),
+            "expires_at": tokens["expires_at"],
+            "scope": tokens.get("scope"),
+        }
+    elif args.command == "whoop-exchange-redirect-url":
+        paths = ensure_repo_structure(repo_root)
+        credentials = load_credentials_from_env()
+        parsed = extract_code_from_redirect_url(args.url, args.expected_state)
+        tokens = exchange_code_for_tokens(credentials, parsed["code"])
+        save_tokens(paths.whoop_tokens_path, tokens)
+        result = {
+            "token_path": str(paths.whoop_tokens_path),
+            "expires_at": tokens["expires_at"],
+            "scope": tokens.get("scope"),
+            "state": parsed.get("state"),
+        }
+    elif args.command == "whoop-sync":
+        result = sync_whoop(
+            root=repo_root,
+            start=args.start,
+            end=args.end,
+            days_back=args.days_back,
+            owner=args.owner,
+            include_profile=not args.no_profile,
+            include_body_measurements=not args.no_body_measurements,
+        )
+    elif args.command == "whoop-capabilities":
+        result = CAPABILITIES
+    elif args.command == "whoop-latest":
+        result = latest_whoop_summary(repo_root)
+    elif args.command == "whoop-verify-webhook":
+        body_file = Path(args.body_file).resolve()
+        secret = load_credentials_from_env().client_secret
+        result = {
+            "valid": verify_webhook_signature(
+                secret=secret,
+                payload_bytes=body_file.read_bytes(),
+                signature_header=args.signature,
+                timestamp_header=args.timestamp,
+            )
+        }
+    elif args.command == "bot-start":
+        from .bot import start_bot
+        start_bot(repo_root)
+        return 0
+    else:
+        paths = ensure_repo_structure(repo_root)
+        index.init_db(paths.db_path)
+        result = {
+            "sources": len(index.list_sources(paths.db_path)),
+            "artifacts": len(index.list_artifacts(paths.db_path)),
+            "records": len(index.list_records(paths.db_path)),
+        }
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0

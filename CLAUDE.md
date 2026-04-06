@@ -8,43 +8,46 @@ Health OS is a local-first, plugin-based personal health operating system. Data 
 
 ## Language & Standards
 
-- **Language:** TypeScript (strict mode)
-- **Runtime:** Node.js / Bun
-- **Testing:** Vitest
-- **Linting:** ESLint with strict config
-- **Package manager:** npm
+- **Language:** Python 3.10+ with type hints (core, connectors) / TypeScript (UI, future)
+- **Runtime:** Python (core) / Node.js (UI, future)
+- **Testing:** unittest
+- **Linting:** ruff
+- **Package manager:** pip / pyproject.toml
+
+> **Note:** UI components (future) will use TypeScript/Next.js. These rules cover the Python core and connectors.
 
 ## Code Rules
 
-### TypeScript
-- `strict: true` in tsconfig — no exceptions
-- Never use `any` — use `unknown` and narrow, or define proper types
-- Use Zod schemas for runtime validation at system boundaries
-- Prefer `interface` for public contracts, `type` for unions/intersections
-- Export types explicitly — no `export *`
+### Python
+- Use type hints everywhere — function signatures, variables, return types
+- Never use `Any` — use `object`, `Unknown`, or define proper types
+- Use `dataclasses` for data models
+- Use JSON Schema for runtime validation at system boundaries
+- Use `Protocol` classes for public contracts (interfaces)
+- Follow PEP 8 naming conventions (snake_case for functions/variables, PascalCase for classes)
 
 ### Connectors
-- Every connector MUST implement the `HealthConnector` interface from `core/schema`
-- Connector code lives in `connectors/{connector-name}/`
-- Each connector has its own `README.md`, `index.ts`, and test file
+- Every connector MUST implement the `HealthConnector` protocol from `core/schema`
+- Connector code lives in `connectors/{connector_name}/`
+- Each connector has its own `README.md`, `__init__.py`, and test file
 - Use `.env.example` for configuration templates — NEVER hardcode secrets
 - Test with synthetic data — NEVER commit real health data
 
 ### File Structure (for connectors)
 ```
-connectors/my-connector/
+connectors/my_connector/
 ├── README.md           # What it does, how to configure
-├── index.ts            # Main connector implementation
-├── types.ts            # Connector-specific types (if needed)
-├── utils.ts            # Helper functions (if needed)
+├── __init__.py         # Main connector implementation
+├── types.py            # Connector-specific types (if needed)
+├── utils.py            # Helper functions (if needed)
 ├── .env.example        # Configuration template
-└── __tests__/
-    └── index.test.ts   # Tests
+└── tests/
+    └── test_connector.py  # Tests
 ```
 
 ### Testing
 - All logic must have tests
-- Use Vitest
+- Use unittest
 - Test the happy path AND error cases
 - Mock external APIs — don't call real services in tests
 - Test data must be synthetic, never real health data
@@ -58,7 +61,7 @@ connectors/my-connector/
 
 - **NEVER commit API keys, tokens, passwords, or any secrets**
 - **NEVER commit real health data** — use synthetic test data only
-- **NEVER disable security checks** — no `// eslint-disable`, no `@ts-ignore` for security rules
+- **NEVER disable security checks** — no `# noqa`, no `# type: ignore` for security rules
 - Store all credentials in `.env` files (gitignored)
 - Provide `.env.example` with placeholder values
 - If you see a secret in code during review, flag it immediately
@@ -66,7 +69,7 @@ connectors/my-connector/
 ## Architecture Rules
 
 - Core modules (`core/`) should have ZERO external dependencies beyond the standard lib and approved packages
-- Connectors can have their own dependencies (listed in their own package.json or the root)
+- Connectors can have their own dependencies (listed in their own pyproject.toml or the root)
 - All data flows through the `HealthEvent` schema — no connector-specific data formats in the core
 - Privacy utilities in `core/privacy/` must be used for any data that leaves the local machine
 - The hypothesis engine must anonymize all contributed data before storage
@@ -78,7 +81,7 @@ connectors/my-connector/
 - Don't refactor other people's connectors without their approval
 - Don't add cloud dependencies — everything must work offline
 - Don't add telemetry or analytics of any kind
-- Don't use `console.log` for debugging — use the project logger (when implemented)
+- Don't use `print()` for debugging — use the project logger (when implemented)
 
 ## PR Review Checklist
 

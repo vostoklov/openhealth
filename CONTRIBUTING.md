@@ -1,6 +1,6 @@
-# Contributing to Health OS
+# Contributing to OpenHealth
 
-Welcome! This guide explains how to contribute to Health OS. Whether you're building a connector, proposing a hypothesis, or improving the core architecture — this document is your starting point.
+Welcome! This guide explains how to contribute to OpenHealth. Whether you're building a connector, proposing a hypothesis, or improving the core architecture — this document is your starting point.
 
 ## Quick Start
 
@@ -50,7 +50,7 @@ This is the easiest way to start. Each connector integrates one health data sour
 
 ### 2. Propose a Hypothesis
 
-Health hypotheses are the social layer of Health OS. Anyone can propose one.
+Health hypotheses are the social layer of OpenHealth. Anyone can propose one.
 
 1. Copy `hypotheses/_template/` to a new directory
 2. Fill in the hypothesis template (title, protocol, required data, etc.)
@@ -114,9 +114,9 @@ test(garmin): add integration tests for sleep data
 
 Your PR should:
 - [ ] Follow the connector interface (if a connector)
-- [ ] Include tests
-- [ ] Have no TypeScript errors (`npm run typecheck`)
-- [ ] Pass linting (`npm run lint`)
+- [ ] Include tests (`python -m unittest discover`)
+- [ ] Pass linting (`ruff check .`)
+- [ ] Use type hints on all public functions
 - [ ] Not contain any secrets, API keys, or tokens
 - [ ] Include a clear description of what and why
 - [ ] Reference the relevant GitHub Issue
@@ -134,23 +134,20 @@ Your PR should:
 
 ```bash
 # Clone the repo
-git clone https://github.com/[org]/health-os.git
-cd health-os
+git clone https://github.com/igindin/openhealth.git
+cd openhealth
 
-# Install dependencies
-npm install
+# Install the package (editable)
+pip install -e .
 
 # Copy environment template
 cp .env.example .env
 
 # Run tests
-npm test
-
-# Type-check
-npm run typecheck
+python -m unittest discover
 
 # Lint
-npm run lint
+ruff check .
 ```
 
 ## AI-Assisted Development

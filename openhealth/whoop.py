@@ -87,15 +87,15 @@ class WhoopApiError(RuntimeError):
 
 
 def load_credentials_from_env() -> WhoopCredentials:
-    client_id = os.getenv("HEALTH_OS_WHOOP_CLIENT_ID")
-    client_secret = os.getenv("HEALTH_OS_WHOOP_CLIENT_SECRET")
-    redirect_uri = os.getenv("HEALTH_OS_WHOOP_REDIRECT_URI")
+    client_id = os.getenv("OPENHEALTH_WHOOP_CLIENT_ID")
+    client_secret = os.getenv("OPENHEALTH_WHOOP_CLIENT_SECRET")
+    redirect_uri = os.getenv("OPENHEALTH_WHOOP_REDIRECT_URI")
     missing = [
         name
         for name, value in (
-            ("HEALTH_OS_WHOOP_CLIENT_ID", client_id),
-            ("HEALTH_OS_WHOOP_CLIENT_SECRET", client_secret),
-            ("HEALTH_OS_WHOOP_REDIRECT_URI", redirect_uri),
+            ("OPENHEALTH_WHOOP_CLIENT_ID", client_id),
+            ("OPENHEALTH_WHOOP_CLIENT_SECRET", client_secret),
+            ("OPENHEALTH_WHOOP_REDIRECT_URI", redirect_uri),
         )
         if not value
     ]

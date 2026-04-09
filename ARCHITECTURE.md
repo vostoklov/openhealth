@@ -8,7 +8,7 @@
 
 ## Overview
 
-Health OS is a **local-first, plugin-based** system. Data lives on the user's machine. Connectors pull data from external sources into a unified schema. The hypothesis engine allows community experiments on anonymized, opt-in data.
+OpenHealth is a **local-first, plugin-based** system. Data lives on the user's machine. Connectors pull data from external sources into a unified schema. The hypothesis engine allows community experiments on anonymized, opt-in data.
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -194,7 +194,7 @@ class Hypothesis:
 ## Directory Structure
 
 ```
-health-os/
+openhealth/
 ├── MANIFEST.md
 ├── ARCHITECTURE.md         # this document
 ├── CONTRIBUTING.md
@@ -246,7 +246,7 @@ health-os/
 1. **No secrets in code** — all API keys, tokens, etc. go in `.env` (gitignored). CI blocks commits containing secrets.
 2. **No cloud dependency** — the system must work fully offline. Cloud features are always opt-in.
 3. **Data anonymization** — any data shared with the community hypothesis pool must be stripped of PII and use pseudonymized identifiers.
-4. **No telemetry** — Health OS does not phone home. Ever.
+4. **No telemetry** — OpenHealth does not phone home. Ever.
 5. **Encryption at rest** — local SQLite database should support optional encryption (SQLCipher or similar).
 
 ## Open Questions (for community RFCs)

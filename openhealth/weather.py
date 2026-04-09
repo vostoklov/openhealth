@@ -12,8 +12,8 @@ from .storage import read_json, write_json
 class WeatherEnricher:
     def __init__(self, cache_path: Path):
         self.cache_path = cache_path
-        self.provider = os.getenv("HEALTH_OS_WEATHER_PROVIDER", "disabled")
-        self.static_payload = os.getenv("HEALTH_OS_WEATHER_STATIC", "")
+        self.provider = os.getenv("OPENHEALTH_WEATHER_PROVIDER", "disabled")
+        self.static_payload = os.getenv("OPENHEALTH_WEATHER_STATIC", "")
 
     def enrich(self, date_value: Optional[str], location: Optional[str]) -> Optional[Dict[str, Any]]:
         if not date_value or not location:

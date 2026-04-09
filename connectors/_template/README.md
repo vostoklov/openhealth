@@ -1,25 +1,24 @@
 # Connector Template
 
-Use this template to build a new Health OS connector.
+Use this template to build a new OpenHealth connector.
 
 ## How to create a new connector
 
-1. Copy this entire `_template` directory to `connectors/your-connector-name/`
+1. Copy this entire `_template` directory to `connectors/your_connector_name/`
 2. Rename files and update the code to match your data source
-3. Implement the `HealthConnector` interface
+3. Implement the `sync()` entry point following `connector.py`
 4. Add tests
 5. Submit a PR
 
 ## File Structure
 
 ```
-connectors/your-connector/
+connectors/your_connector/
 ├── README.md           # Describe your connector (copy and modify this file)
-├── index.ts            # Main connector implementation
-├── types.ts            # Connector-specific types (optional)
+├── connector.py        # Main connector implementation
 ├── .env.example        # Configuration template (API keys, file paths, etc.)
-└── __tests__/
-    └── index.test.ts   # Tests
+└── tests/
+    └── test_connector.py   # Tests
 ```
 
 ## Configuration
@@ -38,7 +37,7 @@ Users copy this to `.env` and fill in their real values. The `.env` file is giti
 
 ```bash
 # Run your connector's tests
-npm test -- connectors/your-connector
+python -m unittest discover -s connectors/your_connector/tests
 ```
 
 Use synthetic data in tests. Never use real health data or real API credentials in test files.

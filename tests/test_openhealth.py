@@ -4,19 +4,19 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from health_os import index
-from health_os.contexts import refresh_contexts
-from health_os.ingest import ingest_path, init_workspace
-from health_os.storage import ensure_repo_structure
+from openhealth import index
+from openhealth.contexts import refresh_contexts
+from openhealth.ingest import ingest_path, init_workspace
+from openhealth.storage import ensure_repo_structure
 
 
-class HealthOsIntegrationTests(unittest.TestCase):
+class OpenHealthIntegrationTests(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.root = Path(self.temp_dir.name)
         init_workspace(self.root)
-        os.environ["HEALTH_OS_WEATHER_PROVIDER"] = "static"
-        os.environ["HEALTH_OS_WEATHER_STATIC"] = json.dumps(
+        os.environ["OPENHEALTH_WEATHER_PROVIDER"] = "static"
+        os.environ["OPENHEALTH_WEATHER_STATIC"] = json.dumps(
             {
                 "Budapest|2024-05-01": {"provider": "static", "temperature_c_max": 24, "conditions": "sunny"},
                 "Budapest|2024-05-02": {"provider": "static", "temperature_c_max": 19, "conditions": "windy"}
@@ -24,8 +24,8 @@ class HealthOsIntegrationTests(unittest.TestCase):
         )
 
     def tearDown(self):
-        os.environ.pop("HEALTH_OS_WEATHER_PROVIDER", None)
-        os.environ.pop("HEALTH_OS_WEATHER_STATIC", None)
+        os.environ.pop("OPENHEALTH_WEATHER_PROVIDER", None)
+        os.environ.pop("OPENHEALTH_WEATHER_STATIC", None)
         self.temp_dir.cleanup()
 
     def test_full_ingest_flow(self):
@@ -147,7 +147,7 @@ class HealthOsIntegrationTests(unittest.TestCase):
         patterns = (self.root / "contexts" / "patterns.md").read_text(encoding="utf-8")
         self.assertIn("correlation prompt", patterns)
         quick_brief = (self.root / "contexts" / "quick-brief.md").read_text(encoding="utf-8")
-        self.assertIn("Health OS currently tracks", quick_brief)
+        self.assertIn("OpenHealth currently tracks", quick_brief)
         source_status = (self.root / "contexts" / "source-status.md").read_text(encoding="utf-8")
         self.assertIn("reference-examples", source_status)
 

@@ -1,4 +1,4 @@
-"""Health OS package."""
+"""OpenHealth package."""
 
 __all__ = ["__version__"]
 

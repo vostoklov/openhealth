@@ -1,4 +1,4 @@
-# Health OS
+# OpenHealth
 
 **A personal health operating system. Open-source. Local-first. Built by a community.**
 
@@ -8,13 +8,13 @@
 
 ## What is this?
 
-Health OS is an open-source framework for managing your health through data, experiments, and collective knowledge.
+OpenHealth is an open-source framework for managing your health through data, experiments, and collective knowledge.
 
 It is **not an app**. It is an operating system — a set of connectors, schemas, and tools you compose into YOUR health system. For your body, your conditions, your hypotheses.
 
 **The problem:** health data is scattered across dozens of services. Sleep in Oura, workouts in Garmin, bloodwork in a PDF, DNA in 23andMe, schedule in Google Calendar. Nothing connects them. No one lets you ask: *"How does my sleep correlate with my meeting load?"* or test: *"If I stop caffeine after 2pm, does my deep sleep improve?"*
 
-Health OS solves this.
+OpenHealth solves this.
 
 ---
 
@@ -67,7 +67,7 @@ Health OS solves this.
 
 2. **Modular by design.** Each connector is a plugin. Install only what you need.
 
-3. **Hypotheses as a social layer.** The unique power of Health OS is the hypothesis engine — a shared space where people propose health experiments, define protocols, and optionally contribute anonymized results. The more people participate, the more we all learn.
+3. **Hypotheses as a social layer.** The unique power of OpenHealth is the hypothesis engine — a shared space where people propose health experiments, define protocols, and optionally contribute anonymized results. The more people participate, the more we all learn.
 
 4. **Quality over speed.** 5 working connectors beat 50 broken ones. Security and privacy are non-negotiable.
 
@@ -80,7 +80,7 @@ Health OS solves this.
 ## Project structure
 
 ```
-health-os/
+openhealth/
 ├── MANIFEST.md             # Vision and values
 ├── ARCHITECTURE.md         # Technical architecture (RFC-001)
 ├── CONTRIBUTING.md         # Contribution rules
@@ -114,8 +114,8 @@ health-os/
 ### Quick start
 
 ```bash
-git clone https://github.com/igindin/health-os.git
-cd health-os
+git clone https://github.com/igindin/openhealth.git
+cd openhealth
 pip install -e .
 python -m unittest discover
 ```
@@ -142,7 +142,7 @@ python -m unittest discover
 
 ## The Hypothesis Engine
 
-This is what makes Health OS more than a tracker — it's a **collective knowledge platform**.
+This is what makes OpenHealth more than a tracker — it's a **collective knowledge platform**.
 
 ### How it works
 
@@ -219,4 +219,4 @@ To propose a change: copy `rfcs/_template.md`, fill it in, submit a PR.
 
 ---
 
-*Health OS is built by a community. Join us.*
+*OpenHealth is built by a community. Join us.*

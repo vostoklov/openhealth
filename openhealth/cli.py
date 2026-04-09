@@ -22,13 +22,13 @@ from .whoop import (
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="health-os", description="Local-first Health OS workspace.")
-    parser.add_argument("--repo-root", default=".", help="Path to the Health OS repository root.")
+    parser = argparse.ArgumentParser(prog="openhealth", description="Local-first OpenHealth workspace.")
+    parser.add_argument("--repo-root", default=".", help="Path to the OpenHealth repository root.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser("init", help="Create folders and initialize the SQLite index.")
 
-    ingest = subparsers.add_parser("ingest", help="Ingest a file or directory into Health OS.")
+    ingest = subparsers.add_parser("ingest", help="Ingest a file or directory into OpenHealth.")
     ingest.add_argument("--source", required=True, help="Source type, for example whoop or messages.")
     ingest.add_argument("--path", required=True, help="File or directory to ingest.")
     ingest.add_argument("--owner", default="user", help="Owner label stored in the manifest.")
@@ -51,7 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
     whoop_exchange_url.add_argument("--url", required=True, help="Full redirect URL captured after WHOOP OAuth.")
     whoop_exchange_url.add_argument("--expected-state", help="Optional OAuth state to verify.")
 
-    whoop_sync = subparsers.add_parser("whoop-sync", help="Sync WHOOP API data into Health OS.")
+    whoop_sync = subparsers.add_parser("whoop-sync", help="Sync WHOOP API data into OpenHealth.")
     whoop_sync.add_argument("--start", help="ISO-8601 UTC start timestamp, for example 2026-03-01T00:00:00Z.")
     whoop_sync.add_argument("--end", help="ISO-8601 UTC end timestamp, for example 2026-03-13T12:00:00Z.")
     whoop_sync.add_argument("--days-back", type=int, default=30, help="Fallback lookback window when no start is provided.")
@@ -60,7 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
     whoop_sync.add_argument("--no-body-measurements", action="store_true", help="Skip syncing WHOOP body measurements.")
 
     subparsers.add_parser("whoop-capabilities", help="Show WHOOP collections and gaps in the public API.")
-    subparsers.add_parser("whoop-latest", help="Show the latest WHOOP timestamps from local Health OS data.")
+    subparsers.add_parser("whoop-latest", help="Show the latest WHOOP timestamps from local OpenHealth data.")
 
     whoop_verify = subparsers.add_parser("whoop-verify-webhook", help="Verify a WHOOP webhook signature for a saved payload file.")
     whoop_verify.add_argument("--body-file", required=True, help="Path to the raw webhook body file.")

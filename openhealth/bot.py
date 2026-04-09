@@ -1,4 +1,4 @@
-"""Telegram bot for Health OS daily multimodal intake.
+"""Telegram bot for OpenHealth daily multimodal intake.
 
 Handles photos (body zone tagging), voice notes (transcription),
 text messages, and reactive checklists. Creates IntakeEnvelopes
@@ -151,7 +151,7 @@ class HealthBot:
             await update.message.reply_text("Not authorized.")
             return
         await update.message.reply_text(
-            "Self Labs / Health OS\n\n"
+            "OpenHealth\n\n"
             "Send me:\n"
             "- Photos (face, eyes, skin) for body zone tracking\n"
             "- Voice notes for journal entries\n"
@@ -189,7 +189,7 @@ class HealthBot:
             rt = r.get("record_type", "unknown")
             record_types[rt] = record_types.get(rt, 0) + 1
         lines = [
-            "Health OS Status",
+            "OpenHealth Status",
             "Sources: %d" % len(sources),
             "Records: %d" % len(records),
         ]
@@ -368,19 +368,19 @@ class HealthBot:
         return app
 
     def run(self) -> None:
-        logger.info("Starting Health OS bot (polling mode)...")
+        logger.info("Starting OpenHealth bot (polling mode)...")
         app = self.build_app()
         app.run_polling(drop_pending_updates=True)
 
 
 def start_bot(repo_root: Path) -> None:
-    token = os.environ.get("HEALTH_OS_TELEGRAM_BOT_TOKEN")
+    token = os.environ.get("OPENHEALTH_TELEGRAM_BOT_TOKEN")
     if not token:
         raise ValueError(
-            "HEALTH_OS_TELEGRAM_BOT_TOKEN not set. "
+            "OPENHEALTH_TELEGRAM_BOT_TOKEN not set. "
             "Create a bot via @BotFather and set the token."
         )
-    allowed_str = os.environ.get("HEALTH_OS_TELEGRAM_ALLOWED_USERS", "")
+    allowed_str = os.environ.get("OPENHEALTH_TELEGRAM_ALLOWED_USERS", "")
     allowed_users = [int(uid.strip()) for uid in allowed_str.split(",") if uid.strip()] or None
 
     bot = HealthBot(token=token, repo_root=repo_root, allowed_users=allowed_users)

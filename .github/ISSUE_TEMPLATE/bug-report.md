@@ -22,8 +22,8 @@ labels: bug
 ## Environment
 
 - OS: [e.g., macOS 15, Ubuntu 24.04]
-- Node.js version: [e.g., 22.x]
-- Health OS version: [e.g., commit hash or version]
+- Python version: [e.g., 3.11]
+- OpenHealth version: [e.g., commit hash or version]
 - Connector(s) involved: [e.g., oura, garmin]
 
 ## Logs / Error messages

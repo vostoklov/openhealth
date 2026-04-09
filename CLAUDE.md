@@ -1,10 +1,10 @@
-# Health OS — AI Development Rules
+# OpenHealth — AI Development Rules
 
 This file is read by AI coding tools (Claude Code, Cursor, Copilot, etc.) to ensure consistent code quality across all contributors.
 
 ## Project Overview
 
-Health OS is a local-first, plugin-based personal health operating system. Data stays on the user's machine. Connectors pull data from external sources into a unified schema.
+OpenHealth is a local-first, plugin-based personal health operating system. Data stays on the user's machine. Connectors pull data from external sources into a unified schema.
 
 ## Language & Standards
 

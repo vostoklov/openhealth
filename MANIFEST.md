@@ -1,10 +1,10 @@
-# Health OS Manifest
+# OpenHealth Manifest
 
 **Version:** 0.1 (RFC-001 — open for community revision)
 
-## What is Health OS?
+## What is OpenHealth?
 
-Health OS is an open-source, local-first personal health operating system built by a community of people who care about their health and want to understand it better through data, experiments, and shared knowledge.
+OpenHealth is an open-source, local-first personal health operating system built by a community of people who care about their health and want to understand it better through data, experiments, and shared knowledge.
 
 It is NOT another health app. It is a **framework** — a set of connectors, schemas, and tools that let you build YOUR health system, tailored to YOUR body, YOUR conditions, and YOUR hypotheses.
 
@@ -16,7 +16,7 @@ Modern health tracking is fragmented:
 - No one lets you ask: "Does my sleep quality correlate with my meeting load?"
 - No one lets you test: "If I stop caffeine after 2pm for 30 days, does my HRV improve?"
 
-Health OS connects everything into one local-first system where YOU own your data and YOU run your experiments.
+OpenHealth connects everything into one local-first system where YOU own your data and YOU run your experiments.
 
 ## Core Principles
 
@@ -24,23 +24,23 @@ Health OS connects everything into one local-first system where YOU own your dat
 Your health data never leaves your machine unless you explicitly choose to share it. No cloud accounts required. No tracking. No ads. No data sales.
 
 ### 2. Modular and connectable
-Health OS is built as a set of plugins (connectors). Each connector handles one data source. You compose your own setup. No one needs every connector — you install what matters to you.
+OpenHealth is built as a set of plugins (connectors). Each connector handles one data source. You compose your own setup. No one needs every connector — you install what matters to you.
 
 ### 3. Community-driven hypotheses
-The unique power of Health OS is the **hypothesis engine** — a shared space where people propose health experiments, define protocols, and (optionally) contribute anonymized results back to the community. The more people participate, the more we all learn.
+The unique power of OpenHealth is the **hypothesis engine** — a shared space where people propose health experiments, define protocols, and (optionally) contribute anonymized results back to the community. The more people participate, the more we all learn.
 
 ### 4. Built in public, quality over speed
 All code is open source. All architecture decisions go through RFCs. Quality matters — we'd rather have 5 solid connectors than 50 broken ones. Security and privacy are non-negotiable.
 
 ### 5. Diversity of health domains
-Everyone's health journey is different. Some people track chronic conditions, some optimize athletic performance, some monitor aging biomarkers, some manage injuries. Health OS is designed to accommodate all of these through its plugin architecture.
+Everyone's health journey is different. Some people track chronic conditions, some optimize athletic performance, some monitor aging biomarkers, some manage injuries. OpenHealth is designed to accommodate all of these through its plugin architecture.
 
 ### 6. AI-native development
 This project is built by people using AI coding tools (Claude Code, Cursor, Copilot, etc.). Our development process is designed for this reality — with strong guardrails, clear interfaces, and automated quality checks.
 
 ## The Network Effect
 
-Health OS becomes more valuable as the community grows:
+OpenHealth becomes more valuable as the community grows:
 - More **connectors** = more data sources you can integrate
 - More **hypotheses** = more experiments you can join or learn from
 - More **anonymized data** = stronger evidence for what works

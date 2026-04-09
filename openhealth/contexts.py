@@ -67,7 +67,7 @@ def build_profile_context(sources: List[Dict], artifacts: List[Dict]) -> str:
     lines = [
         "# Profile",
         "",
-        "This file is the stable top-level context for Health OS. Edit it manually to add baseline facts, goals, and constraints.",
+        "This file is the stable top-level context for OpenHealth. Edit it manually to add baseline facts, goals, and constraints.",
         "",
         "## Current Coverage",
     ]
@@ -187,7 +187,7 @@ def build_quick_brief_context(sources: List[Dict], records: List[Dict]) -> str:
         "# Quick Brief",
         "",
         "## Executive Summary",
-        "Health OS currently tracks %s source batch(es) and %s canonical record(s)." % (len(sources), len(records)),
+        "OpenHealth currently tracks %s source batch(es) and %s canonical record(s)." % (len(sources), len(records)),
         "",
         "## Record Mix",
     ]

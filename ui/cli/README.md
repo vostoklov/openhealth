@@ -1,18 +1,16 @@
 # CLI Interface
 
-Command-line interface for Health OS. The first and simplest way to interact with the system.
+Command-line interface for OpenHealth. The first and simplest way to interact with the system.
 
-## Planned Commands
+## Commands
 
 ```
-health-os init              # Set up local database
-health-os connect <source>  # Configure a connector
-health-os sync              # Pull latest data from all connectors
-health-os query <category>  # Query your health data
-health-os hypothesis list   # View community hypotheses
-health-os hypothesis join   # Join an active hypothesis
+openhealth init              # Set up the local workspace and SQLite index
+openhealth ingest            # Ingest a file or directory
+openhealth refresh-contexts  # Rebuild contexts and insights from indexed records
+openhealth whoop-auth-url    # Generate a WHOOP OAuth authorization URL
+openhealth whoop-sync        # Sync WHOOP data into the local workspace
+openhealth bot-start         # Start the Telegram intake bot (polling mode)
 ```
 
-## Status
-
-Not yet implemented.
+See `openhealth --help` for the full command list.

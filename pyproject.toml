@@ -3,13 +3,13 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "health-os"
+name = "openhealth"
 version = "0.1.0"
 description = "Local-first personal health knowledge base and ingestion pipeline."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "Health OS Contributors" }]
+authors = [{ name = "OpenHealth Contributors" }]
 dependencies = []
 
 [project.optional-dependencies]
@@ -22,10 +22,10 @@ dev = [
 ]
 
 [project.scripts]
-health-os = "health_os.cli:main"
+openhealth = "openhealth.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["health_os*"]
+include = ["openhealth*"]
 
 [tool.ruff]
 target-version = "py310"

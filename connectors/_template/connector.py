@@ -1,23 +1,23 @@
-"""Template connector for Health OS.
+"""Template connector for OpenHealth.
 
 Copy this directory and modify it to create a new connector.
 A connector ingests data from an external source and feeds it
-into the Health OS pipeline via ``ingest_path``.
+into the OpenHealth pipeline via ``ingest_path``.
 
 Connectors are intentionally simple Python modules — no abstract
 base class is required.  The only contract is:
 
 1. Accept a repo root ``Path`` and any connector-specific config.
 2. Write one or more files into ``data/raw/inbox/<source-type>/``.
-3. Call ``health_os.ingest.ingest_path()`` to run the standard
+3. Call ``openhealth.ingest.ingest_path()`` to run the standard
    parsing, archiving, and indexing flow.
 """
 
 from pathlib import Path
 from typing import Any, Dict
 
-from health_os.ingest import ingest_path
-from health_os.storage import ensure_repo_structure
+from openhealth.ingest import ingest_path
+from openhealth.storage import ensure_repo_structure
 
 
 def sync(
@@ -33,7 +33,7 @@ def sync(
     Parameters
     ----------
     root:
-        Path to the Health OS repository root.
+        Path to the OpenHealth repository root.
     owner:
         Owner label stored in the source manifest.
     label:
@@ -68,7 +68,7 @@ def sync(
     # Step 3: Ingest the file through the standard pipeline
     # ------------------------------------------------------------------
     # Replace "my-source-type" with one of the supported source types
-    # defined in ``health_os.config.SOURCE_TYPES``, or add a new one.
+    # defined in ``openhealth.config.SOURCE_TYPES``, or add a new one.
     #
     # result = ingest_path(
     #     root=root,

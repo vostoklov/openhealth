@@ -1,0 +1,85 @@
+{
+  "greeting_name": "Ilya",
+  "measurements": [
+    { "metric": "sleep", "title": "Sleep", "value": "7.2 h", "caption": "Last night" },
+    { "metric": "recovery", "title": "Recovery", "value": "64%", "caption": "WHOOP" },
+    { "metric": "resting_hr", "title": "Resting HR", "value": "54 bpm", "caption": "7-day avg" },
+    { "metric": "weight", "title": "Weight", "value": "72.1 kg", "caption": "Stable" }
+  ],
+  "panels": [
+    {
+      "id": "lab-2024-06-01",
+      "date": "2024-06-01",
+      "title": "Blood panel",
+      "markers": [
+        { "marker_key": "hemoglobin", "display_name": "Hemoglobin", "loinc": "718-7", "value": 14.6, "unit": "g/dL", "value_si": 146.0, "si_unit": "g/L", "reference_low": 13.5, "reference_high": 17.5, "reference_source": "report", "flag": "normal", "note": null },
+        { "marker_key": "vitamin_d", "display_name": "Vitamin D (25-OH)", "loinc": "1989-3", "value": 18.0, "unit": "ng/mL", "value_si": 44.9, "si_unit": "nmol/L", "reference_low": 30.0, "reference_high": null, "reference_source": "fallback", "flag": "low", "note": "Below 20 ng/mL is deficiency, 20-30 insufficiency, >=30 sufficient." },
+        { "marker_key": "ferritin", "display_name": "Ferritin", "loinc": "2276-4", "value": 28.0, "unit": "ng/mL", "value_si": 28.0, "si_unit": "ug/L", "reference_low": 30.0, "reference_high": 400.0, "reference_source": "fallback", "flag": "low", "note": "Acute-phase reactant: rises with inflammation; read alongside CRP." },
+        { "marker_key": "tsh", "display_name": "TSH", "loinc": "3016-3", "value": 2.1, "unit": "mIU/L", "value_si": null, "si_unit": null, "reference_low": 0.4, "reference_high": 4.0, "reference_source": "report", "flag": "normal", "note": null },
+        { "marker_key": "hba1c", "display_name": "HbA1c", "loinc": "4548-4", "value": 5.4, "unit": "%", "value_si": null, "si_unit": null, "reference_low": null, "reference_high": 5.7, "reference_source": "report", "flag": "normal", "note": "<5.7% normal, 5.7-6.4% prediabetes, >=6.5% diabetes (ADA)." },
+        { "marker_key": "total_cholesterol", "display_name": "Total cholesterol", "loinc": "2093-3", "value": 212.0, "unit": "mg/dL", "value_si": 5.48, "si_unit": "mmol/L", "reference_low": null, "reference_high": 200.0, "reference_source": "fallback", "flag": "high", "note": null }
+      ]
+    }
+  ],
+  "trends": [
+    {
+      "metric": "sleep",
+      "title": "Sleep",
+      "unit": "h",
+      "reference_low": 7.0,
+      "reference_high": 9.0,
+      "points": [
+        { "date": "05-23", "value": 6.4 },
+        { "date": "05-24", "value": 7.1 },
+        { "date": "05-25", "value": 6.8 },
+        { "date": "05-26", "value": 5.9 },
+        { "date": "05-27", "value": 7.6 },
+        { "date": "05-28", "value": 7.0 },
+        { "date": "05-29", "value": 7.2 }
+      ]
+    },
+    {
+      "metric": "recovery",
+      "title": "Recovery",
+      "unit": "%",
+      "reference_low": 50.0,
+      "reference_high": 100.0,
+      "points": [
+        { "date": "05-23", "value": 48 },
+        { "date": "05-24", "value": 61 },
+        { "date": "05-25", "value": 55 },
+        { "date": "05-26", "value": 42 },
+        { "date": "05-27", "value": 70 },
+        { "date": "05-28", "value": 63 },
+        { "date": "05-29", "value": 64 }
+      ]
+    }
+  ],
+  "insights": [
+    {
+      "id": "insight-caffeine-sleep",
+      "title": "Late caffeine and deep sleep",
+      "statement": "Lower sleep follows days with afternoon coffee.",
+      "confidence": 0.3,
+      "open_questions": [
+        "Were those also high-stress or late-work days?",
+        "Does the pattern hold when you move coffee earlier?"
+      ],
+      "suggested_validation": "n-of-1, ABAB: 1-week baseline, then cut caffeine after 2pm for a week, repeat.",
+      "sources": []
+    },
+    {
+      "id": "insight-vitd-energy",
+      "title": "Vitamin D and energy notes",
+      "statement": "Low vitamin D overlaps with several low-energy journal entries.",
+      "confidence": 0.45,
+      "open_questions": [
+        "How is sleep on those same days?",
+        "Is the timing seasonal?"
+      ],
+      "suggested_validation": "Discuss re-testing and any supplementation with a clinician; track energy for 2 weeks.",
+      "sources": ["https://medlineplus.gov/lab-tests/"]
+    }
+  ],
+  "alerts": []
+}

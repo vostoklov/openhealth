@@ -1,0 +1,43 @@
+name: OpenHealth
+options:
+  bundleIdPrefix: org.openhealth
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGNING_ALLOWED: "NO"
+targets:
+  OpenHealth:
+    type: application
+    platform: iOS
+    sources:
+      - path: OpenHealth
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
+        INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        PRODUCT_BUNDLE_IDENTIFIER: org.openhealth.app
+        PRODUCT_NAME: OpenHealth
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1"
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+  OpenHealthTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: OpenHealthTests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
+        PRODUCT_NAME: OpenHealthTests
+        PRODUCT_BUNDLE_IDENTIFIER: org.openhealth.app.tests
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    dependencies:
+      - target: OpenHealth

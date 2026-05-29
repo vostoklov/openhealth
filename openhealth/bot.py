@@ -27,10 +27,15 @@ from telegram.ext import (
     filters,
 )
 
+from . import evidence
 from .config import build_paths
 from .ingest import ingest_path
 from .models import BodyZone
 from .storage import ensure_repo_structure, now_utc
+
+# Caption/filename hints that route an uploaded document to the lab-panel parser
+# rather than the generic document parser.
+LAB_HINTS = ("lab", "blood", "panel", "анализ", "кров", "biomarker", "result")
 
 logger = logging.getLogger(__name__)
 
@@ -154,11 +159,14 @@ class HealthBot:
             "OpenHealth\n\n"
             "Send me:\n"
             "- Photos (face, eyes, skin) for body zone tracking\n"
+            "- Lab reports (PDF/CSV) - I will flag values in/out of range\n"
             "- Voice notes for journal entries\n"
             "- Text notes for quick observations\n\n"
             "Commands:\n"
             "/checkin - Quick daily check-in\n"
-            "/status - Show current data summary"
+            "/status - Show current data summary\n\n"
+            "I never diagnose or prescribe. I organize your data and surface "
+            "questions to discuss with a clinician."
         )
 
     async def cmd_checkin(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -259,12 +267,54 @@ class HealthBot:
             "Voice note saved. %d record(s) created." % result.get("records_imported", 0)
         )
 
+    async def handle_document(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not self._is_authorized(update.effective_user.id):
+            return
+        document = update.message.document
+        if not document:
+            return
+        file = await document.get_file()
+        paths = ensure_repo_structure(self.repo_root)
+        media_dir = paths.raw_inbox / "documents"
+        media_dir.mkdir(parents=True, exist_ok=True)
+        safe_name = document.file_name or ("document-%s" % datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S"))
+        local_path = media_dir / safe_name
+        await file.download_to_drive(str(local_path))
+
+        # Route to the lab-panel parser when the caption or filename suggests a
+        # blood/lab report; otherwise treat as a generic document.
+        caption = (update.message.caption or "").lower()
+        name_l = safe_name.lower()
+        source_type = "lab-panel" if any(h in caption or h in name_l for h in LAB_HINTS) else "document-tests"
+        try:
+            result = ingest_path(self.repo_root, source_type, local_path, label=safe_name)
+        except Exception as exc:  # surface ingest errors to the user, keep file
+            logger.exception("Document ingest failed")
+            await update.message.reply_text("Could not process that file: %s" % exc)
+            return
+        kind = "lab panel" if source_type == "lab-panel" else "document"
+        await update.message.reply_text(
+            "Saved %s. %d record(s) created. Send /status to see your data."
+            % (kind, result.get("records_imported", 0))
+        )
+
     async def handle_text(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not self._is_authorized(update.effective_user.id):
             return
         text = update.message.text
         if not text:
             return
+
+        # Safety first: if the message mentions a red-flag symptom, respond
+        # immediately and route to care. The note is still saved for the record.
+        red_flags = evidence.scan_text_red_flags(text)
+        if red_flags:
+            messages = "\n".join("- %s" % f.message for f in red_flags)
+            await update.message.reply_text(
+                "I noticed something that needs a real clinician, not an app:\n%s\n\n"
+                "Please seek medical care. I will not try to interpret this." % messages
+            )
+
         author = update.effective_user.username or str(update.effective_user.id)
         envelope = _create_envelope(
             author=author,
@@ -273,9 +323,10 @@ class HealthBot:
         )
         envelope_path = _save_envelope(self.repo_root, envelope)
         result = _ingest_envelope(self.repo_root, envelope_path)
-        await update.message.reply_text(
-            "Noted. %d record(s) created." % result.get("records_imported", 0)
-        )
+        if not red_flags:
+            await update.message.reply_text(
+                "Noted. %d record(s) created." % result.get("records_imported", 0)
+            )
 
     async def handle_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         query = update.callback_query
@@ -362,6 +413,7 @@ class HealthBot:
         app.add_handler(CommandHandler("checkin", self.cmd_checkin))
         app.add_handler(CommandHandler("status", self.cmd_status))
         app.add_handler(MessageHandler(filters.PHOTO, self.handle_photo))
+        app.add_handler(MessageHandler(filters.Document.ALL, self.handle_document))
         app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, self.handle_voice))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_text))
         app.add_handler(CallbackQueryHandler(self.handle_callback))

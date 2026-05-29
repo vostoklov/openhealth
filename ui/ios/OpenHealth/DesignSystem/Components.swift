@@ -115,6 +115,66 @@ struct RangeBar: View {
     }
 }
 
+/// Large hero tile: an oversized value on a calm gradient. The focal element of
+/// the Today board (editorial, number-forward). Decorative gradient only.
+struct HeroTile: View {
+    let measurement: Measurement
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.s2) {
+            Text(measurement.title.uppercased())
+                .font(.system(size: 12, weight: .semibold))
+                .tracking(0.8)
+                .foregroundStyle(.white.opacity(0.85))
+            Spacer(minLength: Theme.s4)
+            Text(measurement.value)
+                .font(.system(size: 48, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            if let caption = measurement.caption {
+                Text(caption)
+                    .font(.system(size: 13))
+                    .foregroundStyle(.white.opacity(0.85))
+            }
+        }
+        .padding(Theme.s4)
+        .frame(maxWidth: .infinity, minHeight: 180, alignment: .leading)
+        .background(Theme.heroGradient(for: measurement.metric))
+        .clipShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
+    }
+}
+
+/// Small board tile: number-forward measurement on a warm neutral surface.
+struct BoardTile: View {
+    let measurement: Measurement
+    let tint: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.s1) {
+            Text(measurement.title.uppercased())
+                .font(.system(size: 11, weight: .semibold))
+                .tracking(0.6)
+                .foregroundStyle(Theme.inkSoft)
+            Spacer(minLength: Theme.s3)
+            Text(measurement.value)
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(Theme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            if let caption = measurement.caption {
+                Text(caption).font(.system(size: 12)).foregroundStyle(Theme.inkSoft)
+            }
+        }
+        .padding(Theme.s4)
+        .frame(maxWidth: .infinity, minHeight: 110, alignment: .leading)
+        .background(tint)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
+    }
+}
+
 /// Prominent safety banner. The only place red is used.
 struct SafetyBanner: View {
     let alert: SafetyAlert

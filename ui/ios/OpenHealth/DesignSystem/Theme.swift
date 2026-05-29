@@ -13,6 +13,24 @@ enum Theme {
     static let warn = Color(hex: 0xC77D2E)      // amber: out of range
     static let danger = Color(hex: 0xC0392B)    // red: critical safety only
 
+    // Warm neutral surfaces for the widget-board feel (decorative, non-semantic).
+    static let sand = Color(hex: 0xEDE7DC)
+    static let sage = Color(hex: 0xDCE5DD)
+    static let mist = Color(hex: 0xE3E6EC)
+
+    /// Calm decorative gradient for a hero tile, varied per metric. These carry
+    /// no clinical meaning — flags/safety always use the semantic colors above.
+    static func heroGradient(for metric: String) -> LinearGradient {
+        let pairs: [String: [Color]] = [
+            "sleep": [Color(hex: 0x2E7D74), Color(hex: 0x9CC7BF)],
+            "recovery": [Color(hex: 0x4A6FA5), Color(hex: 0xAFC4E0)],
+            "resting_hr": [Color(hex: 0xB0654F), Color(hex: 0xE2B3A2)],
+            "weight": [Color(hex: 0x6B6F86), Color(hex: 0xC2C5D6)]
+        ]
+        let colors = pairs[metric] ?? [Color(hex: 0x2E7D74), Color(hex: 0x9CC7BF)]
+        return LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
     // Spacing scale
     static let s1: CGFloat = 4
     static let s2: CGFloat = 8

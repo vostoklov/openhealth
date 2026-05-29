@@ -12,10 +12,23 @@ struct TodayView: View {
         }
     }
 
+    private let boardTints = [Theme.sand, Theme.sage, Theme.mist]
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.s5) {
+                    // Editorial greeting headline (serif display).
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(greeting)
+                            .font(.system(size: 22, weight: .regular, design: .serif))
+                            .foregroundStyle(Theme.inkSoft)
+                        Text(store.snapshot.greetingName)
+                            .font(.system(size: 40, weight: .bold, design: .serif))
+                            .foregroundStyle(Theme.ink)
+                    }
+                    .padding(.top, Theme.s2)
+
                     // Safety alerts pinned to the very top.
                     ForEach(store.snapshot.alerts) { alert in
                         SafetyBanner(alert: alert)
@@ -26,12 +39,15 @@ struct TodayView: View {
                         reviewPrompt(panel)
                     }
 
-                    SectionHeader(title: "Latest measurements")
+                    // Widget-board: a hero number tile, then a mosaic of the rest.
+                    if let hero = store.snapshot.measurements.first {
+                        HeroTile(measurement: hero)
+                    }
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: Theme.s3),
                                         GridItem(.flexible(), spacing: Theme.s3)],
                               spacing: Theme.s3) {
-                        ForEach(store.snapshot.measurements) { m in
-                            measurementTile(m)
+                        ForEach(Array(store.snapshot.measurements.dropFirst().enumerated()), id: \.element.id) { idx, m in
+                            BoardTile(measurement: m, tint: boardTints[idx % boardTints.count])
                         }
                     }
 
@@ -50,20 +66,7 @@ struct TodayView: View {
                 .padding(Theme.s4)
             }
             .background(Theme.background)
-            .navigationTitle("\(greeting), \(store.snapshot.greetingName)")
-            .navigationBarTitleDisplayMode(.large)
-        }
-    }
-
-    private func measurementTile(_ m: Measurement) -> some View {
-        Card {
-            VStack(alignment: .leading, spacing: Theme.s1) {
-                Text(m.title).font(.system(size: 13)).foregroundStyle(Theme.inkSoft)
-                Text(m.value).font(.system(size: 24, weight: .bold)).foregroundStyle(Theme.ink)
-                if let c = m.caption {
-                    Text(c).font(.system(size: 12)).foregroundStyle(Theme.inkSoft)
-                }
-            }
+            .navigationBarHidden(true)
         }
     }
 

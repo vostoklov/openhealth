@@ -5,6 +5,7 @@ from pathlib import Path
 SOURCE_TYPES = (
     "whoop",
     "document-tests",
+    "lab-panel",
     "messages",
     "telegram-posts",
     "manual-notes",

@@ -1,9 +1,12 @@
 import csv
 import json
+import re
 import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from . import evidence
+from . import reference_ranges
 from .metadata import coerce_list, parse_frontmatter, strip_frontmatter
 from .models import (
     BodyZone,
@@ -32,6 +35,8 @@ def parse_artifact(
 ) -> Tuple[List[Dict[str, Any]], List[str]]:
     if source_type == "whoop":
         return parse_whoop(source_id, artifact_id, archived_path, metadata)
+    if source_type == "lab-panel":
+        return parse_lab_panel(source_id, artifact_id, archived_path, metadata)
     if source_type == "document-tests":
         return parse_document(source_id, artifact_id, archived_path, metadata)
     if source_type in {"messages", "telegram-posts", "manual-notes"}:
@@ -211,6 +216,331 @@ def parse_document(
     return records, parser_notes
 
 
+def parse_lab_panel(
+    source_id: str,
+    artifact_id: str,
+    path: Path,
+    metadata: Dict[str, Any],
+) -> Tuple[List[Dict[str, Any]], List[str]]:
+    """Parse a blood/lab panel into per-marker Observations with flags.
+
+    Accepts three input shapes, in order of trust:
+    1. Structured JSON/CSV with explicit markers (highest confidence).
+    2. Markdown/text with a `markers:` list in frontmatter.
+    3. Free text / PDF, from which markers are extracted by name (lower
+       confidence, marked accordingly).
+
+    Each marker is assessed against the reference range printed on the report
+    when present, falling back to the built-in orientation table otherwise.
+    Critical values raise a red-flag PatternAlert and never get interpreted.
+    """
+
+    parser_notes: List[str] = []
+    text = extract_text(path) or ""
+    frontmatter = parse_frontmatter(text)
+    merged = _merge_metadata(metadata, frontmatter)
+    sex = merged.get("sex")
+    panel_date = merged.get("date") or merged.get("collected_date")
+
+    raw_markers, extraction_quality, notes = _load_lab_markers(path, merged, text)
+    parser_notes.extend(notes)
+
+    # Confidence floor: structured input is trustworthy (the value is exactly
+    # what the lab reported); regex-from-text extraction is less certain.
+    base_conf = 0.92 if extraction_quality == "structured" else 0.6
+
+    records: List[Dict[str, Any]] = []
+    abnormal: List[str] = []
+    critical_flags: List[str] = []
+
+    note = ContextNote(
+        id="note-%s-labpanel" % source_id,
+        record_type="ContextNote",
+        source_id=source_id,
+        title=merged.get("title") or "Lab panel %s" % (panel_date or path.stem),
+        summary=merged.get("summary") or "Lab panel with %d marker(s)." % len(raw_markers),
+        artifact_ids=[artifact_id],
+        evidence_class="personal",
+        confidence=base_conf,
+        date=panel_date,
+        location=merged.get("location"),
+        tags=coerce_list(merged.get("tags")) + ["lab-panel"],
+        metadata={"sex": sex, "extraction_quality": extraction_quality, "source_kind": "lab-panel"},
+        note_kind="lab_panel",
+        themes=["labs"],
+    )
+    records.append(note.to_dict())
+
+    for idx, marker in enumerate(raw_markers):
+        name = marker.get("name") or marker.get("marker") or ""
+        value = _to_float(marker.get("value"))
+        unit = marker.get("unit")
+        report_low = _to_float(marker.get("reference_low"))
+        report_high = _to_float(marker.get("reference_high"))
+
+        assessment = reference_ranges.assess_marker(
+            name=name, value=value, unit=unit, sex=sex,
+            report_low=report_low, report_high=report_high,
+        )
+        marker_key = assessment["marker_key"] if assessment else slugify(name or "marker-%d" % idx)
+        flag = assessment["flag"] if assessment else "unknown"
+        if flag in ("low", "high"):
+            abnormal.append("%s %s" % (name, flag))
+
+        # Critical value check -> red flag, route to clinician, do not interpret.
+        red = evidence.check_critical_lab(marker_key, value) if assessment else None
+        obs_meta: Dict[str, Any] = {"source_kind": "lab-panel"}
+        if assessment:
+            obs_meta.update(assessment)
+        if red is not None:
+            obs_meta["red_flag"] = {"code": red.code, "message": red.message, "urgency": red.urgency}
+            critical_flags.append(name)
+
+        observation = Observation(
+            id="obs-%s-%s" % (source_id, marker_key),
+            record_type="Observation",
+            source_id=source_id,
+            title="%s%s" % (
+                assessment["display_name"] if assessment else (name or "Lab marker"),
+                "" if flag in ("normal", "unknown") else " (%s)" % flag,
+            ),
+            summary=_lab_summary(name, value, unit, assessment),
+            artifact_ids=[artifact_id],
+            evidence_class="personal",
+            confidence=base_conf if assessment else base_conf * 0.7,
+            date=panel_date,
+            tags=["lab-panel", marker_key] + ([flag] if flag in ("low", "high") else []),
+            metadata=obs_meta,
+            observation_kind="lab_marker",
+            metric_name=marker_key,
+            value=value,
+            unit=unit or (assessment["unit"] if assessment else None),
+        )
+        records.append(observation.to_dict())
+
+        if assessment is None:
+            parser_notes.append("Marker '%s' not recognised; stored raw without reference range." % name)
+
+    # Surface abnormal / critical findings as a review prompt, never a diagnosis.
+    if critical_flags:
+        alert = PatternAlert(
+            id="alert-%s-critical" % source_id,
+            record_type="PatternAlert",
+            source_id=source_id,
+            title="Critical lab value flagged",
+            summary=(
+                "One or more values are in the critical range (%s). Contact a clinician promptly. "
+                "The system will not interpret these." % ", ".join(critical_flags)
+            ),
+            artifact_ids=[artifact_id],
+            evidence_class="safety-flag",
+            confidence=0.0,
+            date=panel_date,
+            tags=["lab-panel", "red-flag", "see-clinician"],
+            metadata={"critical_markers": critical_flags},
+            relationship="critical_value",
+            related_signals=critical_flags,
+            evidence_count=len(critical_flags),
+            suggested_validation="Contact a clinician. Do not wait for system interpretation.",
+        )
+        records.append(alert.to_dict())
+    elif abnormal:
+        alert = PatternAlert(
+            id="alert-%s-outofrange" % source_id,
+            record_type="PatternAlert",
+            source_id=source_id,
+            title="Some markers outside reference range",
+            summary=(
+                "Out-of-range markers: %s. This is a prompt to review with a clinician, not a diagnosis. "
+                "Single out-of-range values are common and often not meaningful on their own." % ", ".join(abnormal)
+            ),
+            artifact_ids=[artifact_id],
+            evidence_class="derived-hypothesis",
+            confidence=evidence.confidence_to_numeric(evidence.Confidence.C2),
+            date=panel_date,
+            tags=["lab-panel", "out-of-range", "review-needed"],
+            metadata={"abnormal_markers": abnormal},
+            relationship="out_of_range",
+            related_signals=abnormal,
+            evidence_count=len(abnormal),
+            suggested_validation="Re-test to confirm, and review trend over time with a clinician.",
+        )
+        records.append(alert.to_dict())
+
+    if panel_date:
+        event = TimelineEvent(
+            id="event-%s-labpanel" % source_id,
+            record_type="TimelineEvent",
+            source_id=source_id,
+            title=note.title,
+            summary=note.summary,
+            artifact_ids=[artifact_id],
+            evidence_class="personal",
+            confidence=base_conf,
+            date=panel_date,
+            tags=note.tags,
+            metadata={"marker_count": len(raw_markers), "source_kind": "lab-panel"},
+            event_kind="lab_panel",
+            related_record_ids=[r["id"] for r in records if r["record_type"] == "Observation"],
+        )
+        records.append(event.to_dict())
+
+    return records, parser_notes
+
+
+def _load_lab_markers(
+    path: Path,
+    merged: Dict[str, Any],
+    text: str,
+) -> Tuple[List[Dict[str, Any]], str, List[str]]:
+    """Return (markers, extraction_quality, notes).
+
+    extraction_quality is "structured" (JSON/CSV/frontmatter list) or "text".
+    """
+
+    notes: List[str] = []
+    suffix = path.suffix.lower()
+
+    # 1. JSON with explicit markers.
+    if suffix == ".json":
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        markers = payload.get("markers") if isinstance(payload, dict) else payload
+        if isinstance(markers, list) and markers:
+            return [dict(m) for m in markers], "structured", notes
+        notes.append("JSON lab panel had no 'markers' list.")
+        return [], "structured", notes
+
+    # 2. CSV with one marker per row.
+    if suffix == ".csv":
+        with path.open("r", encoding="utf-8", errors="ignore") as handle:
+            rows = list(csv.DictReader(handle))
+        markers = []
+        for row in rows:
+            lowered = {k.lower(): v for k, v in row.items()}
+            markers.append({
+                "name": lowered.get("name") or lowered.get("marker") or lowered.get("test"),
+                "value": lowered.get("value") or lowered.get("result"),
+                "unit": lowered.get("unit") or lowered.get("units"),
+                "reference_low": lowered.get("reference_low") or lowered.get("ref_low") or lowered.get("low"),
+                "reference_high": lowered.get("reference_high") or lowered.get("ref_high") or lowered.get("high"),
+            })
+        return markers, "structured", notes
+
+    # 3. Frontmatter `markers:` list (markdown/text).
+    fm_markers = merged.get("markers")
+    if isinstance(fm_markers, list) and fm_markers:
+        return [dict(m) if isinstance(m, dict) else {"name": str(m)} for m in fm_markers], "structured", notes
+
+    # 4. Free text / PDF: extract by recognised marker names.
+    extracted = _extract_markers_from_text(text)
+    if not extracted:
+        notes.append("No markers could be extracted from text; consider structured JSON/CSV input.")
+    return extracted, "text", notes
+
+
+# A number, optionally with a decimal part.
+_NUM = r"(\d+(?:\.\d+)?)"
+# Optional reference range like (13.5-17.5) or [30 - 100].
+_RANGE = r"[\(\[]\s*%s\s*[-–]\s*%s\s*[\)\]]" % (_NUM, _NUM)
+
+
+def _extract_markers_from_text(text: str) -> List[Dict[str, Any]]:
+    """Best-effort extraction of known markers from free text / OCR output.
+
+    For each known marker, scan each line for one of its aliases followed by a
+    number. Captures an inline reference range when present. This is
+    intentionally conservative: unknown lines are ignored rather than guessed.
+    """
+
+    if not text:
+        return []
+    markers: List[Dict[str, Any]] = []
+    seen = set()
+    lines = text.splitlines()
+    for spec in reference_ranges.MARKERS.values():
+        if spec.key in seen:
+            continue
+        for line in lines:
+            lowered = line.lower()
+            if not any(alias in lowered for alias in spec.aliases):
+                continue
+            value_match = re.search(_NUM, line)
+            if not value_match:
+                continue
+            range_match = re.search(_RANGE, line)
+            marker: Dict[str, Any] = {"name": spec.display_name, "value": value_match.group(1)}
+            if range_match:
+                marker["reference_low"] = range_match.group(1)
+                marker["reference_high"] = range_match.group(2)
+            markers.append(marker)
+            seen.add(spec.key)
+            break
+    return markers
+
+
+def _lab_summary(
+    name: str,
+    value: Optional[float],
+    unit: Optional[str],
+    assessment: Optional[Dict[str, Any]],
+) -> str:
+    if assessment is None:
+        return "%s = %s %s (not recognised; stored raw)." % (name, value, unit or "")
+    flag = assessment["flag"]
+    ref = ""
+    low, high = assessment.get("reference_low"), assessment.get("reference_high")
+    if low is not None or high is not None:
+        ref = " (ref %s-%s, %s)" % (low, high, assessment.get("reference_source"))
+    return "%s = %s %s -> %s%s." % (
+        assessment["display_name"], value, assessment.get("unit") or unit or "", flag, ref,
+    )
+
+
+def _to_float(value: Any) -> Optional[float]:
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _red_flag_alert(
+    source_id: str,
+    artifact_id: str,
+    text: Optional[str],
+    date: Optional[str],
+) -> Optional[Dict[str, Any]]:
+    """Scan free text for symptom red flags and build a safety alert if any.
+
+    Returns a PatternAlert dict (confidence 0.0, never interpreted) or None.
+    """
+
+    flags = evidence.scan_text_red_flags(text)
+    if not flags:
+        return None
+    messages = "; ".join(f.message for f in flags)
+    urgency = "emergency" if any(f.urgency == "emergency" for f in flags) else "urgent"
+    alert = PatternAlert(
+        id="alert-%s-redflag" % source_id,
+        record_type="PatternAlert",
+        source_id=source_id,
+        title="Possible red-flag symptom mentioned",
+        summary="%s This is a safety prompt, not a diagnosis." % messages,
+        artifact_ids=[artifact_id] if artifact_id else [],
+        evidence_class="safety-flag",
+        confidence=0.0,
+        date=date,
+        tags=["red-flag", "see-clinician", urgency],
+        metadata={"flag_codes": [f.code for f in flags], "urgency": urgency},
+        relationship="symptom_red_flag",
+        related_signals=[f.code for f in flags],
+        evidence_count=len(flags),
+        suggested_validation="Seek professional medical care. The system will not interpret this.",
+    )
+    return alert.to_dict()
+
+
 def parse_context_text(
     source_type: str,
     source_id: str,
@@ -245,6 +575,9 @@ def parse_context_text(
         mood=merged.get("mood"),
     )
     records = [note.to_dict()]
+    red_flag = _red_flag_alert(source_id, artifact_id, body, note.date)
+    if red_flag:
+        records.append(red_flag)
     if note.date or note.start_date:
         event = TimelineEvent(
             id="event-%s-main" % source_id,
@@ -459,6 +792,9 @@ def parse_telegram_envelope(
         themes=coerce_list(payload.get("themes")),
     )
     records: List[Dict[str, Any]] = [note.to_dict()]
+    red_flag = _red_flag_alert(source_id, artifact_id, envelope.text, note.date)
+    if red_flag:
+        records.append(red_flag)
 
     # Create MediaObservation for photo attachments with body zone info
     for idx, attachment in enumerate(envelope.attachments):

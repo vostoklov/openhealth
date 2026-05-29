@@ -126,9 +126,17 @@ python -m unittest discover
 |--------|-------------|-----------|
 | **Build a connector** | Copy `connectors/_template/`, implement `HealthConnector` interface | Medium |
 | **Propose a hypothesis** | Copy `hypotheses/_template/`, fill in the template, submit a PR | Easy |
+| **Contribute a reference norm** | Add a marker + source to `reference_ranges.py` | Easy |
+| **Contribute an insight template** | Anonymized hypothesis pattern (see [RFC-002](./rfcs/002-community-contribution-model.md)) | Easy |
 | **Improve architecture** | Write an RFC in `rfcs/`, discuss on the PR | Advanced |
 | **Review PRs** | Look for `needs-review` label | Any |
 | **Report bugs** | Open an Issue using the template | Easy |
+
+**How we handle data and trust:** personal health data never leaves your
+machine; the community shares only anonymized artifacts (code, reference norms,
+insight templates). Every claim carries a confidence label (C1–C5). See
+[docs/methodology/evidence-and-trust.md](./docs/methodology/evidence-and-trust.md)
+and [RFC-002](./rfcs/002-community-contribution-model.md).
 
 ### Rules
 

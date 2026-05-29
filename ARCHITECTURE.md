@@ -60,7 +60,21 @@ OpenHealth is a **local-first, plugin-based** system. Data lives on the user's m
 
 ### Core Data Models
 
-The fundamental data models. Built with Python dataclasses:
+> **Implementation note (2026-05-29):** the working engine in
+> [`openhealth/models.py`](openhealth/models.py) uses an **evidence-oriented**
+> model, not the `HealthCategory` sketch below. The sketch is kept as the
+> original RFC-001 proposal; the code is the source of truth. The real records
+> share a `RecordBase` (`id`, `record_type`, `source_id`, `evidence_class`,
+> `confidence`, `date`, `tags`, `metadata`) and specialize into `Observation`,
+> `TimelineEvent`, `Intervention`, `ContextNote`, `ReferenceCase`,
+> `MediaObservation`, `InsightHypothesis`, `PatternAlert`, and `ValidationPrompt`.
+> Every record carries an explicit `confidence` and `evidence_class`
+> (`personal`, `external-reference`, `contextual`, `derived-hypothesis`,
+> `safety-flag`). See [docs/methodology/evidence-and-trust.md](docs/methodology/evidence-and-trust.md)
+> for how confidence is graded (C1–C5) and how safety red flags work. A future
+> RFC will reconcile this section with the implemented model.
+
+The original RFC-001 sketch (kept for history):
 
 ```python
 from dataclasses import dataclass, field

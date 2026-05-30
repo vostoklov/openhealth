@@ -175,6 +175,83 @@ struct BoardTile: View {
     }
 }
 
+/// Circular gauge: a colored ring with a big value in the center. Inspired by
+/// the recovery/strain ring language of fitness apps, recolored to our palette
+/// (teal = in range, amber = attention). The ring is a wellness summary, never
+/// a clinical judgment — semantic flags/safety keep their own colors.
+struct RingGauge: View {
+    let progress: Double           // 0...1
+    let centerValue: String
+    var centerUnit: String? = nil
+    var tint: Color = Theme.accent
+    var lineWidth: CGFloat = 16
+    var size: CGFloat = 200
+
+    private var clamped: Double { min(max(progress, 0), 1) }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Theme.hairline, lineWidth: lineWidth)
+            Circle()
+                .trim(from: 0, to: clamped)
+                .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            VStack(spacing: 0) {
+                Text(centerValue)
+                    .font(.system(size: size * 0.26, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                if let unit = centerUnit {
+                    Text(unit)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Theme.inkSoft)
+                }
+            }
+        }
+        .frame(width: size, height: size)
+    }
+}
+
+/// A ring with a heading and a plain-language readout below — the "what this
+/// means" line that keeps a number honest. Observational, not prescriptive.
+struct RingCard: View {
+    let title: String
+    let progress: Double
+    let centerValue: String
+    var centerUnit: String? = nil
+    var tint: Color = Theme.accent
+    let readout: String
+
+    var body: some View {
+        Card {
+            VStack(spacing: Theme.s3) {
+                Text(title.uppercased())
+                    .font(.system(size: 12, weight: .semibold))
+                    .tracking(0.8)
+                    .foregroundStyle(Theme.inkSoft)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                RingGauge(progress: progress, centerValue: centerValue,
+                          centerUnit: centerUnit, tint: tint, size: 190)
+                    .padding(.vertical, Theme.s2)
+                Text(readout)
+                    .font(.system(size: 14))
+                    .foregroundStyle(Theme.ink)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+    }
+}
+
+/// Parse a leading number out of a display string like "64%" or "7.2 h".
+func leadingNumber(_ s: String) -> Double? {
+    let prefix = s.drop(while: { !$0.isNumber }).prefix { $0.isNumber || $0 == "." }
+    return Double(prefix)
+}
+
 /// Prominent safety banner. The only place red is used.
 struct SafetyBanner: View {
     let alert: SafetyAlert

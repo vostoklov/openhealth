@@ -7,8 +7,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    DEVELOPMENT_TEAM: ""
-    CODE_SIGNING_ALLOWED: "NO"
+    DEVELOPMENT_TEAM: F6HUG8ZC86
+    CODE_SIGN_STYLE: Automatic
 targets:
   OpenHealth:
     type: application
@@ -41,3 +41,15 @@ targets:
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
     dependencies:
       - target: OpenHealth
+schemes:
+  OpenHealth:
+    build:
+      targets:
+        OpenHealth: all
+        OpenHealthTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - OpenHealthTests

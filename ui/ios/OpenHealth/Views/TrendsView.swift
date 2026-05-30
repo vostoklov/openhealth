@@ -26,6 +26,17 @@ struct TrendsView: View {
                     }
 
                     if let t = trend {
+                        if let last = t.points.last?.value {
+                            RingGauge(
+                                progress: ringProgress(t, last),
+                                centerValue: trim(last),
+                                centerUnit: t.unit,
+                                tint: inRange(t, last) ? Theme.accent : Theme.warn,
+                                size: 170
+                            )
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, Theme.s2)
+                        }
                         Card {
                             VStack(alignment: .leading, spacing: Theme.s3) {
                                 Text(t.title).font(.system(size: 18, weight: .semibold))
@@ -73,6 +84,20 @@ struct TrendsView: View {
         let lo = (values.min() ?? 0) * 0.9
         let hi = (values.max() ?? 1) * 1.1
         return lo...max(hi, lo + 1)
+    }
+
+    /// Ring fill: position of the latest value inside its reference band (or the
+    /// observed min/max when no reference exists).
+    private func ringProgress(_ t: Trend, _ value: Double) -> Double {
+        let lo = t.referenceLow ?? t.points.map(\.value).min() ?? value
+        let hi = t.referenceHigh ?? t.points.map(\.value).max() ?? (value + 1)
+        guard hi > lo else { return 0.5 }
+        return min(max((value - lo) / (hi - lo), 0), 1)
+    }
+    private func inRange(_ t: Trend, _ value: Double) -> Bool {
+        if let lo = t.referenceLow, value < lo { return false }
+        if let hi = t.referenceHigh, value > hi { return false }
+        return true
     }
 
     private func readout(_ t: Trend) -> String {

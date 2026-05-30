@@ -14,6 +14,31 @@ struct TodayView: View {
 
     private let boardTints = [Theme.sand, Theme.sage, Theme.mist]
 
+    // The recovery metric drives the focal ring; the rest fill the board.
+    private var recoveryMeasurement: Measurement? {
+        store.snapshot.measurements.first { $0.metric == "recovery" }
+    }
+    private var boardMeasurements: [Measurement] {
+        store.snapshot.measurements.filter { $0.metric != "recovery" }
+    }
+
+    /// Progress 0...1. Percentage metrics map directly; others fall back to a
+    /// neutral half-fill so the ring still reads as a summary.
+    private func ringProgress(_ m: Measurement) -> Double {
+        guard let n = leadingNumber(m.value) else { return 0.5 }
+        return m.value.contains("%") ? n / 100 : min(n / 100, 1)
+    }
+    private func ringTint(_ m: Measurement) -> Color {
+        ringProgress(m) >= 0.5 ? Theme.accent : Theme.warn
+    }
+    /// Observational readout — describes, does not prescribe.
+    private func ringReadout(_ m: Measurement) -> String {
+        let p = ringProgress(m)
+        if p >= 0.66 { return "In your usual range for \(m.title.lowercased())." }
+        if p >= 0.5 { return "A middling \(m.title.lowercased()) reading — nothing unusual." }
+        return "Lower than your usual \(m.title.lowercased()). Worth noting, not alarming."
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -39,14 +64,22 @@ struct TodayView: View {
                         reviewPrompt(panel)
                     }
 
-                    // Widget-board: a hero number tile, then a mosaic of the rest.
-                    if let hero = store.snapshot.measurements.first {
+                    // Recovery ring as the focal element, then a board of the rest.
+                    if let ring = recoveryMeasurement {
+                        RingCard(
+                            title: ring.title,
+                            progress: ringProgress(ring),
+                            centerValue: ring.value,
+                            tint: ringTint(ring),
+                            readout: ringReadout(ring)
+                        )
+                    } else if let hero = store.snapshot.measurements.first {
                         HeroTile(measurement: hero)
                     }
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: Theme.s3),
                                         GridItem(.flexible(), spacing: Theme.s3)],
                               spacing: Theme.s3) {
-                        ForEach(Array(store.snapshot.measurements.dropFirst().enumerated()), id: \.element.id) { idx, m in
+                        ForEach(Array(boardMeasurements.enumerated()), id: \.element.id) { idx, m in
                             BoardTile(measurement: m, tint: boardTints[idx % boardTints.count])
                         }
                     }

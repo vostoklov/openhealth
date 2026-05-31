@@ -2,6 +2,12 @@
 
 Welcome! This guide explains how to contribute to OpenHealth. Whether you're building a connector, proposing a hypothesis, or improving the core architecture — this document is your starting point.
 
+> **Never used git or a terminal?** You don't need to. Read
+> [docs/contributing/start-here.md](docs/contributing/start-here.md): you work
+> entirely through Claude Code / Codex, pick a card from [TASKS.md](TASKS.md),
+> and the agent handles setup, tests and shipping (`/ship`) for you. The
+> git-based flow below is for people who prefer it.
+
 ## Quick Start
 
 1. Fork the repo

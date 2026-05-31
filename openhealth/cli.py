@@ -69,6 +69,20 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser("bot-start", help="Start the Telegram intake bot (polling mode).")
 
+    subparsers.add_parser("modules", help="List available health domain modules.")
+
+    mod = subparsers.add_parser("module", help="Run a domain module on a JSON payload.")
+    mod.add_argument("--id", required=True, help="Module id, e.g. pulse, sleep, cycle, body.")
+    mod.add_argument("--payload-json", help="Inline JSON payload for the module.")
+    mod.add_argument("--payload-file", help="Path to a JSON payload file.")
+    mod.add_argument("--no-save", action="store_true", help="Do not persist results into the index.")
+
+    rec = subparsers.add_parser("recent", help="Show recent records/insights from the index.")
+    rec.add_argument("--type", dest="rtype", help="Filter by record_type, e.g. InsightHypothesis.")
+    rec.add_argument("--metric", help="Filter by metric_name, e.g. rmssd_ms.")
+    rec.add_argument("--tag", help="Filter by a tag.")
+    rec.add_argument("--limit", type=int, default=10, help="Max rows.")
+
     return parser
 
 
@@ -146,6 +160,68 @@ def main(argv: Optional[List[str]] = None) -> int:
         from .bot import start_bot
         start_bot(repo_root)
         return 0
+    elif args.command == "modules":
+        from . import modules as modpkg
+        modpkg.load_builtin()
+        result = {
+            "modules": [
+                {"id": m.id, "name": m.name, "domain": m.domain, "summary": m.summary}
+                for m in modpkg.all_modules()
+            ]
+        }
+    elif args.command == "module":
+        from . import modules as modpkg
+        modpkg.load_builtin()
+        module = modpkg.get_module(args.id)
+        if args.payload_file:
+            payload = json.loads(Path(args.payload_file).read_text(encoding="utf-8"))
+        elif args.payload_json:
+            payload = json.loads(args.payload_json)
+        else:
+            payload = {}
+        outcome = module.compute(payload)
+        saved = 0
+        if not args.no_save and (outcome.metrics or outcome.insights):
+            paths = ensure_repo_structure(repo_root)
+            index.init_db(paths.db_path)
+            for record in list(outcome.metrics) + list(outcome.insights):
+                index.upsert_record(paths.db_path, record)
+                saved += 1
+        result = {
+            "module": args.id,
+            "metrics": outcome.metrics,
+            "insights": outcome.insights,
+            "notes": outcome.notes,
+            "saved_to_index": saved,
+        }
+    elif args.command == "recent":
+        paths = ensure_repo_structure(repo_root)
+        index.init_db(paths.db_path)
+        rows = index.list_records(paths.db_path)
+        if args.rtype:
+            rows = [r for r in rows if r.get("record_type") == args.rtype]
+        if args.metric:
+            rows = [r for r in rows if r.get("metric_name") == args.metric]
+        if args.tag:
+            rows = [r for r in rows if args.tag in (r.get("tags") or [])]
+        rows.sort(key=lambda r: (r.get("date") or r.get("start_date") or ""), reverse=True)
+        result = {
+            "count": len(rows),
+            "records": [
+                {
+                    "id": r.get("id"),
+                    "record_type": r.get("record_type"),
+                    "date": r.get("date") or r.get("start_date"),
+                    "title": r.get("title"),
+                    "summary": r.get("summary"),
+                    "metric_name": r.get("metric_name"),
+                    "value": r.get("value"),
+                    "unit": r.get("unit"),
+                    "confidence": r.get("confidence"),
+                }
+                for r in rows[: args.limit]
+            ],
+        }
     else:
         paths = ensure_repo_structure(repo_root)
         index.init_db(paths.db_path)

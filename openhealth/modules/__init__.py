@@ -18,6 +18,9 @@ from .base import HealthModule, ModuleResult, register, get_module, all_modules
 def load_builtin() -> None:
     """Import built-in modules so they self-register. Safe to call repeatedly."""
     from . import pulse  # noqa: F401  (import side-effect: registration)
+    from . import sleep  # noqa: F401
+    from . import cycle  # noqa: F401
+    from . import body   # noqa: F401
 
 
 __all__ = [

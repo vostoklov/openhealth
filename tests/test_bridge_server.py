@@ -6,6 +6,7 @@ The module is loaded by path because ui/web is not a package.
 
 import importlib.util
 import json
+import stat
 import subprocess
 from pathlib import Path
 
@@ -15,6 +16,14 @@ _SERVER_PATH = Path(__file__).resolve().parent.parent / "ui" / "web" / "server.p
 _spec = importlib.util.spec_from_file_location("bridge_server", _SERVER_PATH)
 server = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(server)
+
+
+@pytest.fixture(autouse=True)
+def oh_home(tmp_path, monkeypatch):
+    """Isolate every test from the real ~/.openhealth (config + memory)."""
+    home = tmp_path / "oh-home"
+    monkeypatch.setenv("OPENHEALTH_HOME", str(home))
+    return home
 
 
 # --- prompt assembly ---------------------------------------------------------
@@ -232,3 +241,236 @@ def test_handle_agent_request_runs_insight_with_data(tmp_path, monkeypatch):
     assert body["task"] == "insight"
     assert "Recovery: 64%" in seen["prompt"]
     assert "не врач" in seen["prompt"]
+
+
+# --- agent config (~/.openhealth/agent.json) ----------------------------------
+
+
+def test_load_agent_config_defaults_when_missing():
+    cfg = server.load_agent_config()
+    assert cfg == {"agent": "auto", "model": None, "extra_args": []}
+
+
+def test_save_and_load_agent_config_roundtrip(oh_home):
+    path = server.save_agent_config({"agent": "codex", "model": "gpt-5.2-codex", "extra_args": ["--foo"]})
+    assert path == oh_home / "agent.json"
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    cfg = server.load_agent_config()
+    assert cfg == {"agent": "codex", "model": "gpt-5.2-codex", "extra_args": ["--foo"]}
+
+
+def test_load_agent_config_sanitizes_broken_values(oh_home):
+    oh_home.mkdir(parents=True)
+    (oh_home / "agent.json").write_text(
+        json.dumps({"agent": "rm -rf /", "model": "bad model name!", "extra_args": "not-a-list"}),
+        encoding="utf-8",
+    )
+    assert server.load_agent_config() == {"agent": "auto", "model": None, "extra_args": []}
+    (oh_home / "agent.json").write_text("{broken", encoding="utf-8")
+    assert server.load_agent_config()["agent"] == "auto"
+
+
+def test_sanitize_model():
+    assert server.sanitize_model(None) is None
+    assert server.sanitize_model("  ") is None
+    assert server.sanitize_model("claude-sonnet-4-6") == "claude-sonnet-4-6"
+    assert server.sanitize_model("openai/o4-mini") == "openai/o4-mini"
+    for bad in ("has space", "x" * 200, "$(evil)", "-leading-dash", 42):
+        with pytest.raises(ValueError):
+            server.sanitize_model(bad)
+
+
+def test_handle_config_request_validates_and_persists(oh_home):
+    status, body = server.handle_config_request({"agent": "hermes"})
+    assert status == 400  # detected but not selectable
+
+    status, body = server.handle_config_request({"agent": "codex", "model": "o4-mini"})
+    assert status == 200
+    assert body["config"]["agent"] == "codex"
+    assert (oh_home / "agent.json").is_file()
+    assert any(a["name"] == "antigravity" and a["binary"] == "agy" for a in body["agents"])
+
+    status, body = server.handle_config_request({"model": "x y"})
+    assert status == 400
+    assert server.load_agent_config()["model"] == "o4-mini"  # bad POST didn't clobber
+
+    status, body = server.handle_config_request({"model": None})  # reset model
+    assert status == 200
+    assert server.load_agent_config() == {"agent": "codex", "model": None, "extra_args": []}
+
+
+def test_agents_status_reports_availability(monkeypatch):
+    monkeypatch.setattr(server.shutil, "which", _which_factory({"claude", "agy"}))
+    rows = {r["name"]: r for r in server.agents_status()}
+    assert set(rows) == {"claude", "codex", "antigravity", "hermes", "openclaw"}
+    assert rows["claude"]["available"] is True
+    assert rows["antigravity"]["available"] is True  # via the agy binary
+    assert rows["codex"]["available"] is False
+    assert rows["openclaw"]["selectable"] is False
+    assert rows["codex"]["selectable"] is True
+
+
+# --- model flag in agent commands ----------------------------------------------
+
+
+def test_build_agent_command_with_model_flags():
+    claude = server.build_agent_command("claude", "p", model="claude-sonnet-4-6")
+    assert claude[claude.index("--model") + 1] == "claude-sonnet-4-6"
+
+    codex = server.build_agent_command("codex", "p", "/tmp/x.txt", model="o4-mini")
+    assert codex[codex.index("-m") + 1] == "o4-mini"
+    assert codex[-1] == "p"  # prompt stays the last argv element
+
+    agy = server.build_agent_command("antigravity", "p", model="gemini-3-pro")
+    assert agy[0] == "agy"
+    assert agy[agy.index("--model") + 1] == "gemini-3-pro"
+    assert agy[-2:] == ["--print", "p"]  # flags before the prompt (Go-style flags)
+
+
+def test_build_agent_command_extra_args_and_no_model():
+    cmd = server.build_agent_command("claude", "p", model=None, extra_args=["--verbose"])
+    assert "--model" not in cmd
+    assert "--verbose" in cmd
+
+
+def test_run_agent_honors_configured_agent(tmp_path, monkeypatch):
+    calls = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append(cmd)
+        out_path = cmd[cmd.index("--output-last-message") + 1] if "--output-last-message" in cmd else None
+        if out_path:
+            Path(out_path).write_text("ok", encoding="utf-8")
+        return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(server.shutil, "which", _which_factory({"claude", "codex"}))
+    monkeypatch.setattr(server.subprocess, "run", fake_run)
+
+    out = server.run_agent("p", tmp_path, config={"agent": "codex", "model": "o4-mini", "extra_args": []})
+    assert out["agent"] == "codex"
+    assert len(calls) == 1  # no cascade: only the configured agent ran
+    assert calls[0][0] == "codex"
+    assert calls[0][calls[0].index("-m") + 1] == "o4-mini"
+
+
+def test_run_agent_configured_agent_missing_is_no_agent(tmp_path, monkeypatch):
+    monkeypatch.setattr(server.shutil, "which", _which_factory({"claude"}))
+    out = server.run_agent("p", tmp_path, config={"agent": "antigravity", "model": None, "extra_args": []})
+    assert out["status"] == "no_agent"
+    assert "antigravity" in out["message"]
+
+
+def test_run_agent_reads_config_from_disk(tmp_path, monkeypatch):
+    server.save_agent_config({"agent": "claude", "model": "opus", "extra_args": []})
+    seen = {}
+
+    def fake_run(cmd, **kwargs):
+        seen["cmd"] = cmd
+        return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(server.shutil, "which", _which_factory({"claude", "codex"}))
+    monkeypatch.setattr(server.subprocess, "run", fake_run)
+    out = server.run_agent("p", tmp_path)  # no explicit config -> loads agent.json
+    assert out["agent"] == "claude"
+    assert seen["cmd"][seen["cmd"].index("--model") + 1] == "opus"
+
+
+# --- user context preamble -------------------------------------------------------
+
+
+def test_build_user_context_empty_when_nothing_found(tmp_path):
+    assert server.build_user_context(tmp_path / "sub") == ""
+
+
+def test_build_user_context_reads_agents_md_and_docs(tmp_path):
+    (tmp_path / "AGENTS.md").write_text("# Правила\nНе диагностируй.", encoding="utf-8")
+    (tmp_path / "goal.md").write_text("Цель: понять, что влияет на HRV.", encoding="utf-8")
+    (tmp_path / "about-me.md").write_text("Илья, 30+, утренний хронотип.", encoding="utf-8")
+    ctx = server.build_user_context(tmp_path)
+    assert ctx.startswith("КОНТЕКСТ ПОЛЬЗОВАТЕЛЯ")
+    assert "Инструкции пользователя (AGENTS.md):" in ctx
+    assert "Не диагностируй." in ctx
+    assert "Цель пользователя (goal.md):" in ctx and "влияет на HRV" in ctx
+    assert "О пользователе (about-me.md):" in ctx and "хронотип" in ctx
+
+
+def test_build_user_context_finds_parent_and_claude_md_and_goal_prefix(tmp_path):
+    (tmp_path / "CLAUDE.md").write_text("Инструкции из CLAUDE.md", encoding="utf-8")
+    (tmp_path / "GOAL-openhealth.md").write_text("Цель из префиксного файла", encoding="utf-8")
+    base = tmp_path / "dashboard"
+    base.mkdir()
+    ctx = server.build_user_context(base)
+    assert "Инструкции из CLAUDE.md" in ctx  # parent fallback
+    assert "GOAL-openhealth.md" in ctx and "префиксного" in ctx  # goal*.md match
+
+
+def test_build_user_context_research_lists_files_and_heads(tmp_path):
+    research = tmp_path / "research"
+    research.mkdir()
+    import os as _os
+    for i, name in enumerate(["old.md", "mid.md", "fresh.md", "extra.txt"]):
+        p = research / name
+        p.write_text("Содержимое {} файла {}".format(i, name), encoding="utf-8")
+        _os.utime(p, (1000 + i, 1000 + i))  # mtime order: old < mid < fresh < extra
+    ctx = server.build_user_context(tmp_path)
+    assert "Личные ресёрчи пользователя (research/)" in ctx
+    assert "old.md" in ctx and "extra.txt" in ctx  # all names listed
+    assert "Содержимое 3 файла extra.txt" in ctx  # freshest gets an excerpt
+    assert "Содержимое 0 файла old.md" not in ctx  # only the 3 freshest excerpted
+
+
+def test_build_user_context_caps_and_prioritizes_agents(tmp_path):
+    (tmp_path / "AGENTS.md").write_text("A" * 5000, encoding="utf-8")
+    (tmp_path / "goal.md").write_text("G" * 5000, encoding="utf-8")
+    research = tmp_path / "research"
+    research.mkdir()
+    (research / "big.md").write_text("R" * 5000, encoding="utf-8")
+    ctx = server.build_user_context(tmp_path)
+    assert len(ctx) <= server.MAX_CONTEXT_CHARS
+    assert "A" * 100 in ctx  # AGENTS survives
+    assert ctx.count("A") >= server.CONTEXT_AGENTS_CHARS - 10  # got its full budget
+    assert "G" * 100 in ctx  # goal survives too (capped at 600)
+
+
+# --- preamble + memory wired into /api/agent --------------------------------------
+
+
+def test_handle_agent_request_includes_context_and_remembers(tmp_path, oh_home, monkeypatch):
+    from openhealth import agent_memory
+
+    (tmp_path / "AGENTS.md").write_text("Правило: личные данные приоритетнее общих знаний.", encoding="utf-8")
+    (tmp_path / server.DATA_FILE).write_text(json.dumps({"recovery": 70}), encoding="utf-8")
+    prompts = []
+
+    def fake_run(cmd, **kwargs):
+        prompts.append(cmd[2])  # claude -p <prompt>
+        return subprocess.CompletedProcess(cmd, 0, stdout="Сон укоротился. Recovery ниже базы.", stderr="")
+
+    monkeypatch.setattr(server.shutil, "which", _which_factory({"claude"}))
+    monkeypatch.setattr(server.subprocess, "run", fake_run)
+
+    status, body = server.handle_agent_request({"task": "insight"}, tmp_path)
+    assert status == 200 and body["status"] == "ok"
+    assert "КОНТЕКСТ ПОЛЬЗОВАТЕЛЯ" in prompts[0]
+    assert "личные данные приоритетнее" in prompts[0]
+    assert "Память прошлых разборов" not in prompts[0]  # first run: no memory yet
+
+    # the run was remembered (in OPENHEALTH_HOME, not the real home)
+    entries = agent_memory.load_entries(home=oh_home)
+    assert len(entries) == 1
+    assert entries[0]["task"] == "insight"
+    assert entries[0]["summary"].startswith("Сон укоротился.")
+
+    # second run sees the memory block before the task
+    server.handle_agent_request({"task": "insight"}, tmp_path)
+    assert "Память прошлых разборов" in prompts[1]
+    assert "Сон укоротился." in prompts[1]
+    assert prompts[1].index("Память прошлых разборов") < prompts[1].index("Задача:")
+
+
+def test_build_prompt_places_preamble_before_task():
+    prompt = server.build_prompt(
+        "insight", user_context="КОНТЕКСТ ПОЛЬЗОВАТЕЛЯ. X", memory_block="Память прошлых разборов: Y"
+    )
+    assert prompt.index("КОНТЕКСТ ПОЛЬЗОВАТЕЛЯ") < prompt.index("Память прошлых разборов") < prompt.index("Задача:")
+    assert "не врач" in prompt

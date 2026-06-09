@@ -1,5 +1,10 @@
 import SwiftUI
 
+/// Today: the recovery/strain summary and "what you're ready for". A glanceable
+/// readiness screen in the dark Widget-Board style, with the recovery ring
+/// color-coded green/yellow/red (web-dashboard language). "Doctor Context" gives
+/// a mood read on recovery. Observational only — never a diagnosis. The daily
+/// journal lives on its own (first) tab.
 struct TodayView: View {
     @Environment(HealthStore.self) private var store
 
@@ -12,96 +17,238 @@ struct TodayView: View {
         }
     }
 
-    private let boardTints = [Theme.sand, Theme.sage, Theme.mist]
-
-    // The recovery metric drives the focal ring; the rest fill the board.
-    private var recoveryMeasurement: Measurement? {
-        store.snapshot.measurements.first { $0.metric == "recovery" }
-    }
-    private var boardMeasurements: [Measurement] {
-        store.snapshot.measurements.filter { $0.metric != "recovery" }
+    private var todayLabel: String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "EEEE, MMM d"
+        return f.string(from: Date())
     }
 
-    /// Progress 0...1. Percentage metrics map directly; others fall back to a
-    /// neutral half-fill so the ring still reads as a summary.
-    private func ringProgress(_ m: Measurement) -> Double {
-        guard let n = leadingNumber(m.value) else { return 0.5 }
-        return m.value.contains("%") ? n / 100 : min(n / 100, 1)
+    private func measurement(_ metric: String) -> Measurement? {
+        store.snapshot.measurements.first { $0.metric == metric }
     }
-    private func ringTint(_ m: Measurement) -> Color {
-        ringProgress(m) >= 0.5 ? Theme.accent : Theme.warn
+    private var recovery: Measurement? { measurement("recovery") }
+
+    /// Recovery as 0...100 (parsed from the display value).
+    private var recoveryScore: Double? {
+        recovery.flatMap { leadingNumber($0.value) }
     }
-    /// Observational readout — describes, does not prescribe.
-    private func ringReadout(_ m: Measurement) -> String {
-        let p = ringProgress(m)
-        if p >= 0.66 { return "In your usual range for \(m.title.lowercased())." }
-        if p >= 0.5 { return "A middling \(m.title.lowercased()) reading — nothing unusual." }
-        return "Lower than your usual \(m.title.lowercased()). Worth noting, not alarming."
+
+    // Board metrics under the ring, in display order.
+    private var boardMetrics: [Measurement] {
+        ["strain", "hrv", "resting_hr", "sleep"].compactMap { measurement($0) }
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.s5) {
-                    // Editorial greeting headline (serif display).
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(greeting)
-                            .font(.system(size: 22, weight: .regular, design: .serif))
-                            .foregroundStyle(Theme.inkSoft)
-                        Text(store.snapshot.greetingName)
-                            .font(.system(size: 40, weight: .bold, design: .serif))
-                            .foregroundStyle(Theme.ink)
-                    }
-                    .padding(.top, Theme.s2)
+                    header
 
-                    // Safety alerts pinned to the very top.
                     ForEach(store.snapshot.alerts) { alert in
                         SafetyBanner(alert: alert)
                     }
 
-                    // Out-of-range review prompts (calm, not alarming).
+                    if let score = recoveryScore, let rec = recovery {
+                        recoveryCard(score: score, measurement: rec)
+                        doctorContext(score: score)
+                        boardCard
+                        readinessCard(score: score)
+                    } else {
+                        Text("No recovery data yet. Connect a source on desktop.")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Theme.inkSoft)
+                    }
+
                     ForEach(store.snapshot.panels.filter { !$0.abnormal.isEmpty }) { panel in
                         reviewPrompt(panel)
                     }
 
-                    // Recovery ring as the focal element, then a board of the rest.
-                    if let ring = recoveryMeasurement {
-                        RingCard(
-                            title: ring.title,
-                            progress: ringProgress(ring),
-                            centerValue: ring.value,
-                            tint: ringTint(ring),
-                            readout: ringReadout(ring)
-                        )
-                    } else if let hero = store.snapshot.measurements.first {
-                        HeroTile(measurement: hero)
-                    }
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: Theme.s3),
-                                        GridItem(.flexible(), spacing: Theme.s3)],
-                              spacing: Theme.s3) {
-                        ForEach(Array(boardMeasurements.enumerated()), id: \.element.id) { idx, m in
-                            BoardTile(measurement: m, tint: boardTints[idx % boardTints.count])
-                        }
-                    }
-
-                    NavigationLink {
-                        CheckInView()
-                    } label: {
-                        Text("Daily check-in")
-                            .font(.system(size: 16, weight: .semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, Theme.s3)
-                            .background(Theme.accent)
-                            .foregroundStyle(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
-                    }
+                    Text("A reflection helper, not a doctor. Anything worrying goes to a specialist.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.inkDim)
                 }
                 .padding(Theme.s4)
             }
-            .background(Theme.background)
+            .background(Theme.background.ignoresSafeArea())
             .navigationBarHidden(true)
         }
     }
+
+    // MARK: - Header
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(greeting)
+                        .font(.system(size: 18, weight: .regular, design: .serif))
+                        .foregroundStyle(Theme.inkSoft)
+                    Text(store.snapshot.greetingName)
+                        .font(.system(size: 34, weight: .bold, design: .serif))
+                        .foregroundStyle(Theme.ink)
+                }
+                Spacer()
+                if let score = recoveryScore {
+                    recoveryPill(score)
+                }
+            }
+            Text(todayLabel)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Theme.inkSoft)
+                .padding(.top, Theme.s1)
+        }
+        .padding(.top, Theme.s2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func recoveryPill(_ score: Double) -> some View {
+        HStack(spacing: 6) {
+            Circle().fill(Theme.recoveryColor(score)).frame(width: 8, height: 8)
+            Text("recovery \(Int(score))")
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .foregroundStyle(Theme.ink)
+        }
+        .padding(.horizontal, Theme.s3)
+        .padding(.vertical, 6)
+        .overlay(Capsule().stroke(Theme.hairlineStrong, lineWidth: 1))
+        .clipShape(Capsule())
+    }
+
+    // MARK: - Recovery hero
+
+    private func recoveryCard(score: Double, measurement: Measurement) -> some View {
+        let color = Theme.recoveryColor(score)
+        return Card {
+            VStack(spacing: Theme.s3) {
+                Text("RECOVERY")
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(1.0)
+                    .foregroundStyle(Theme.inkSoft)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                ZStack {
+                    Circle()
+                        .stroke(Theme.hairlineStrong, lineWidth: 14)
+                    Circle()
+                        .trim(from: 0, to: min(max(score / 100, 0), 1))
+                        .stroke(color, style: StrokeStyle(lineWidth: 14, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                    VStack(spacing: 0) {
+                        Text("\(Int(score))")
+                            .font(.system(size: 64, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(color)
+                        Text(measurement.caption ?? "recovery")
+                            .font(.system(size: 11, weight: .medium))
+                            .tracking(0.8)
+                            .foregroundStyle(Theme.inkSoft)
+                    }
+                }
+                .frame(width: 190, height: 190)
+                .padding(.vertical, Theme.s2)
+                Text(Theme.recoveryHeadline(score))
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    // MARK: - Doctor Context
+
+    private func doctorContext(score: Double) -> some View {
+        let mood = Theme.recoveryMood(score)
+        return Card {
+            HStack(spacing: Theme.s3) {
+                Text(mood.emoji)
+                    .font(.system(size: 30))
+                    .frame(width: 48, height: 48)
+                    .background(Theme.surfaceAlt)
+                    .clipShape(Circle())
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Doctor Context")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
+                    Text(mood.line)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.inkSoft)
+                }
+                Spacer()
+            }
+        }
+    }
+
+    // MARK: - Board
+
+    private var boardCard: some View {
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: Theme.s3),
+                            GridItem(.flexible(), spacing: Theme.s3)],
+                  spacing: Theme.s3) {
+            ForEach(boardMetrics) { m in
+                MetricTile(measurement: m)
+            }
+        }
+    }
+
+    // MARK: - Readiness
+
+    private func readinessCard(score: Double) -> some View {
+        Card {
+            VStack(alignment: .leading, spacing: Theme.s3) {
+                Text("READY FOR TODAY")
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(1.0)
+                    .foregroundStyle(Theme.inkSoft)
+                Text(readinessText(score))
+                    .font(.system(size: 15))
+                    .foregroundStyle(Theme.ink)
+                HStack(alignment: .top, spacing: Theme.s3) {
+                    Text("DO TODAY")
+                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                        .tracking(0.6)
+                        .padding(.horizontal, Theme.s2)
+                        .padding(.vertical, 6)
+                        .background(Theme.recoveryColor(score))
+                        .foregroundStyle(Theme.background)
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(actionTitle(score))
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(Theme.ink)
+                        Text(actionWhy(score))
+                            .font(.system(size: 12))
+                            .foregroundStyle(Theme.inkSoft)
+                    }
+                }
+                .padding(Theme.s3)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Theme.surfaceAlt)
+                .clipShape(RoundedRectangle(cornerRadius: Theme.radiusSmall, style: .continuous))
+            }
+        }
+    }
+
+    private func readinessText(_ score: Double) -> String {
+        let zone = Theme.recoveryHeadline(score).lowercased()
+        if score >= 67 {
+            return "Recovery \(Int(score))% (\(zone)). Your body is primed — a harder session or a demanding day fits well today."
+        }
+        if score >= 34 {
+            return "Recovery \(Int(score))% (\(zone)). A moderate day suits you — keep intensity in check and protect tonight's sleep."
+        }
+        return "Recovery \(Int(score))% (\(zone)). Treat today as easy — light movement, an earlier night, and less load."
+    }
+    private func actionTitle(_ score: Double) -> String {
+        if score >= 67 { return "Use the window for your hardest task" }
+        if score >= 34 { return "Pick one helpful action, skip the rest" }
+        return "Go to bed 30 minutes earlier"
+    }
+    private func actionWhy(_ score: Double) -> String {
+        if score >= 67 { return "High recovery is a good time to spend effort." }
+        if score >= 34 { return "Middle ground rewards focus over volume." }
+        return "Sleep is the strongest lever on recovery." }
+
+    // MARK: - Lab review prompt (kept from the records layer)
 
     private func reviewPrompt(_ panel: LabPanel) -> some View {
         NavigationLink {
@@ -111,7 +258,8 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: Theme.s2) {
                     HStack {
                         Image(systemName: "info.circle").foregroundStyle(Theme.warn)
-                        Text("Some markers to review").font(.system(size: 15, weight: .semibold))
+                        Text("Some markers to review")
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(Theme.ink)
                         Spacer()
                         Image(systemName: "chevron.right").foregroundStyle(Theme.inkSoft)
@@ -119,7 +267,7 @@ struct TodayView: View {
                     Text(panel.abnormal.map { "\($0.displayName) \($0.flag.label)" }.joined(separator: ", "))
                         .font(.system(size: 13)).foregroundStyle(Theme.inkSoft)
                     Text("A prompt to review with a clinician, not a diagnosis.")
-                        .font(.system(size: 12)).foregroundStyle(Theme.inkSoft)
+                        .font(.system(size: 12)).foregroundStyle(Theme.inkDim)
                 }
             }
         }
@@ -127,47 +275,35 @@ struct TodayView: View {
     }
 }
 
-/// Minimal mood check-in (mirrors the engine's /checkin intake).
-struct CheckInView: View {
-    @Environment(\.dismiss) private var dismiss
-    private let options = ["Great", "Good", "Okay", "Low"]
-    @State private var picked: String?
+/// Dark board tile: a luminous number on a recessed surface.
+private struct MetricTile: View {
+    let measurement: Measurement
 
     var body: some View {
-        VStack(spacing: Theme.s5) {
-            Text("How are you feeling right now?")
-                .font(.system(size: 20, weight: .semibold))
-                .multilineTextAlignment(.center)
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.s3) {
-                ForEach(options, id: \.self) { opt in
-                    Button {
-                        picked = opt
-                    } label: {
-                        Text(opt)
-                            .font(.system(size: 16, weight: .medium))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, Theme.s4)
-                            .background(picked == opt ? Theme.accent : Theme.surface)
-                            .foregroundStyle(picked == opt ? .white : Theme.ink)
-                            .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.hairline))
-                            .clipShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
-                    }
-                }
+        VStack(alignment: .leading, spacing: Theme.s1) {
+            Text(measurement.title.uppercased())
+                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                .tracking(0.6)
+                .foregroundStyle(Theme.inkSoft)
+            Spacer(minLength: Theme.s2)
+            Text(measurement.value)
+                .font(.system(size: 26, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(Theme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            if let caption = measurement.caption {
+                Text(caption).font(.system(size: 11)).foregroundStyle(Theme.inkDim)
             }
-            if picked != nil {
-                Button("Save") { dismiss() }
-                    .font(.system(size: 16, weight: .semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Theme.s3)
-                    .background(Theme.accent).foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
-            }
-            Spacer()
         }
-        .padding(Theme.s4)
-        .background(Theme.background)
-        .navigationTitle("Check-in")
-        .navigationBarTitleDisplayMode(.inline)
+        .padding(Theme.s3 + 1)
+        .frame(maxWidth: .infinity, minHeight: 96, alignment: .leading)
+        .background(Theme.surfaceAlt)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.radiusSmall, style: .continuous)
+                .stroke(Theme.hairline, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.radiusSmall, style: .continuous))
     }
 }
 

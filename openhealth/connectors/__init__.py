@@ -7,6 +7,8 @@ Health export) needs only an iPhone.
 """
 
 from .apple_health import import_apple_health  # noqa: F401
+from .oura import import_oura  # noqa: F401
+from .garmin import import_garmin  # noqa: F401
 from .google_calendar import (  # noqa: F401
     GoogleCalendarClient,
     GoogleCalendarError,
@@ -18,6 +20,8 @@ from .google_calendar import (  # noqa: F401
 
 __all__ = [
     "import_apple_health",
+    "import_oura",
+    "import_garmin",
     "GoogleCalendarClient",
     "GoogleCalendarError",
     "ensure_derived_calendar",

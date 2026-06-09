@@ -82,25 +82,7 @@
     --shadow-diffuse: transparent;
   }
 
-  [data-theme="bauhaus"] {
-    --bg: #f4f4f5;
-    --side: #1a1a1a;
-    --card-outer: #ffffff;
-    --card-inner: #f7f7f8;
-    --line: #1a1a1a;
-    --line2: #1a1a1a;
-    --ink: #1a1a1a;
-    --mut: #4d4d4d;
-    --dim: #808080;
-    --accent: #ff3b30;
-    --accent-glow: rgba(255, 59, 48, 0.1);
-    --radius-outer: 0px;
-    --radius-inner: 0px;
-    --shadow-diffuse: transparent;
-    --ok: #2e7d32;
-    --warn: #f9a825;
-    --bad: #c62828;
-  }
+  
 
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
@@ -274,39 +256,6 @@
     margin-bottom: 2px;
   }
 
-  .themes {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-    margin-top: 12px;
-  }
-  
-  .themes button {
-    font: 500 9px var(--mono);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--dim);
-    background: none;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 5px 6px;
-    cursor: pointer;
-    flex: 1;
-    text-align: center;
-    transition: all 0.2s ease;
-  }
-  
-  .themes button:hover {
-    color: var(--ink);
-    border-color: var(--line2);
-  }
-
-  .themes button[aria-pressed="true"] {
-    color: var(--ink);
-    border-color: var(--accent);
-    background: var(--card-outer);
-  }
-
   /* ---- Main Area ---- */
   main {
     flex: 1;
@@ -343,10 +292,7 @@
     border-bottom: 2px solid #000000;
   }
 
-  [data-theme="bauhaus"] .topbar {
-    background: rgba(244, 244, 245, 0.85);
-    border-bottom: 2px solid #1a1a1a;
-  }
+  
   
   .topbar h1 {
     font-size: 16px;
@@ -450,25 +396,6 @@
     grid-template-columns: repeat(12, 1fr);
     gap: 20px;
     align-items: start;
-  }
-
-  /* Левый стек «Сегодня»: recovery + готовность тянутся на высоту соседа
-     (чеклист справа длинный) — без пустоты под левой колонкой. */
-  .today-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    align-self: stretch;
-  }
-
-  .today-stack .today-stack-fill {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .today-stack .today-stack-fill .card-inner {
-    flex: 1;
   }
 
   /* Double-Bezel Card Design */
@@ -1622,7 +1549,7 @@
   .modal-overlay.on { display: flex; }
 
   [data-theme="light"] .modal-overlay,
-  [data-theme="bauhaus"] .modal-overlay { background: rgba(17, 24, 39, 0.4); }
+  
   [data-theme="brutalist"] .modal-overlay { background: rgba(0, 0, 0, 0.5); backdrop-filter: none; -webkit-backdrop-filter: none; }
 
   .modal-card {
@@ -2473,6 +2400,414 @@
     }
   }
 
+  /* ---- Crosshair tooltip (hover-скраббинг графиков, паттерн WHOOP week-compare) ---- */
+  .spark-container { position: relative; }
+  .chart-host { position: relative; }
+
+  .chart-tip {
+    position: absolute;
+    z-index: 30;
+    pointer-events: none;
+    background: var(--card-inner);
+    border: 1px solid var(--line2);
+    border-radius: 10px;
+    padding: 8px 11px;
+    box-shadow: 0 8px 24px var(--shadow-diffuse);
+    font-size: 11px;
+    line-height: 1.45;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+  }
+
+  .chart-tip.on { opacity: 1; }
+
+  .chart-tip .tip-date {
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--dim);
+    margin-bottom: 4px;
+  }
+
+  .chart-tip .tip-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .chart-tip .tip-row .swatch {
+    width: 7px;
+    height: 7px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .chart-tip .tip-row .k { color: var(--mut); }
+  .chart-tip .tip-row .v { font-family: var(--mono); color: var(--ink); margin-left: auto; padding-left: 10px; }
+
+  .xhair-svg line { stroke: var(--mut); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.7; }
+  svg.has-xhair { touch-action: pan-y; cursor: crosshair; }
+
+  /* ---- Ось дат под графиками (WHOOP day-bars: «Вт 12 … Пн 18») ---- */
+  .date-axis {
+    position: relative;
+    height: 16px;
+    margin-top: 6px;
+  }
+
+  .date-axis span {
+    position: absolute;
+    transform: translateX(-50%);
+    font: 500 9.5px var(--mono);
+    color: var(--dim);
+    white-space: nowrap;
+  }
+
+  .date-axis span.today { color: var(--ink); font-weight: 600; }
+
+  /* ---- Стрелки периода ‹ окно › (паттерн WHOOP period-arrows) ---- */
+  .period-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .period-nav button {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--card-outer);
+    color: var(--mut);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .period-nav button:hover:not(:disabled) { color: var(--ink); border-color: var(--line2); }
+  .period-nav button:disabled { opacity: 0.35; cursor: default; }
+
+  .period-nav .period-nav-label {
+    min-width: 96px;
+    text-align: center;
+    font: 600 11px var(--mono);
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+
+  /* ---- Сборка «Сегодня»: DnD-виджеты (паттерн iPhone home screen edit) ---- */
+  .today-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 14px;
+  }
+
+  .today-widget { position: relative; }
+
+  @keyframes widget-wiggle {
+    0%, 100% { transform: rotate(-0.9deg); }
+    50% { transform: rotate(0.9deg); }
+  }
+
+  #z-today.layout-edit .today-widget {
+    animation: widget-wiggle 1.2s ease-in-out infinite;
+    cursor: grab;
+    user-select: none;
+  }
+
+  #z-today.layout-edit .today-widget:nth-child(2n) { animation-delay: -0.6s; }
+  #z-today.layout-edit .today-widget .card-inner { pointer-events: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    #z-today.layout-edit .today-widget {
+      animation: none;
+      outline: 1.5px dashed var(--line2);
+      outline-offset: 3px;
+    }
+  }
+
+  .today-widget.drag-src {
+    opacity: 0.35;
+    outline: 1.5px dashed var(--accent);
+    outline-offset: 3px;
+    animation: none !important;
+  }
+
+  .widget-ghost {
+    position: fixed;
+    z-index: 500;
+    pointer-events: none;
+    opacity: 0.92;
+    transform: rotate(1.5deg) scale(1.02);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    border-radius: var(--radius-outer);
+  }
+
+  .tw-remove, .tw-resize {
+    position: absolute;
+    z-index: 5;
+    display: grid;
+    place-items: center;
+    background: var(--card-inner);
+    border: 1px solid var(--line2);
+    color: var(--mut);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .tw-remove {
+    top: -9px;
+    left: -9px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 13px;
+  }
+
+  .tw-remove:hover { color: var(--bad); border-color: var(--bad); }
+
+  .tw-resize {
+    right: -7px;
+    bottom: -7px;
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    font-size: 12px;
+  }
+
+  .tw-resize:hover { color: var(--ink); border-color: var(--line2); }
+
+  .today-hidden-panel {
+    margin-top: 20px;
+    padding: 14px 16px;
+    border: 1px dashed var(--line2);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .today-hidden-panel .lbl {
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--dim);
+  }
+
+  .hidden-widget-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font: 500 12px var(--font);
+    color: var(--ink);
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .hidden-widget-chip:hover { border-color: var(--accent); }
+  .hidden-widget-chip i { font-size: 13px; color: var(--accent); }
+
+  /* Чеклист в дефолтной раскладке занимает две строки справа (как исходный вид). */
+  #todayGrid > [data-widget="checklist"].row-2 { grid-row: span 2; }
+  @media (max-width: 860px) {
+    #todayGrid > [data-widget="checklist"].row-2 { grid-row: auto; }
+  }
+
+  /* ---- Диагностика (tech-статус, паттерн Linear health-check) ---- */
+  .diag-list { display: flex; flex-direction: column; }
+
+  .diag-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 2px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .diag-row:last-child { border-bottom: none; }
+
+  .diag-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--line2);
+  }
+
+  .diag-dot.ok { background: var(--ok); box-shadow: 0 0 7px var(--ok-glow), 0 0 6px var(--ok); }
+  .diag-dot.warn { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+  .diag-dot.bad { background: var(--bad); box-shadow: 0 0 6px var(--bad); }
+
+  .diag-name {
+    width: 190px;
+    flex-shrink: 0;
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .diag-name i { font-size: 15px; color: var(--mut); }
+
+  .diag-detail {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    color: var(--mut);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .diag-updated {
+    flex-shrink: 0;
+    font: 500 10.5px var(--mono);
+    color: var(--dim);
+  }
+
+  .diag-action { flex-shrink: 0; }
+
+  .diag-badge {
+    display: inline-block;
+    font: 600 9px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    margin-left: 8px;
+    vertical-align: 1px;
+  }
+
+  .diag-badge.warn { color: var(--warn); background: var(--warn-glow); }
+  .diag-badge.bad { color: var(--bad); background: var(--bad-glow); }
+  .diag-badge.ok { color: var(--ok); background: var(--ok-glow); }
+
+  @media (max-width: 720px) {
+    .diag-row { flex-wrap: wrap; }
+    .diag-name { width: auto; }
+    .diag-detail { flex-basis: 100%; white-space: normal; }
+  }
+
+  /* ---- Пульс дня: календарь + циркадная энергия (паттерн Rise) ---- */
+  .cal-score-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .cal-score-num {
+    font: 300 40px var(--mono);
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  .cal-score-num small { font-size: 14px; color: var(--dim); letter-spacing: 0; }
+
+  .cal-score-bar {
+    height: 6px;
+    background: var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .cal-score-fill { height: 100%; border-radius: 3px; }
+
+  .cal-fact-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 12.5px;
+  }
+
+  .cal-fact-row:last-of-type { border-bottom: none; }
+  .cal-fact-row .k { color: var(--mut); }
+  .cal-fact-row .v { font-family: var(--mono); color: var(--ink); }
+
+  .cal-gap-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+  .cal-gap-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font: 500 11px var(--mono);
+    color: var(--ok);
+    background: var(--ok-glow);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 999px;
+    padding: 3px 10px;
+  }
+
+  .energy-phase-now {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    margin-bottom: 14px;
+  }
+
+  .energy-phase-now i { font-size: 22px; }
+
+  .energy-phase-now .t { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .energy-phase-now .s { font-size: 11.5px; color: var(--mut); margin-top: 2px; }
+
+  .energy-badge {
+    font: 600 9.5px var(--mono);
+    letter-spacing: 0.04em;
+    paint-order: stroke;
+  }
+
+  /* ---- Журнал: кандидаты из календаря и todo ---- */
+  .cand-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+  .cand-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font: 500 12px var(--font);
+    color: var(--ink);
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .cand-chip:hover:not(.added) { border-color: var(--accent); }
+  .cand-chip i { font-size: 13px; color: var(--accent); }
+  .cand-chip .src { font: 500 9px var(--mono); color: var(--dim); text-transform: uppercase; letter-spacing: 0.05em; }
+  .cand-chip.added { opacity: 0.55; cursor: default; }
+  .cand-chip.added i { color: var(--ok); }
+
+  .cand-hint {
+    font-size: 11.5px;
+    color: var(--dim);
+    margin: 10px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .cand-hint i { font-size: 13px; flex-shrink: 0; }
+
   /* ---- Footer hints ---- */
   footer {
     border-top: 1px solid var(--line);
@@ -2602,6 +2937,10 @@
         <i class="ph-light ph-arrows-clockwise"></i>
         <span>Синхронизация</span>
       </a>
+      <a data-z="diagnostics" data-icon="ph-pulse" onclick="go('diagnostics')">
+        <i class="ph-light ph-pulse"></i>
+        <span>Диагностика</span>
+      </a>
       <a data-z="settings" data-icon="ph-gear-six" onclick="go('settings')">
         <i class="ph-light ph-gear-six"></i>
         <span>Настройки</span>
@@ -2616,13 +2955,6 @@
         <b>Пульс</b>
         <div class="muted" id="docMini">Загрузка...</div>
       </div>
-    </div>
-
-    <div class="themes" id="themes" role="group" aria-label="Тема оформления">
-      <button data-t="dark" aria-pressed="true">Тёмная</button>
-      <button data-t="light" aria-pressed="false">Светлая</button>
-      <button data-t="brutalist" aria-pressed="false">Брутал</button>
-      <button data-t="bauhaus" aria-pressed="false">Баухауз</button>
     </div>
 
     <button class="nav-config-btn" id="navConfigBtn" onclick="openNavConfig()">
@@ -2653,13 +2985,15 @@
       
       <!-- SCREEN 1: TODAY / OVERVIEW -->
       <section class="zone on" id="z-today">
-        <div class="bento-grid">
-          
-          <!-- Левый стек: recovery + готовность (заполняет высоту рядом с чеклистом) -->
-          <div class="col-8 today-stack">
+        <div class="today-toolbar">
+          <button class="btn-secondary" id="todayEditBtn" onclick="toggleTodayEdit()">
+            <i class="ph-light ph-squares-four"></i> Редактировать
+          </button>
+        </div>
+        <div class="bento-grid" id="todayGrid">
 
           <!-- Recovery Ring -->
-          <div class="card-outer">
+          <div class="card-outer col-8 today-widget" data-widget="recovery">
             <div class="card-inner">
               <div class="card-header">
                 <div class="card-title-group">
@@ -2691,8 +3025,8 @@
             </div>
           </div>
           
-          <!-- Готовность к дню (в левом стеке, заполняет высоту) -->
-          <div class="card-outer today-stack-fill">
+          <!-- Готовность к дню -->
+          <div class="card-outer col-8 today-widget" data-widget="readiness">
             <div class="card-inner">
               <div class="card-header" style="margin-bottom:12px;">
                 <div class="card-title-group">
@@ -2714,10 +3048,8 @@
             </div>
           </div>
 
-          </div><!-- /today-stack -->
-
           <!-- Habit Checklist -->
-          <div class="card-outer col-4">
+          <div class="card-outer col-4 today-widget row-2" data-widget="checklist">
             <div class="card-inner">
               <div class="card-header">
                 <div class="card-title-group">
@@ -2743,7 +3075,7 @@
 
 
           <!-- Пульс: разбор дня (локальный агент через bridge) -->
-          <div class="card-outer col-12" id="insightCard">
+          <div class="card-outer col-12 today-widget" data-widget="insight" id="insightCard">
             <div class="card-inner">
               <div class="card-header" style="margin-bottom:14px;">
                 <div class="card-title-group">
@@ -2769,6 +3101,8 @@
           </div>
 
         </div>
+
+        <div class="today-hidden-panel" id="todayHiddenPanel" style="display:none;"></div>
       </section>
 
       <!-- SCREEN 2: PULSE OF THE DAY -->
@@ -2802,6 +3136,7 @@
                   <path id="pulseLine" fill="none" stroke="var(--accent)" stroke-width="2.5"></path>
                   <circle id="pulsePoint" r="4" fill="var(--accent)" stroke="var(--card-inner)" stroke-width="2"></circle>
                 </svg>
+                <div class="date-axis" id="pulseAxis"></div>
               </div>
             </div>
           </div>
@@ -2818,6 +3153,34 @@
               </div>
               
               <div class="zone-list" id="zoneList"></div>
+            </div>
+          </div>
+
+          <!-- Календарь сегодня (ICS-подписка через bridge) -->
+          <div class="card-outer col-6">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Календарь сегодня</h3>
+                  <div class="sub">загрузка дня из ICS-подписки — считается локально</div>
+                </div>
+                <i class="ph-light ph-calendar-check card-header-icon"></i>
+              </div>
+              <div id="pulseCalBody"></div>
+            </div>
+          </div>
+
+          <!-- Энергия дня (Rise-стиль): рендерится только при DATA.circadian -->
+          <div class="card-outer col-6" id="pulseEnergyCard" style="display:none;">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Энергия дня</h3>
+                  <div class="sub">циркадная кривая: пик, спад, окно мелатонина</div>
+                </div>
+                <i class="ph-light ph-wave-sine card-header-icon"></i>
+              </div>
+              <div id="pulseEnergyBody"></div>
             </div>
           </div>
 
@@ -2962,6 +3325,7 @@
                   <path id="sleepArea" fill="url(#sleepGlow)"></path>
                   <path id="sleepLine" fill="none" stroke="#60a5fa" stroke-width="2"></path>
                 </svg>
+                <div class="date-axis" id="sleepAxis"></div>
               </div>
             </div>
           </div>
@@ -2986,6 +3350,7 @@
                   <path id="strainArea" fill="url(#strainGlow)"></path>
                   <path id="strainLine" fill="none" stroke="#f43f5e" stroke-width="2"></path>
                 </svg>
+                <div class="date-axis" id="strainAxis"></div>
               </div>
             </div>
           </div>
@@ -3063,6 +3428,20 @@
             </div>
           </div>
 
+          <!-- Кандидаты в журнал: закрытые todo и события календаря с health-ключами -->
+          <div class="card-outer col-12">
+            <div class="card-inner">
+              <div class="card-header" style="margin-bottom:8px;">
+                <div class="card-title-group">
+                  <h3>Кандидаты в журнал</h3>
+                  <div class="sub">сделанные задачи и события календаря, похожие на здоровье — один клик добавляет в чек-ин</div>
+                </div>
+                <i class="ph-light ph-magnet card-header-icon"></i>
+              </div>
+              <div id="journalCandidates"></div>
+            </div>
+          </div>
+
           <div class="card-outer col-8">
             <div class="card-inner">
               <div class="card-header">
@@ -3130,7 +3509,10 @@
                   <h3 id="trendsTitle">Сводные тренды (30 дней)</h3>
                   <div class="sub">анализ изменений показателей восстановления и вариабельности пульса</div>
                 </div>
-                <div class="period-switch" id="psTrends" role="group" aria-label="Окно трендов"></div>
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                  <div class="period-nav" id="pnTrends" aria-label="Сдвиг окна трендов"></div>
+                  <div class="period-switch" id="psTrends" role="group" aria-label="Окно трендов"></div>
+                </div>
               </div>
 
               <div class="spark-container">
@@ -3148,6 +3530,7 @@
                   <path id="trendsRecArea" fill="url(#recTrendGlow)"></path>
                   <path id="trendsRecLine" fill="none" stroke="var(--accent)" stroke-width="2"></path>
                 </svg>
+                <div class="date-axis" id="trendsRecAxis"></div>
               </div>
 
               <div class="spark-container" style="margin-top:24px;">
@@ -3165,6 +3548,7 @@
                   <path id="trendsHrvArea" fill="url(#hrvTrendGlow)"></path>
                   <path id="trendsHrvLine" fill="none" stroke="#a855f7" stroke-width="2"></path>
                 </svg>
+                <div class="date-axis" id="trendsHrvAxis"></div>
               </div>
             </div>
           </div>
@@ -3350,6 +3734,7 @@
                   <path id="tlSparkArea" fill="url(#tlGlow)"></path>
                   <path id="tlSparkLine" fill="none" stroke="var(--accent)" stroke-width="2"></path>
                 </svg>
+                <div class="date-axis" id="tlSparkAxis"></div>
               </div>
 
               <div class="tl-feed" id="tlFeed"></div>
@@ -3448,6 +3833,7 @@
                   <div class="period" id="repPeriod">—</div>
                 </div>
                 <div class="rep-print-hide" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                  <div class="period-nav" id="pnReports" aria-label="Сдвиг окна отчёта"></div>
                   <div class="period-switch" id="psReports" role="group" aria-label="Окно отчёта"></div>
                   <button class="btn-secondary" id="repPrintBtn" onclick="printReport()">
                     <i class="ph-light ph-printer"></i> Версия для печати
@@ -3531,6 +3917,27 @@
         </div>
       </section>
 
+      <!-- SCREEN 15b: DIAGNOSTICS — tech-статус системы (паттерн Linear health-check) -->
+      <section class="zone" id="z-diagnostics">
+        <div class="bento-grid">
+          <div class="card-outer col-12">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Состояние системы</h3>
+                  <div class="sub">bridge, выгрузка данных, источники, календарь, todo и память агента</div>
+                </div>
+                <button class="btn-secondary" id="diagRunBtn" onclick="runDiagnostics()">
+                  <i class="ph-light ph-play"></i> Прогнать проверки
+                </button>
+              </div>
+              <div class="diag-list" id="diagList"></div>
+              <p class="cmd-hint" id="diagFootnote" style="margin-top:14px;">Проверки идут последовательно с таймаутами — страница ничего не отправляет наружу, все запросы локальные.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- SCREEN 16: SETTINGS — хаб настроек (паттерн Linear Settings) -->
       <section class="zone" id="z-settings">
         <div class="settings-col">
@@ -3581,7 +3988,7 @@
                 <div class="card-header">
                   <div class="card-title-group">
                     <h3>Тема</h3>
-                    <div class="sub">синхронизировано с переключателем в сайдбаре · выбор запоминается</div>
+                    <div class="sub">единственное место выбора темы · выбор запоминается локально</div>
                   </div>
                   <i class="ph-light ph-palette card-header-icon"></i>
                 </div>
@@ -4015,6 +4422,255 @@ function animateTodayEnter() {
     { opacity: 1, x: 0, duration: 0.4, stagger: 0.05, ease: 'power2.out', clearProps: 'opacity,transform' });
 }
 
+// ============================================================
+// СБОРКА «СЕГОДНЯ»: DnD-виджеты (паттерн iPhone home screen edit).
+// Состояние {order[], spans{}, hidden[]} — localStorage openhealth.layout.today.
+// ============================================================
+
+const TODAY_LAYOUT_KEY = 'openhealth.layout.today';
+const TODAY_WIDGETS = {
+  recovery: { label: 'Восстановление' },
+  checklist: { label: 'Чеклист привычек' },
+  readiness: { label: 'Готовность к дню' },
+  insight: { label: 'Пульс: разбор дня' }
+};
+const TODAY_DEFAULT_LAYOUT = {
+  order: ['recovery', 'checklist', 'readiness', 'insight'],
+  spans: { recovery: 8, checklist: 4, readiness: 8, insight: 12 },
+  hidden: []
+};
+const SPAN_CYCLE = [4, 6, 8, 12];
+
+let todayEditMode = false;
+let todayDrag = null;
+
+function loadTodayLayout() {
+  try {
+    const v = JSON.parse(localStorage.getItem(TODAY_LAYOUT_KEY) || 'null');
+    if (v && Array.isArray(v.order)) return v;
+  } catch (e) { /* повреждённый layout — дефолт */ }
+  return null;
+}
+
+// Дефолт + сохранённое: неизвестные id отбрасываем, недостающие дописываем.
+function currentTodayLayout() {
+  const base = {
+    order: [...TODAY_DEFAULT_LAYOUT.order],
+    spans: { ...TODAY_DEFAULT_LAYOUT.spans },
+    hidden: []
+  };
+  const saved = loadTodayLayout();
+  if (!saved) return base;
+  const order = saved.order.filter(id => TODAY_WIDGETS[id]);
+  TODAY_DEFAULT_LAYOUT.order.forEach(id => { if (!order.includes(id)) order.push(id); });
+  base.order = order;
+  if (saved.spans && typeof saved.spans === 'object') {
+    Object.keys(TODAY_WIDGETS).forEach(id => {
+      const s = +saved.spans[id];
+      if (SPAN_CYCLE.includes(s)) base.spans[id] = s;
+    });
+  }
+  if (Array.isArray(saved.hidden)) base.hidden = saved.hidden.filter(id => TODAY_WIDGETS[id]);
+  return base;
+}
+
+function persistTodayLayout(layout) {
+  try { localStorage.setItem(TODAY_LAYOUT_KEY, JSON.stringify(layout)); } catch (e) { /* private mode */ }
+}
+
+// Текущее состояние читается прямо из DOM — он и есть источник правды.
+function todayLayoutFromDOM() {
+  const layout = { order: [], spans: {}, hidden: [] };
+  document.querySelectorAll('#todayGrid > [data-widget]').forEach(w => {
+    const id = w.dataset.widget;
+    layout.order.push(id);
+    layout.spans[id] = +(w.dataset.span || TODAY_DEFAULT_LAYOUT.spans[id]);
+    if (w.style.display === 'none') layout.hidden.push(id);
+  });
+  return layout;
+}
+
+function setWidgetSpan(w, span) {
+  SPAN_CYCLE.forEach(s => w.classList.remove('col-' + s));
+  w.classList.add('col-' + span);
+  w.dataset.span = span;
+  // Чеклист в узкой колонке держит две строки (повторяет исходный вид).
+  w.classList.toggle('row-2', w.dataset.widget === 'checklist' && span === 4);
+}
+
+function applyTodayLayout() {
+  const grid = document.getElementById('todayGrid');
+  if (!grid) return;
+  const layout = currentTodayLayout();
+  layout.order.forEach(id => {
+    const w = grid.querySelector(`[data-widget="${id}"]`);
+    if (!w) return;
+    grid.appendChild(w);
+    setWidgetSpan(w, layout.spans[id]);
+    w.style.display = layout.hidden.includes(id) ? 'none' : '';
+  });
+  renderTodayHiddenPanel();
+}
+
+function toggleTodayEdit() {
+  todayEditMode = !todayEditMode;
+  const zone = document.getElementById('z-today');
+  if (zone) zone.classList.toggle('layout-edit', todayEditMode);
+  const btn = document.getElementById('todayEditBtn');
+  if (btn) {
+    btn.innerHTML = todayEditMode
+      ? '<i class="ph-light ph-check"></i> Готово'
+      : '<i class="ph-light ph-squares-four"></i> Редактировать';
+  }
+  document.querySelectorAll('#todayGrid > .today-widget').forEach(w => {
+    if (todayEditMode) addWidgetControls(w);
+    else removeWidgetControls(w);
+  });
+  renderTodayHiddenPanel();
+  if (!todayEditMode) persistTodayLayout(todayLayoutFromDOM());
+}
+
+function addWidgetControls(w) {
+  if (w.querySelector(':scope > .tw-remove')) return;
+  const rm = document.createElement('button');
+  rm.className = 'tw-remove';
+  rm.type = 'button';
+  rm.title = 'Скрыть блок';
+  rm.setAttribute('aria-label', 'Скрыть блок');
+  rm.innerHTML = '<i class="ph-light ph-x"></i>';
+  rm.addEventListener('pointerdown', e => e.stopPropagation());
+  rm.addEventListener('click', e => { e.stopPropagation(); hideTodayWidget(w); });
+
+  const rs = document.createElement('button');
+  rs.className = 'tw-resize';
+  rs.type = 'button';
+  rs.title = 'Ширина: 4 → 6 → 8 → 12 колонок';
+  rs.setAttribute('aria-label', 'Изменить ширину блока');
+  rs.innerHTML = '<i class="ph-light ph-arrows-out-simple"></i>';
+  rs.addEventListener('pointerdown', e => e.stopPropagation());
+  rs.addEventListener('click', e => { e.stopPropagation(); cycleWidgetSpan(w); });
+
+  w.appendChild(rm);
+  w.appendChild(rs);
+}
+
+function removeWidgetControls(w) {
+  w.querySelectorAll(':scope > .tw-remove, :scope > .tw-resize').forEach(b => b.remove());
+}
+
+function cycleWidgetSpan(w) {
+  const cur = +(w.dataset.span || TODAY_DEFAULT_LAYOUT.spans[w.dataset.widget] || 12);
+  const next = SPAN_CYCLE[(SPAN_CYCLE.indexOf(cur) + 1) % SPAN_CYCLE.length];
+  setWidgetSpan(w, next);
+  persistTodayLayout(todayLayoutFromDOM());
+  gsap.fromTo(w, { scale: 0.985 }, { scale: 1, duration: 0.3, ease: 'power2.out', clearProps: 'transform' });
+}
+
+function hideTodayWidget(w) {
+  w.style.display = 'none';
+  persistTodayLayout(todayLayoutFromDOM());
+  renderTodayHiddenPanel();
+}
+
+function restoreTodayWidget(id) {
+  const w = document.querySelector(`#todayGrid > [data-widget="${id}"]`);
+  if (!w) return;
+  w.style.display = '';
+  if (todayEditMode) addWidgetControls(w);
+  persistTodayLayout(todayLayoutFromDOM());
+  renderTodayHiddenPanel();
+  gsap.fromTo(w, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out', clearProps: 'opacity,transform' });
+}
+
+function renderTodayHiddenPanel() {
+  const panel = document.getElementById('todayHiddenPanel');
+  if (!panel) return;
+  const hidden = todayLayoutFromDOM().hidden;
+  if (!todayEditMode || !hidden.length) { panel.style.display = 'none'; panel.innerHTML = ''; return; }
+  panel.style.display = '';
+  panel.innerHTML = '<span class="lbl">Скрытые блоки</span>' + hidden.map(id => `
+    <button type="button" class="hidden-widget-chip" onclick="restoreTodayWidget('${id}')">
+      <i class="ph-light ph-plus-circle"></i>${TODAY_WIDGETS[id].label}
+    </button>`).join('');
+}
+
+// Drag на pointer-событиях: ghost следует за курсором, оригинал — placeholder,
+// перестановка в DOM на лету, на отпускании — persist.
+function bindTodayDrag() {
+  const grid = document.getElementById('todayGrid');
+  if (!grid || grid._dragBound) return;
+  grid._dragBound = true;
+
+  grid.addEventListener('pointerdown', e => {
+    if (!todayEditMode || e.button > 0) return;
+    const w = e.target.closest('.today-widget');
+    if (!w || e.target.closest('.tw-remove, .tw-resize')) return;
+    e.preventDefault();
+    todayDrag = { w, startX: e.clientX, startY: e.clientY, started: false, ghost: null, offsetX: 0, offsetY: 0 };
+  });
+
+  document.addEventListener('pointermove', e => {
+    if (!todayDrag) return;
+    if (!todayDrag.started) {
+      if (Math.hypot(e.clientX - todayDrag.startX, e.clientY - todayDrag.startY) < 6) return;
+      startTodayDrag(e);
+    }
+    moveTodayDrag(e);
+  });
+
+  document.addEventListener('pointerup', endTodayDrag);
+  document.addEventListener('pointercancel', endTodayDrag);
+}
+
+function startTodayDrag(e) {
+  const w = todayDrag.w;
+  const rect = w.getBoundingClientRect();
+  const ghost = w.cloneNode(true);
+  ghost.classList.add('widget-ghost');
+  ghost.classList.remove('today-widget', 'drag-src');
+  ghost.querySelectorAll('.tw-remove, .tw-resize').forEach(b => b.remove());
+  ghost.style.width = rect.width + 'px';
+  ghost.style.height = rect.height + 'px';
+  ghost.style.left = rect.left + 'px';
+  ghost.style.top = rect.top + 'px';
+  document.body.appendChild(ghost);
+  todayDrag.ghost = ghost;
+  todayDrag.offsetX = e.clientX - rect.left;
+  todayDrag.offsetY = e.clientY - rect.top;
+  w.classList.add('drag-src');
+  todayDrag.started = true;
+}
+
+function moveTodayDrag(e) {
+  const { ghost, w } = todayDrag;
+  if (!ghost) return;
+  ghost.style.left = (e.clientX - todayDrag.offsetX) + 'px';
+  ghost.style.top = (e.clientY - todayDrag.offsetY) + 'px';
+
+  ghost.style.display = 'none'; // elementFromPoint не должен ловить сам ghost
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  ghost.style.display = '';
+  const over = el && el.closest ? el.closest('#todayGrid > .today-widget') : null;
+  if (!over || over === w) return;
+
+  const r = over.getBoundingClientRect();
+  // Узкие блоки решает горизонталь, широкие (col-12) — вертикаль.
+  const wide = r.width > window.innerWidth * 0.6;
+  const before = wide ? e.clientY < r.top + r.height / 2 : e.clientX < r.left + r.width / 2;
+  const grid = document.getElementById('todayGrid');
+  if (before) grid.insertBefore(w, over);
+  else grid.insertBefore(w, over.nextSibling);
+}
+
+function endTodayDrag() {
+  if (!todayDrag) return;
+  const { w, ghost, started } = todayDrag;
+  if (ghost) ghost.remove();
+  if (w) w.classList.remove('drag-src');
+  if (started) persistTodayLayout(todayLayoutFromDOM());
+  todayDrag = null;
+}
+
 function initPulseScreen() {
   const count = 48;
   const points = [];
@@ -4032,7 +4688,31 @@ function initPulseScreen() {
     points.push(currentHR);
   }
 
-  renderAreaChart('pulseChart', 'pulseLine', 'pulseArea', points);
+  const gPulse = renderAreaChart('pulseChart', 'pulseLine', 'pulseArea', points);
+
+  // Ось времени (24 часа) + crosshair по ЧСС.
+  const hourLabel = i => {
+    const h = (i / count) * 24;
+    const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+    return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+  };
+  if (gPulse) {
+    const hourItems = points.map((v, i) => ({ label: hourLabel(i), today: false }));
+    // Часы реже: каждые 6 точек (~3 часа) при 48 точках.
+    const axisEl = document.getElementById('pulseAxis');
+    if (axisEl) {
+      const spans = [];
+      for (let i = 0; i < count; i += 8) {
+        const x = (gPulse.padding + (i / (count - 1)) * (gPulse.w - 2 * gPulse.padding)) / gPulse.w * 100;
+        spans.push(`<span style="left:${x.toFixed(2)}%">${hourItems[i].label}</span>`);
+      }
+      axisEl.innerHTML = spans.join('');
+    }
+    attachCrosshair('pulseChart', {
+      labels: points.map((v, i) => 'Сегодня · ' + hourLabel(i)),
+      series: [{ pts: gPulse.pts, values: points, color: 'var(--accent)', label: 'ЧСС', fmt: v => Math.round(v) + ' уд/мин' }]
+    });
+  }
 
   const zones = [
     { num: 5, name: "Максимальная (Анаэробная)", range: "151-170 уд/мин", time: "18 мин", fill: "#f43f5e", pct: 15 },
@@ -4062,6 +4742,241 @@ function initPulseScreen() {
   const pt = document.getElementById('pulsePoint');
   if (pt) gsap.fromTo(pt, { opacity: 0 }, { opacity: 1, duration: 0.3, delay: 1.1, ease: 'power1.out' });
   gsap.from('#zoneList .zone-bar-fill', { width: 0, duration: 0.6, stagger: 0.06, ease: 'power3.out' });
+
+  renderPulseCalendar();
+  renderPulseEnergy();
+}
+
+// ============================================================
+// ПУЛЬС ДНЯ: «Календарь сегодня» (ICS через bridge) и
+// «Энергия дня» (циркадная волна, эталон Rise energy schedule).
+// ============================================================
+
+// Один промис на сессию: карточка календаря и «Кандидаты» в Журнале
+// делят запрос; invalidate после POST /api/calendar.
+let _calendarPromise = null;
+
+function fetchCalendarDay() {
+  if (!_calendarPromise) {
+    // Приоритет — выгрузка (DATA.calendar), иначе живой bridge.
+    if (DATA.calendar && (DATA.calendar.day || DATA.calendar.day_load_score != null)) {
+      _calendarPromise = Promise.resolve(
+        DATA.calendar.day ? DATA.calendar : { configured: true, status: 'ok', day: DATA.calendar }
+      );
+    } else {
+      _calendarPromise = fetchWithTimeout('/api/calendar', 4000).then(r => r.json());
+    }
+  }
+  return _calendarPromise;
+}
+
+function calOfflineHTML(text) {
+  return `
+    <p class="cand-hint" style="margin:4px 0 0;">
+      <i class="ph-light ph-plugs"></i>
+      <span>${escapeHtml(text)}</span>
+    </p>`;
+}
+
+function renderPulseCalendar() {
+  const body = document.getElementById('pulseCalBody');
+  if (!body) return;
+  body.innerHTML = settingsSkeletonHTML();
+
+  fetchCalendarDay().then(j => {
+    if (!j || j.configured === false) { body.innerHTML = calendarSetupHTML(j && j.how); return; }
+    if (j.status === 'error') {
+      body.innerHTML = calOfflineHTML('Подписка настроена, но фид не прочитался: ' + (j.message || 'ошибка') + '. Проверь ссылку в ~/.openhealth/calendar.json.');
+      return;
+    }
+    const d = j.day || {};
+    const score = Math.max(0, Math.min(100, d.day_load_score || 0));
+    const scoreColor = score >= 67 ? 'var(--bad)' : score >= 34 ? 'var(--warn)' : 'var(--ok)';
+    const gaps = (d.gaps || []).map(g =>
+      `<span class="cal-gap-chip"><i class="ph-light ph-coffee"></i>${escapeHtml(g.start)}–${escapeHtml(g.end)}</span>`).join('');
+
+    body.innerHTML = `
+      <div class="cal-score-row">
+        <span class="cal-score-num mono" style="color:${scoreColor};" id="calScoreNum">${score}<small>/100</small></span>
+        <span class="muted" style="font-size:11px;">загрузка дня</span>
+      </div>
+      <div class="cal-score-bar"><div class="cal-score-fill" id="calScoreFill" style="background:${scoreColor}; width:0%;"></div></div>
+      <div class="cal-fact-row"><span class="k">Встречи</span><span class="v">${d.meetings_count || 0} · ${d.busy_hours || 0} ч занято</span></div>
+      <div class="cal-fact-row"><span class="k">Первая / последняя</span><span class="v">${d.first_event ? escapeHtml(d.first_event) + ' – ' + escapeHtml(d.last_event) : 'встреч нет'}</span></div>
+      <div class="cal-fact-row"><span class="k">Окна больше часа</span><span class="v">${d.gaps_over_1h || 0}</span></div>
+      ${gaps ? `<div class="cal-gap-chips">${gaps}</div>` : ''}
+      ${d.meetings_count >= 3 && !(d.gaps || []).length ? '<p class="cand-hint"><i class="ph-light ph-warning"></i><span>3+ встречи без окна на восстановление — день плотный, запланируй паузу.</span></p>' : ''}`;
+
+    // FRAMES: узкий прогресс-бар — width-исключение (0.6 power3.out).
+    gsap.to('#calScoreFill', { width: score + '%', duration: 0.6, ease: 'power3.out' });
+  }).catch(() => {
+    body.innerHTML = calOfflineHTML('Bridge офлайн — карточка оживёт после запуска OpenHealth.command.');
+  });
+}
+
+// CTA-настройка: 3 шага из ответа bridge + поле ICS-URL.
+function calendarSetupHTML(how) {
+  const steps = (Array.isArray(how) && how.length ? how : [
+    'Google Calendar: Settings → нужный календарь → «Integrate calendar» → скопируй Secret address (.ics).',
+    'Apple iCloud: правый клик по календарю → «Public Calendar» → скопируй webcal://-ссылку.',
+    'Вставь ссылку ниже — она сохранится локально в ~/.openhealth/calendar.json.'
+  ]).slice(0, 3).map(s => `<li class="step"><div class="step-text">${escapeHtml(s)}</div></li>`).join('');
+
+  return `
+    <p class="muted" style="font-size:12px; margin:0 0 12px;">Календарь не подключён. Подписка по секретной ICS-ссылке — данные не уходят дальше bridge.</p>
+    <ol class="steps" style="gap:12px;">${steps}</ol>
+    <div class="form-group" style="margin:16px 0 0;">
+      <label for="icsUrlInput">Ссылка на .ics</label>
+      <input type="text" id="icsUrlInput" placeholder="https://calendar.google.com/calendar/ical/…/basic.ics"
+             onkeydown="if(event.key==='Enter'){saveIcsUrl();}">
+    </div>
+    <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+      <button class="btn-primary" id="icsSaveBtn" onclick="saveIcsUrl()">
+        <i class="ph-light ph-plugs-connected"></i> Подключить
+      </button>
+    </div>`;
+}
+
+function saveIcsUrl() {
+  const input = document.getElementById('icsUrlInput');
+  const btn = document.getElementById('icsSaveBtn');
+  const url = (input ? input.value : '').trim();
+  if (!url) { showToast('Вставь ссылку на .ics', false); return; }
+  if (btn) btn.disabled = true;
+  fetchWithTimeout('/api/calendar', 6000, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ics_url: url })
+  }).then(r => r.json().then(b => ({ ok: r.ok, b })))
+    .then(({ ok, b }) => {
+      if (!ok || !b || b.status !== 'ok') throw new Error((b && b.message) || 'не сохранилось');
+      showToast('Календарь подключён');
+      _calendarPromise = null;
+      renderPulseCalendar();
+    })
+    .catch(err => {
+      showToast('Не вышло: ' + (err.message || 'bridge офлайн'), false);
+      if (btn) btn.disabled = false;
+    });
+}
+
+// «Энергия дня»: горизонтальная волна (мята → янтарь) с бейджами фаз.
+// DATA.circadian = { curve: [числа] | [{t,v}], phases: [{type|label,start,end}],
+// melatonin_window: {start,end} }. Нет данных или не парсится — карточка скрыта молча.
+function renderPulseEnergy() {
+  const card = document.getElementById('pulseEnergyCard');
+  const body = document.getElementById('pulseEnergyBody');
+  if (!card || !body) return;
+
+  const c = DATA.circadian;
+  let curve = [];
+  try {
+    if (c && Array.isArray(c.curve) && c.curve.length >= 4) {
+      curve = c.curve.map(p => typeof p === 'number' ? p : (p && typeof p.v === 'number' ? p.v : NaN));
+    }
+  } catch (e) { curve = []; }
+  if (!curve.length || curve.some(v => !isFinite(v))) { card.style.display = 'none'; return; }
+  card.style.display = '';
+
+  const W = 560, H = 190, L = 14, R = 14, T = 40, B = 26;
+  const iw = W - L - R, ih = H - T - B;
+  const mn = Math.min(...curve), mx = Math.max(...curve);
+  const range = (mx - mn) || 1;
+  const x = i => L + (i / (curve.length - 1)) * iw;
+  const y = v => T + (1 - (v - mn) / range) * ih;
+  const hourX = hhmm => {
+    const m = String(hhmm || '').match(/^(\d{1,2}):(\d{2})/);
+    if (!m) return null;
+    const frac = (+m[1] + (+m[2]) / 60) / 24;
+    return L + frac * iw;
+  };
+
+  let d = `M ${x(0).toFixed(1)} ${y(curve[0]).toFixed(1)}`;
+  for (let i = 0; i < curve.length - 1; i++) {
+    const cx = (x(i) + x(i + 1)) / 2;
+    d += ` C ${cx.toFixed(1)} ${y(curve[i]).toFixed(1)}, ${cx.toFixed(1)} ${y(curve[i + 1]).toFixed(1)}, ${x(i + 1).toFixed(1)} ${y(curve[i + 1]).toFixed(1)}`;
+  }
+
+  const PHASE_META = {
+    peak: { label: 'Peak', color: '#34d399', icon: 'ph-arrow-up-right' },
+    dip: { label: 'Dip', color: '#f59e0b', icon: 'ph-arrow-down-right' },
+    melatonin: { label: 'Melatonin window', color: '#a78bfa', icon: 'ph-moon' }
+  };
+
+  const phases = Array.isArray(c.phases) ? c.phases.slice(0, 5) : [];
+  if (c.melatonin_window && c.melatonin_window.start) {
+    phases.push({ type: 'melatonin', start: c.melatonin_window.start, end: c.melatonin_window.end });
+  }
+
+  const badges = phases.map(p => {
+    const meta = PHASE_META[String(p.type || '').toLowerCase()] || { label: p.label || p.type || 'фаза', color: 'var(--mut)', icon: 'ph-clock' };
+    const px = hourX(p.start);
+    if (px == null) return '';
+    const idx = Math.max(0, Math.min(curve.length - 1, Math.round((px - L) / iw * (curve.length - 1))));
+    const py = y(curve[idx]) - 14;
+    const txt = meta.label + (p.start ? ' · ' + p.start : '');
+    return `
+      <g>
+        <rect x="${(px - 4).toFixed(1)}" y="${(py - 11).toFixed(1)}" rx="7" ry="7" width="${txt.length * 5.6 + 14}" height="17" fill="${meta.color}" opacity="0.16"></rect>
+        <text x="${(px + 3).toFixed(1)}" y="${(py + 1).toFixed(1)}" class="energy-badge" fill="${meta.color}">${escapeHtml(txt)}</text>
+        <line x1="${px.toFixed(1)}" y1="${(py + 6).toFixed(1)}" x2="${px.toFixed(1)}" y2="${y(curve[idx]).toFixed(1)}" stroke="${meta.color}" stroke-width="1" stroke-dasharray="2 3" opacity="0.7"></line>
+        <circle cx="${px.toFixed(1)}" cy="${y(curve[idx]).toFixed(1)}" r="3" fill="${meta.color}" stroke="var(--card-inner)" stroke-width="1.2"></circle>
+      </g>`;
+  }).join('');
+
+  const hourCaps = [0, 6, 12, 18, 24].map(h =>
+    `<text x="${(L + h / 24 * iw).toFixed(1)}" y="${H - 8}" text-anchor="${h === 0 ? 'start' : h === 24 ? 'end' : 'middle'}" class="rep-svg-cap">${String(h).padStart(2, '0')}:00</text>`).join('');
+
+  // Активная фаза сейчас — крупная рекомендация (Rise: «Peak — сложная работа»).
+  const PHASE_RECO = {
+    peak: 'Пик энергии — лучшее окно для сложной и важной работы.',
+    dip: 'Спад — время лёгких задач, прогулки или короткого отдыха.',
+    melatonin: 'Окно мелатонина — приглуши свет и готовься ко сну.'
+  };
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const toMin = s => { const m = String(s || '').match(/^(\d{1,2}):(\d{2})/); return m ? (+m[1]) * 60 + (+m[2]) : null; };
+  let active = null;
+  phases.forEach(p => {
+    const a = toMin(p.start), b = toMin(p.end);
+    if (a == null || b == null) return;
+    const inside = a <= b ? (nowMin >= a && nowMin < b) : (nowMin >= a || nowMin < b);
+    if (inside) active = p;
+  });
+  const activeMeta = active ? (PHASE_META[String(active.type || '').toLowerCase()] || { label: active.label || 'фаза', color: 'var(--mut)', icon: 'ph-clock' }) : null;
+  const nowBlock = active ? `
+    <div class="energy-phase-now">
+      <i class="ph-duotone ${activeMeta.icon}" style="color:${activeMeta.color};"></i>
+      <div>
+        <div class="t">${escapeHtml(activeMeta.label)} · ${escapeHtml(active.start || '')}–${escapeHtml(active.end || '')}</div>
+        <div class="s">${escapeHtml(PHASE_RECO[String(active.type || '').toLowerCase()] || 'Текущая фаза циркадного ритма.')}</div>
+      </div>
+    </div>` : '';
+
+  body.innerHTML = `
+    ${nowBlock}
+    <svg class="rep-chart-svg" id="energyWaveSvg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Циркадная кривая энергии">
+      <defs>
+        <linearGradient id="energyGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#34d399"/>
+          <stop offset="55%" stop-color="#fbbf24"/>
+          <stop offset="100%" stop-color="#a78bfa"/>
+        </linearGradient>
+        <linearGradient id="energyFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#34d399" stop-opacity="0.14"/>
+          <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="${d} L ${(W - R)} ${H - B} L ${L} ${H - B} Z" fill="url(#energyFill)" id="energyArea"></path>
+      <path d="${d}" fill="none" stroke="url(#energyGrad)" stroke-width="2.5" stroke-linecap="round" id="energyLine"></path>
+      ${badges}
+      ${hourCaps}
+    </svg>`;
+
+  // FRAMES: line-draw 1.2 + area fade 0.6/0.4.
+  drawPath(document.getElementById('energyLine'));
+  const area = document.getElementById('energyArea');
+  if (area) gsap.fromTo(area, { opacity: 0 }, { opacity: 1, duration: 0.6, delay: 0.4, ease: 'power1.out' });
 }
 
 function updateBiomarkersScreen() {
@@ -4252,8 +5167,21 @@ function animateWhoopRings() {
   countUp(document.getElementById('whoopSleepVal'), sleepPct, { duration: 1, delay: 0.15, suffix: '%' });
   countUp(document.getElementById('whoopStrainVal'), DATA.strain, { duration: 1, delay: 0.3, decimals: Number.isInteger(DATA.strain) ? 0 : 1 });
 
-  renderAreaChart('chartSleep', 'sleepLine', 'sleepArea', DATA.trendSleep);
-  renderAreaChart('chartStrain', 'strainLine', 'strainArea', DATA.trendStrain);
+  const gSleep = renderAreaChart('chartSleep', 'sleepLine', 'sleepArea', DATA.trendSleep);
+  const gStrain = renderAreaChart('chartStrain', 'strainLine', 'strainArea', DATA.trendStrain);
+
+  // Оси дат + crosshair мини-трендов (всегда хвост ряда, без сдвига).
+  if (gSleep && Array.isArray(DATA.trendSleep)) {
+    const dts = seriesDates(DATA.trendSleep.length, 0);
+    renderDateAxis('sleepAxis', dateAxisItems(dts), gSleep);
+    attachCrosshair('chartSleep', { labels: dts.map(fmtTipDate), series: [{ pts: gSleep.pts, values: DATA.trendSleep, color: '#60a5fa', label: 'Сон', fmt: v => v.toFixed(1) + ' ч' }] });
+  }
+  if (gStrain && Array.isArray(DATA.trendStrain)) {
+    const dts = seriesDates(DATA.trendStrain.length, 0);
+    renderDateAxis('strainAxis', dateAxisItems(dts), gStrain);
+    attachCrosshair('chartStrain', { labels: dts.map(fmtTipDate), series: [{ pts: gStrain.pts, values: DATA.trendStrain, color: '#f43f5e', label: 'Strain', fmt: v => v.toFixed(1) + ' /21' }] });
+  }
+
   animateSparkline('sleepLine', 'sleepArea');
   animateSparkline('strainLine', 'strainArea');
 }
@@ -4337,12 +5265,115 @@ function saveJournalEntry() {
   gsap.fromTo('#journalSaveStatus', { opacity: 0 }, { opacity: 1, duration: 0.3 });
 }
 
-function initTrendsScreen() {
-  const n = getPeriod();
-  const rec = (Array.isArray(DATA.trend30Rec) ? DATA.trend30Rec : []).slice(-n);
-  const hrv = (Array.isArray(DATA.trend30Hrv) ? DATA.trend30Hrv : []).slice(-n);
+// ============================================================
+// ЖУРНАЛ: кандидаты — закрытые todo (/api/todos) и события календаря
+// с health-ключами; клик добавляет done-привычку дня.
+// ============================================================
 
-  periodSwitcher('psTrends', () => initTrendsScreen());
+const CAND_HEALTH_RE = /(трениров|тренир|спорт|врач|стоматолог|йог|бег|зал|массаж|плаван|прогул|медит|растяж|анализ|витамин)/i;
+
+function candIcon(label) {
+  const l = String(label || '').toLowerCase();
+  if (/(трениров|тренир|спорт|зал|workout|gym)/.test(l)) return 'ph-barbell';
+  if (/(бег|прогул|run|walk)/.test(l)) return 'ph-footprints';
+  if (/(йог|медит|yoga|meditat)/.test(l)) return 'ph-brain';
+  if (/(врач|стоматолог|анализ|doctor)/.test(l)) return 'ph-flask';
+  if (/(массаж|плаван|swim)/.test(l)) return 'ph-heart';
+  if (/(сон|sleep)/.test(l)) return 'ph-moon';
+  if (/(витамин|лекарств)/.test(l)) return 'ph-pill';
+  return 'ph-plus-circle';
+}
+
+async function loadJournalCandidates() {
+  const box = document.getElementById('journalCandidates');
+  if (!box) return;
+  box.innerHTML = settingsSkeletonHTML();
+
+  const found = [];
+  const notes = [];
+
+  // 1. Todoist: закрытые задачи дня, уже отфильтрованные коннектором.
+  try {
+    const res = await fetchWithTimeout('/api/todos', 4500);
+    const j = await res.json().catch(() => null);
+    if (res.status === 503 || !j || j.configured === false) notes.push('Todoist не настроен');
+    else if (j.status === 'error') notes.push('Todoist: ' + (j.message || 'ошибка'));
+    else (j.candidates || []).forEach(c => {
+      const label = c.label_ru || c.original;
+      if (label) found.push({ label, source: 'todoist', hint: c.original || '' });
+    });
+  } catch (e) { notes.push('bridge офлайн — todo недоступны'); }
+
+  // 2. Календарь: события дня с health-ключами (тренир/спорт/врач/йога/бег/зал/массаж…).
+  try {
+    const j = await fetchCalendarDay();
+    if (!j || j.configured === false) notes.push('календарь не подключён');
+    else if (j.status === 'error') notes.push('календарь: фид не прочитался');
+    else ((j.day && j.day.events) || []).forEach(ev => {
+      const s = ev.summary || '';
+      if (CAND_HEALTH_RE.test(s)) found.push({ label: s, source: 'календарь', hint: (ev.start || '') + '–' + (ev.end || '') });
+    });
+  } catch (e) { if (!notes.some(n => n.includes('bridge'))) notes.push('bridge офлайн — календарь недоступен'); }
+
+  // Дедуп по подписи.
+  const seen = {};
+  const cands = found.filter(c => { const k = c.label.toLowerCase(); if (seen[k]) return false; seen[k] = 1; return true; });
+
+  if (!cands.length) {
+    // 503/не настроено → одна строка-подсказка, не назойливо.
+    box.innerHTML = `
+      <p class="cand-hint">
+        <i class="ph-light ph-magnet"></i>
+        <span>${notes.length ? escapeHtml(notes.join(' · ')) + ' — кандидаты появятся после подключения.' : 'Сегодня кандидатов нет: ни закрытых health-задач, ни событий со спортом или врачом.'}</span>
+      </p>`;
+    return;
+  }
+
+  const isAdded = label => (DATA.habits || []).some(h => h.label === label && h.done);
+  box.innerHTML = `
+    <div class="cand-chips">${cands.map((c, i) => `
+      <button type="button" class="cand-chip ${isAdded(c.label) ? 'added' : ''}" data-cand="${i}" title="${escapeHtml(c.hint)}">
+        <i class="ph-light ${isAdded(c.label) ? 'ph-check' : candIcon(c.label)}"></i>
+        <span>+ ${escapeHtml(c.label)}</span>
+        <span class="src">${c.source}</span>
+      </button>`).join('')}
+    </div>
+    ${notes.length ? `<p class="cand-hint"><i class="ph-light ph-info"></i><span>${escapeHtml(notes.join(' · '))}</span></p>` : ''}`;
+
+  box.querySelectorAll('.cand-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      if (chip.classList.contains('added')) return;
+      addCandidateToJournal(cands[+chip.dataset.cand], chip);
+    });
+  });
+}
+
+function addCandidateToJournal(cand, chip) {
+  const label = cand.label;
+  const id = 'cand_' + label.toLowerCase().replace(/[^a-zа-яё0-9]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+  const existing = DATA.habits.find(h => h.id === id || h.label === label);
+  if (existing) existing.done = true;
+  else DATA.habits.push({ id, label, done: true, delta: 4, icon: candIcon(label) });
+
+  persistHabits();
+  renderHabits();
+  if (chip) {
+    chip.classList.add('added');
+    const icon = chip.querySelector('i');
+    if (icon) icon.className = 'ph-light ph-check';
+    gsap.fromTo(chip, { scale: 0.95 }, { scale: 1, duration: 0.3, ease: 'power2.out', clearProps: 'transform' });
+  }
+  showToast('Добавлено в журнал: ' + label);
+}
+
+function initTrendsScreen() {
+  clampPeriodOffset();
+  const rec = periodWindow(DATA.trend30Rec);
+  const hrv = periodWindow(DATA.trend30Hrv);
+  const dates = seriesDates(rec.length, PERIOD_OFFSET);
+
+  periodSwitcher('psTrends', () => { initTrendsScreen(); });
+  periodNav('pnTrends', () => initTrendsScreen());
 
   // Заголовки и средние пересчитываются под окно (честная длина среза).
   const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
@@ -4352,8 +5383,22 @@ function initTrendsScreen() {
   setTxt('trendsHrvLabel', `HRV Trend (${hrv.length} дн, мс)`);
   setTxt('trendsHrvAvg', hrv.length ? 'Среднее: ' + Math.round(avgArr(hrv)) + ' мс' : 'Среднее: —');
 
-  renderAreaChart('trendsRecChart', 'trendsRecLine', 'trendsRecArea', rec);
-  renderAreaChart('trendsHrvChart', 'trendsHrvLine', 'trendsHrvArea', hrv);
+  const gRec = renderAreaChart('trendsRecChart', 'trendsRecLine', 'trendsRecArea', rec);
+  const gHrv = renderAreaChart('trendsHrvChart', 'trendsHrvLine', 'trendsHrvArea', hrv);
+
+  // Ось дат + hover-crosshair (единый механизм, эталон WHOOP).
+  const axisItems = dateAxisItems(dates);
+  const tipLabels = dates.map(fmtTipDate);
+  if (gRec) {
+    renderDateAxis('trendsRecAxis', axisItems, gRec);
+    attachCrosshair('trendsRecChart', { labels: tipLabels, series: [{ pts: gRec.pts, values: rec, color: 'var(--accent)', label: 'Recovery', fmt: v => Math.round(v) + '%' }] });
+  }
+  if (gHrv) {
+    const hrvDates = seriesDates(hrv.length, PERIOD_OFFSET);
+    renderDateAxis('trendsHrvAxis', dateAxisItems(hrvDates), gHrv);
+    attachCrosshair('trendsHrvChart', { labels: hrvDates.map(fmtTipDate), series: [{ pts: gHrv.pts, values: hrv, color: '#a855f7', label: 'HRV', fmt: v => Math.round(v) + ' мс' }] });
+  }
+
   // FRAMES: line-draw 1.2 + area fade 0.6/delay 0.4 — переигрывается при смене окна.
   animateSparkline('trendsRecLine', 'trendsRecArea');
   animateSparkline('trendsHrvLine', 'trendsHrvArea');
@@ -4402,7 +5447,8 @@ function repBarsSVG(v1, v2, color, fmt, cap1, cap2) {
 }
 
 // Line-chart recovery с горизонтальными полосами-зонами (WHOOP Training Behavior).
-function repZoneSVG(arr) {
+// dates — ряд дат той же длины; возвращает {html, pts} для crosshair.
+function repZoneSVG(arr, dates) {
   const W = 820, H = 250, L = 46, R = 18, T = 14, B = 30;
   const iw = W - L - R, ih = H - T - B;
   const y = v => T + (1 - v / 100) * ih;
@@ -4423,28 +5469,38 @@ function repZoneSVG(arr) {
   ).join('');
 
   const pts = arr.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const dateOf = i => (dates && dates[i]) ? fmtDayMon(dates[i]) : 'день −' + (arr.length - 1 - i);
   const dots = arr.map((v, i) =>
-    `<circle class="rep-dot" cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3" fill="${col(v)}" stroke="var(--card-inner)" stroke-width="1"><title>день −${arr.length - 1 - i}: recovery ${v}%</title></circle>`
+    `<circle class="rep-dot" cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3" fill="${col(v)}" stroke="var(--card-inner)" stroke-width="1"><title>${dateOf(i)}: recovery ${v}%</title></circle>`
   ).join('');
 
+  // Ось X: реальные даты (WHOOP day-bars), на 30д — каждые 5 от свежего края.
   const n = arr.length;
-  const xcaps = `
-    <text x="${x(0)}" y="${H - 8}" text-anchor="start" class="rep-svg-cap">день −${n - 1}</text>
-    <text x="${x(Math.floor((n - 1) / 2))}" y="${H - 8}" text-anchor="middle" class="rep-svg-cap">−${n - 1 - Math.floor((n - 1) / 2)}</text>
-    <text x="${x(n - 1)}" y="${H - 8}" text-anchor="end" class="rep-svg-cap">сегодня</text>`;
+  const step = n <= 8 ? 1 : n <= 16 ? 2 : 5;
+  const xcaps = arr.map((v, i) => {
+    const isLast = i === n - 1;
+    if (!isLast && ((n - 1 - i) % step !== 0 || (step > 1 && (n - 1 - i) < step * 0.6))) return '';
+    const anchor = i === 0 ? 'start' : isLast ? 'end' : 'middle';
+    const lbl = dates && dates[i] ? (n <= 8 ? fmtDayShort(dates[i]) : fmtDayMon(dates[i])) : '';
+    return `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="${anchor}" class="rep-svg-cap">${lbl}</text>`;
+  }).join('');
 
-  return `
-    <svg class="rep-chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Recovery по дням с зонами">
+  return {
+    pts: arr.map((v, i) => ({ x: x(i), y: y(v) })),
+    html: `
+    <svg class="rep-chart-svg" id="repZoneSvg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Recovery по дням с зонами">
       ${bands}${axis}
       <polyline id="repZoneLine" points="${pts}" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"></polyline>
       ${dots}${xcaps}
-    </svg>`;
+    </svg>`
+  };
 }
 
 // HRV/RHR adaptation: тонкая линия + два отрезка-средних (WHOOP Physiological Response).
 // betterDir: 'up' — рост это хорошо (HRV); 'down' — снижение это хорошо (RHR).
-function repAdaptSVG(arr, unit, betterDir, lineId) {
-  const W = 430, H = 180, L = 18, R = 18, T = 36, B = 18;
+// Возвращает {html, pts} — даты идут краями оси и в crosshair-тултип.
+function repAdaptSVG(arr, unit, betterDir, lineId, dates) {
+  const W = 430, H = 180, L = 18, R = 18, T = 36, B = 30;
   const iw = W - L - R, ih = H - T - B;
   let mn = Math.min(...arr), mx = Math.max(...arr);
   const pad = (mx - mn || 1) * 0.1;
@@ -4463,14 +5519,25 @@ function repAdaptSVG(arr, unit, betterDir, lineId) {
   const pts = arr.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
   const labY = v => Math.max(T - 22, y(v) - 10) + 0; // подпись над отрезком, не выше рамки
 
-  return `
-    <svg class="rep-chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Adaptation: средние за половины окна">
+  // Даты краёв и середины окна — честная ось X.
+  const n = arr.length;
+  const dcaps = (dates && dates.length === n) ? `
+      <text x="${x(0).toFixed(1)}" y="${H - 6}" text-anchor="start" class="rep-svg-cap">${fmtDayMon(dates[0])}</text>
+      <text x="${x(Math.floor((n - 1) / 2)).toFixed(1)}" y="${H - 6}" text-anchor="middle" class="rep-svg-cap">${fmtDayMon(dates[Math.floor((n - 1) / 2)])}</text>
+      <text x="${x(n - 1).toFixed(1)}" y="${H - 6}" text-anchor="end" class="rep-svg-cap">${fmtDayMon(dates[n - 1])}</text>` : '';
+
+  return {
+    pts: arr.map((v, i) => ({ x: x(i), y: y(v) })),
+    html: `
+    <svg class="rep-chart-svg" id="${lineId}Svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Adaptation: средние за половины окна">
       <polyline id="${lineId}" points="${pts}" fill="none" stroke="var(--dim)" stroke-width="1.2" opacity="0.75" stroke-linejoin="round"></polyline>
       <line class="rep-adapt-avg" x1="${L}" y1="${y(a1).toFixed(1)}" x2="${mid.toFixed(1)}" y2="${y(a1).toFixed(1)}" stroke="var(--ink)" stroke-width="2.4"></line>
       <line class="rep-adapt-avg" x1="${mid.toFixed(1)}" y1="${y(a2).toFixed(1)}" x2="${W - R}" y2="${y(a2).toFixed(1)}" stroke="${c2}" stroke-width="2.4"></line>
       <text class="rep-adapt-label rep-adapt-avg" x="${L}" y="${labY(a1).toFixed(1)}" text-anchor="start" fill="var(--ink)">${Math.round(a1)} ${unit}</text>
       <text class="rep-adapt-label rep-adapt-avg" x="${W - R}" y="${labY(a2).toFixed(1)}" text-anchor="end" fill="${c2}">${Math.round(a2)} ${unit} ${pct > 0 ? '+' : ''}${pct}%</text>
-    </svg>`;
+      ${dcaps}
+    </svg>`
+  };
 }
 
 function repAdaptEmptyHTML(text) {
@@ -4481,9 +5548,9 @@ function repAdaptEmptyHTML(text) {
     </div>`;
 }
 
-function repHeatHTML(arr) {
+function repHeatHTML(arr, dates) {
   const cells = arr.map((v, i) =>
-    `<div class="rep-heat-cell" style="background:${zoneRgba(v, (0.3 + 0.55 * (v / 100)).toFixed(2))}" title="день −${arr.length - 1 - i}: recovery ${v}%"></div>`
+    `<div class="rep-heat-cell" style="background:${zoneRgba(v, (0.3 + 0.55 * (v / 100)).toFixed(2))}" title="${(dates && dates[i]) ? fmtDayMon(dates[i]) : 'день −' + (arr.length - 1 - i)}: recovery ${v}%"></div>`
   );
   const tail = (7 * Math.ceil(arr.length / 7)) - arr.length;
   for (let i = 0; i < tail; i++) cells.push('<div class="rep-heat-cell empty" aria-hidden="true"></div>');
@@ -4491,19 +5558,23 @@ function repHeatHTML(arr) {
 }
 
 function renderReport(animate) {
-  // Окно отчёта = выбранный период (openhealth.period); срезы — хвост ряда.
+  // Окно отчёта = выбранный период (openhealth.period) + сдвиг стрелками.
+  clampPeriodOffset();
   const N = getPeriod();
-  const rec = (Array.isArray(DATA.trend30Rec) ? DATA.trend30Rec : []).slice(-N);
-  const hrv = (Array.isArray(DATA.trend30Hrv) ? DATA.trend30Hrv : []).slice(-N);
-  const sleep = (Array.isArray(DATA.trendSleep) ? DATA.trendSleep : []).slice(-N);
-  const rhr = (Array.isArray(DATA.trend30Rhr) ? DATA.trend30Rhr : []).slice(-N);
+  const rec = periodWindow(DATA.trend30Rec);
+  const hrv = periodWindow(DATA.trend30Hrv);
+  const sleep = periodWindow(DATA.trendSleep);
+  const rhr = periodWindow(DATA.trend30Rhr);
+  const recDates = seriesDates(rec.length, PERIOD_OFFSET);
 
   periodSwitcher('psReports', () => renderReport(true));
+  periodNav('pnReports', () => renderReport(true));
 
   // Шапка: период из данных, честная пометка окна.
-  document.getElementById('repPeriod').textContent = 'данные по: ' + (DATA.date || 'нет даты');
-  const noteParts = [`окно: последние ${rec.length} дн recovery/HRV из выгрузки`];
-  if (rec.length && rec.length < N) noteParts.push(`выбран период ${N} дн — в выгрузке только ${rec.length}`);
+  document.getElementById('repPeriod').textContent =
+    (recDates.length ? fmtWindowLabel(recDates) + ' · ' : '') + 'данные по: ' + (DATA.date || 'нет даты');
+  const noteParts = [`окно: ${rec.length} дн recovery/HRV из выгрузки` + (PERIOD_OFFSET ? ` · сдвиг −${PERIOD_OFFSET} дн от свежего края` : '')];
+  if (rec.length && rec.length < N) noteParts.push(`выбран период ${N} дн — в окне только ${rec.length}`);
   if (sleep.length && sleep.length !== rec.length) noteParts.push(`сон — ${sleep.length} дн`);
   if (!rhr.length) noteParts.push('дневного ряда RHR в выгрузке нет');
   document.getElementById('repWindowNote').textContent = noteParts.join(' · ');
@@ -4549,19 +5620,39 @@ function renderReport(animate) {
   }
 
   // --- Recovery по дням + heatmap --------------------------------------
-  document.getElementById('repZoneWrap').innerHTML = rec.length >= 2
-    ? repZoneSVG(rec)
-    : repAdaptEmptyHTML('Нет дневного ряда recovery в выгрузке.');
-  document.getElementById('repHeat').innerHTML = rec.length ? repHeatHTML(rec) : '';
-  document.getElementById('repHeatRange').textContent = rec.length ? `день −${rec.length - 1} → сегодня` : '';
+  const zoneWrap = document.getElementById('repZoneWrap');
+  if (rec.length >= 2) {
+    const zone = repZoneSVG(rec, recDates);
+    zoneWrap.innerHTML = zone.html;
+    attachCrosshair('repZoneSvg', {
+      labels: recDates.map(fmtTipDate),
+      series: [{ pts: zone.pts, values: rec, color: 'var(--accent)', label: 'Recovery', fmt: v => Math.round(v) + '%' }]
+    });
+  } else {
+    zoneWrap.innerHTML = repAdaptEmptyHTML('Нет дневного ряда recovery в выгрузке.');
+  }
+  document.getElementById('repHeat').innerHTML = rec.length ? repHeatHTML(rec, recDates) : '';
+  document.getElementById('repHeatRange').textContent = recDates.length ? fmtWindowLabel(recDates) : '';
 
   // --- HRV / RHR adaptation --------------------------------------------
-  document.getElementById('repHrvWrap').innerHTML = hrv.length >= 6
-    ? repAdaptSVG(hrv, 'ms', 'up', 'repHrvLine')
-    : repAdaptEmptyHTML('Нет дневного ряда HRV в выгрузке.');
-  document.getElementById('repRhrWrap').innerHTML = rhr.length >= 6
-    ? repAdaptSVG(rhr, 'уд/мин', 'down', 'repRhrLine')
-    : repAdaptEmptyHTML(`В текущей выгрузке нет дневного ряда RHR — есть только сегодняшнее значение (${DATA.rhr} уд/мин). Блок включится, когда build_dashboard_data.py начнёт отдавать trend30Rhr.`);
+  const adaptInto = (wrapId, arr, unit, betterDir, lineId, emptyText, color, tipLabel) => {
+    const wrap = document.getElementById(wrapId);
+    if (arr.length >= 6) {
+      const dts = seriesDates(arr.length, PERIOD_OFFSET);
+      const a = repAdaptSVG(arr, unit, betterDir, lineId, dts);
+      wrap.innerHTML = a.html;
+      attachCrosshair(lineId + 'Svg', {
+        labels: dts.map(fmtTipDate),
+        series: [{ pts: a.pts, values: arr, color, label: tipLabel, fmt: v => Math.round(v) + ' ' + unit }]
+      });
+    } else {
+      wrap.innerHTML = repAdaptEmptyHTML(emptyText);
+    }
+  };
+  adaptInto('repHrvWrap', hrv, 'ms', 'up', 'repHrvLine', 'Нет дневного ряда HRV в выгрузке.', '#a855f7', 'HRV');
+  adaptInto('repRhrWrap', rhr, 'уд/мин', 'down', 'repRhrLine',
+    `В текущей выгрузке нет дневного ряда RHR — есть только сегодняшнее значение (${DATA.rhr} уд/мин). Блок включится, когда build_dashboard_data.py начнёт отдавать trend30Rhr.`,
+    '#f97316', 'RHR');
 
   if (animate) animateReportEnter();
 }
@@ -4622,8 +5713,8 @@ const SYNC_GUIDES = {
     sub: 'экспорт из аккаунта WHOOP → локальная команда импорта',
     steps: [
       {
-        text: 'Запроси экспорт данных: <b>app.whoop.com</b> → Profile → Data Export (письмо с архивом придёт на почту). Либо используй WHOOP API token, если он у тебя настроен.',
-        link: 'https://app.whoop.com', linkLabel: 'app.whoop.com'
+        text: 'Прямое API-подключение: создай приложение на <b>developer-dashboard.whoop.com</b> (OAuth2 client) и используй <span class="mono">python3 -m openhealth whoop-auth-url</span> → <span class="mono">whoop-sync</span>. Либо разовый экспорт: app.whoop.com → Profile → Data Export.',
+        link: 'https://developer-dashboard.whoop.com/', linkLabel: 'developer-dashboard.whoop.com'
       },
       { text: 'Импортируй скачанный файл (путь подставь свой):', cmd: 'python3 -m openhealth import-whoop ~/Downloads/whoop_export.zip' },
       REBUILD_STEP
@@ -4807,8 +5898,8 @@ function analyzeScreenshot() {
 
 function renderAreaChart(svgId, lineId, areaId, arr) {
   const svg = document.getElementById(svgId);
-  if (!svg) return;
-  
+  if (!svg) return null;
+
   const w = svg.viewBox.baseVal.width || 600;
   const h = svg.viewBox.baseVal.height || 220;
   const mn = Math.min(...arr);
@@ -4846,10 +5937,198 @@ function renderAreaChart(svgId, lineId, areaId, arr) {
   }
 
   const point = document.getElementById('pulsePoint');
-  if (point && pts.length > 0) {
+  if (point && svgId === 'pulseChart' && pts.length > 0) {
     point.setAttribute('cx', pts[pts.length - 1].x.toFixed(1));
     point.setAttribute('cy', pts[pts.length - 1].y.toFixed(1));
   }
+
+  // Геометрия для crosshair и оси дат у того же графика.
+  return { pts, w, h, padding };
+}
+
+// ============================================================
+// CROSSHAIR + ОСЬ ДАТ: единый hover-механизм всех графиков
+// (эталон WHOOP week-compare: вертикаль + точки + тултип-карточка).
+// ============================================================
+
+// fetch с таймаутом: все локальные /api/* зовём только через него.
+function fetchWithTimeout(url, ms, opts) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms || 2500);
+  return fetch(url, Object.assign({ signal: ctrl.signal, cache: 'no-store' }, opts || {}))
+    .finally(() => clearTimeout(timer));
+}
+
+// Даты окна: len точек, последняя = дата выгрузки минус offsetDays.
+function seriesDates(len, offsetDays) {
+  const end = parseDataDate();
+  const off = offsetDays || 0;
+  const out = [];
+  for (let i = 0; i < len; i++) {
+    const back = off + (len - 1 - i);
+    out.push(new Date(end.getFullYear(), end.getMonth(), end.getDate() - back));
+  }
+  return out;
+}
+
+const fmtDayShort = d => RU_WEEKDAYS_SHORT[d.getDay()].charAt(0).toUpperCase() + RU_WEEKDAYS_SHORT[d.getDay()].slice(1) + ' ' + d.getDate();
+const fmtDayMon = d => d.getDate() + ' ' + RU_MONTHS_SHORT[d.getMonth()];
+const fmtTipDate = d => fmtDayShort(d) + ' ' + RU_MONTHS_SHORT[d.getMonth()];
+
+// Подпись окна «14–27 фев» / «28 фев – 13 мар».
+function fmtWindowLabel(dates) {
+  if (!dates || !dates.length) return '—';
+  const a = dates[0], b = dates[dates.length - 1];
+  if (a.getMonth() === b.getMonth()) return a.getDate() + '–' + fmtDayMon(b);
+  return fmtDayMon(a) + ' – ' + fmtDayMon(b);
+}
+
+// Ось X под графиком: WHOOP-стиль «Вт 12 … Пн 18»; на 30д — каждые 5 точек.
+// items: [{label, today?}], geom: {w, pad} того же viewBox, что и сам график.
+function renderDateAxis(containerId, items, geom) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!items || items.length < 2) { el.innerHTML = ''; return; }
+  const w = geom && geom.w || 800;
+  const pad = geom && geom.pad != null ? geom.pad : 15;
+  const n = items.length;
+  const step = n <= 8 ? 1 : n <= 16 ? 2 : 5;
+  const spans = [];
+  for (let i = 0; i < n; i++) {
+    const isLast = i === n - 1;
+    // Шаг отсчитываем от свежего края (последняя дата всегда подписана).
+    if (!isLast && (n - 1 - i) % step !== 0) continue;
+    if (!isLast && step > 1 && (n - 1 - i) < step * 0.6) continue; // не липнуть к последней
+    const x = (pad + (i / (n - 1)) * (w - 2 * pad)) / w * 100;
+    spans.push(`<span class="${items[i].today ? 'today' : ''}" style="left:${x.toFixed(2)}%">${escapeHtml(items[i].label)}</span>`);
+  }
+  el.innerHTML = spans.join('');
+}
+
+// Хелпер: ряд дат -> items для renderDateAxis (метка «сегодня» по реальной дате).
+function dateAxisItems(dates) {
+  const tk = todayKey();
+  return dates.map(d => ({ label: fmtDayShort(d), today: dateKeyOf(d) === tk }));
+}
+
+// attachCrosshair(svg, cfg): вертикаль + точка(и) + тултип; мышь скраббит,
+// touchmove работает (touch-action: pan-y), уход — скрытие.
+// cfg: { labels: [строка-заголовок на индекс], series: [{pts, color, label, fmt}] }
+function attachCrosshair(svgOrId, cfg) {
+  const svg = typeof svgOrId === 'string' ? document.getElementById(svgOrId) : svgOrId;
+  if (!svg || !cfg || !cfg.series || !cfg.series.length || !cfg.series[0].pts || cfg.series[0].pts.length < 2) return;
+  svg._xhair = cfg;
+  svg.classList.add('has-xhair');
+
+  const host = svg.parentElement;
+  if (host) host.classList.add('chart-host');
+
+  if (svg._xhairBound) return;
+  svg._xhairBound = true;
+
+  const NS = 'http://www.w3.org/2000/svg';
+
+  function ensureNodes(c) {
+    let g = svg.querySelector(':scope > g.xhair-svg');
+    if (!g) {
+      g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'xhair-svg');
+      g.style.display = 'none';
+      g.appendChild(document.createElementNS(NS, 'line'));
+      svg.appendChild(g);
+    }
+    // Точек ровно столько, сколько серий (пересоздаём при изменении).
+    let dots = g.querySelectorAll('circle');
+    if (dots.length !== c.series.length) {
+      dots.forEach(d => d.remove());
+      c.series.forEach(() => g.appendChild(document.createElementNS(NS, 'circle')));
+      dots = g.querySelectorAll('circle');
+    }
+    return { g, line: g.querySelector('line'), dots };
+  }
+
+  function ensureTip() {
+    if (!host) return null;
+    let tip = host.querySelector(':scope > .chart-tip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.className = 'chart-tip';
+      host.appendChild(tip);
+    }
+    return tip;
+  }
+
+  function hide() {
+    const g = svg.querySelector(':scope > g.xhair-svg');
+    if (g) g.style.display = 'none';
+    const tip = host && host.querySelector(':scope > .chart-tip');
+    if (tip) tip.classList.remove('on');
+  }
+
+  function move(clientX) {
+    const c = svg._xhair;
+    if (!c) return;
+    const rect = svg.getBoundingClientRect();
+    if (!rect.width) return;
+    const vb = svg.viewBox.baseVal;
+    const vx = (clientX - rect.left) / rect.width * vb.width;
+
+    const pts0 = c.series[0].pts;
+    let idx = 0, best = Infinity;
+    for (let i = 0; i < pts0.length; i++) {
+      const d = Math.abs(pts0[i].x - vx);
+      if (d < best) { best = d; idx = i; }
+    }
+
+    const { g, line, dots } = ensureNodes(c);
+    g.style.display = '';
+    const x = pts0[idx].x;
+    line.setAttribute('x1', x); line.setAttribute('x2', x);
+    line.setAttribute('y1', 0); line.setAttribute('y2', vb.height);
+
+    // Радиус точки компенсирует неравномерный scale (preserveAspectRatio=none).
+    const rx = 3.5 * (vb.width / rect.width);
+    c.series.forEach((s, si) => {
+      const p = s.pts[idx];
+      const dot = dots[si];
+      if (!p) { dot.style.display = 'none'; return; }
+      dot.style.display = '';
+      dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y);
+      dot.setAttribute('r', Math.max(3, Math.min(7, rx)));
+      dot.setAttribute('fill', s.color);
+      dot.setAttribute('stroke', 'var(--card-inner)');
+      dot.setAttribute('stroke-width', 1.5 * (vb.width / rect.width));
+    });
+
+    const tip = ensureTip();
+    if (tip) {
+      const rows = c.series.map(s => {
+        const v = s.values ? s.values[idx] : null;
+        const txt = s.fmt ? s.fmt(v, idx) : String(v);
+        return `<div class="tip-row"><span class="swatch" style="background:${s.color}"></span><span class="k">${escapeHtml(s.label)}</span><span class="v">${escapeHtml(txt)}</span></div>`;
+      }).join('');
+      tip.innerHTML = `<div class="tip-date">${escapeHtml((c.labels && c.labels[idx]) || '')}</div>${rows}`;
+      tip.classList.add('on');
+
+      // Позиция: над точкой, прижата к границам контейнера.
+      const hostRect = host.getBoundingClientRect();
+      const px = rect.left - hostRect.left + (x / vb.width) * rect.width;
+      const py = rect.top - hostRect.top;
+      const tw = tip.offsetWidth, th = tip.offsetHeight;
+      let left = px - tw / 2;
+      left = Math.max(2, Math.min(left, hostRect.width - tw - 2));
+      let top = py - th - 8;
+      if (top < 0) top = py + 8;
+      tip.style.left = left + 'px';
+      tip.style.top = top + 'px';
+    }
+  }
+
+  svg.addEventListener('pointermove', e => move(e.clientX));
+  svg.addEventListener('pointerdown', e => move(e.clientX));
+  svg.addEventListener('pointerleave', hide);
+  svg.addEventListener('touchmove', e => { if (e.touches[0]) move(e.touches[0].clientX); }, { passive: true });
+  svg.addEventListener('touchend', hide);
 }
 
 const titles = {
@@ -4868,6 +6147,7 @@ const titles = {
   research: "Research",
   reports: "Отчёты",
   digests: "Дайджесты",
+  diagnostics: "Диагностика",
   settings: "Настройки"
 };
 
@@ -5222,7 +6502,8 @@ const NAV_HIDEABLE = [
   { z: 'protocols', label: 'Protocols', icon: 'ph-book-open' },
   { z: 'research', label: 'Research', icon: 'ph-microscope' },
   { z: 'reports', label: 'Отчёты', icon: 'ph-file-text' },
-  { z: 'digests', label: 'Дайджесты', icon: 'ph-bell' }
+  { z: 'digests', label: 'Дайджесты', icon: 'ph-bell' },
+  { z: 'diagnostics', label: 'Диагностика', icon: 'ph-pulse' }
 ];
 
 function getHiddenNav() {
@@ -5345,6 +6626,10 @@ function go(z) {
         animateBiomarkersEnter();
       } else if (z === 'timeline') {
         renderTimeline();
+      } else if (z === 'journal') {
+        loadJournalCandidates();
+      } else if (z === 'diagnostics') {
+        renderDiagnostics();
       } else if (z === 'settings') {
         renderSettingsScreen();
       }
@@ -5369,22 +6654,18 @@ function syncNavIcons() {
   });
 }
 
-// === Темы: один источник правды (applyTheme), сайдбар и карточки в Настройках синхронны ===
+// === Темы: один источник правды (applyTheme), выбор живёт в Настройках → Оформление ===
 
 const THEME_KEY = 'openhealth.theme';
 const THEME_DEFS = [
   { id: 'dark', label: 'Тёмная', bg: '#060709', card: '#14171d', line: '#1d212a', ink: '#f3f4f6', accent: '#10b981' },
   { id: 'light', label: 'Светлая', bg: '#f9fafb', card: '#ffffff', line: '#e5e7eb', ink: '#111827', accent: '#10b981' },
-  { id: 'brutalist', label: 'Брутал', bg: '#ffffff', card: '#ffffff', line: '#000000', ink: '#000000', accent: '#0000ff' },
-  { id: 'bauhaus', label: 'Баухауз', bg: '#f4f4f5', card: '#ffffff', line: '#1a1a1a', ink: '#1a1a1a', accent: '#ff3b30' }
+  { id: 'brutalist', label: 'Брутал', bg: '#ffffff', card: '#ffffff', line: '#000000', ink: '#000000', accent: '#0000ff' }
 ];
-
-const themes = document.getElementById('themes');
 
 function applyTheme(t, persist) {
   if (!THEME_DEFS.some(x => x.id === t)) return;
   document.documentElement.dataset.theme = t;
-  [...themes.children].forEach(x => x.setAttribute('aria-pressed', String(x.dataset.t === t)));
   if (persist !== false) { try { localStorage.setItem(THEME_KEY, t); } catch (e) { /* ignore */ } }
   renderThemeCards();
   applyZoneBackgrounds();
@@ -5395,11 +6676,6 @@ function applyTheme(t, persist) {
   else if (activeTab === 'whoop-overview') animateWhoopRings();
   else if (activeTab === 'trends') initTrendsScreen();
 }
-
-themes.addEventListener('click', e => {
-  const b = e.target.closest('button');
-  if (b) applyTheme(b.dataset.t);
-});
 
 // Карточки-превью тем в Настройках (мини-превью реальных цветов темы).
 function renderThemeCards() {
@@ -5491,6 +6767,8 @@ window.addEventListener('DOMContentLoaded', () => {
   applyNavVisibility();
   bindUploadInputs();
   bindProfileInputs();
+  applyTodayLayout();
+  bindTodayDrag();
   // Render immediately with whatever DATA we have, then re-render if real
   // local data loads (keeps demo instant and avoids a blank first paint).
   loadRealData().then(loaded => { if (loaded) renderDashboard(); });
@@ -5511,12 +6789,60 @@ function exploreCorrelations() {
 const PERIOD_KEY = 'openhealth.period';
 const PERIOD_OPTIONS = [7, 14, 30];
 
+// Сдвиг окна назад от свежего края (стрелки ‹›, паттерн WHOOP period-arrows).
+// В памяти сессии: перезагрузка возвращает на свежий край.
+let PERIOD_OFFSET = 0;
+
 function getPeriod() {
   try {
     const v = parseInt(localStorage.getItem(PERIOD_KEY), 10);
     if (PERIOD_OPTIONS.includes(v)) return v;
   } catch (e) { /* ignore */ }
   return 30;
+}
+
+// Сколько максимум можно сдвинуться назад при текущем окне (внутри 30 точек).
+function periodMaxOffset() {
+  const len = (Array.isArray(DATA.trend30Rec) ? DATA.trend30Rec : []).length;
+  return Math.max(0, len - getPeriod());
+}
+
+function clampPeriodOffset() {
+  PERIOD_OFFSET = Math.max(0, Math.min(PERIOD_OFFSET, periodMaxOffset()));
+}
+
+// Срез ряда под окно с учётом сдвига: конец = len - offset, длина = период.
+function periodWindow(arr) {
+  if (!Array.isArray(arr) || !arr.length) return [];
+  const n = getPeriod();
+  const off = Math.max(0, Math.min(PERIOD_OFFSET, Math.max(0, arr.length - 1)));
+  const end = arr.length - off;
+  const start = Math.max(0, end - n);
+  return arr.slice(start, Math.max(start, end));
+}
+
+// Стрелки ‹ окно ›: рендер в контейнер; подпись «14–27 фев» из дат окна.
+// Все экземпляры на странице синхронны: общий PERIOD_OFFSET.
+function periodNav(containerId, onChange) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  clampPeriodOffset();
+  const n = getPeriod();
+  const win = periodWindow(DATA.trend30Rec || []);
+  const label = fmtWindowLabel(seriesDates(win.length, PERIOD_OFFSET));
+  const maxOff = periodMaxOffset();
+  el.innerHTML = `
+    <button type="button" data-dir="back" aria-label="Окно назад" ${PERIOD_OFFSET >= maxOff ? 'disabled' : ''}><i class="ph-light ph-caret-left"></i></button>
+    <span class="period-nav-label">${escapeHtml(label)}</span>
+    <button type="button" data-dir="fwd" aria-label="Окно вперёд" ${PERIOD_OFFSET <= 0 ? 'disabled' : ''}><i class="ph-light ph-caret-right"></i></button>`;
+  el.querySelectorAll('button').forEach(b => {
+    b.onclick = () => {
+      const step = n;
+      if (b.dataset.dir === 'back') PERIOD_OFFSET = Math.min(maxOff, PERIOD_OFFSET + step);
+      else PERIOD_OFFSET = Math.max(0, PERIOD_OFFSET - step);
+      if (onChange) onChange();
+    };
+  });
 }
 
 // Рендерит пилюлю-сегмент в контейнер и зовёт onChange при смене окна.
@@ -5628,10 +6954,17 @@ function renderTimeline() {
   }
 
   // Мини-спарклайн recovery сверху (FRAMES: line-draw 1.2 + area 0.6/0.4).
-  renderAreaChart('tlSparkSvg', 'tlSparkLine', 'tlSparkArea', arr);
+  const gTl = renderAreaChart('tlSparkSvg', 'tlSparkLine', 'tlSparkArea', arr);
   animateSparkline('tlSparkLine', 'tlSparkArea');
   const avgEl = document.getElementById('tlSparkAvg');
   if (avgEl) avgEl.textContent = 'Среднее: ' + Math.round(avgArr(arr)) + '%';
+
+  // Ось дат + crosshair (тот же 14-дневный хвост, что и лента ниже).
+  if (gTl) {
+    const dts = seriesDates(arr.length, 0);
+    renderDateAxis('tlSparkAxis', dateAxisItems(dts), gTl);
+    attachCrosshair('tlSparkSvg', { labels: dts.map(fmtTipDate), series: [{ pts: gTl.pts, values: arr, color: 'var(--accent)', label: 'Recovery', fmt: v => Math.round(v) + '%' }] });
+  }
 
   const endDate = parseDataDate();
   const realToday = todayKey();
@@ -6012,6 +7345,190 @@ function renderSettingsScreen() {
   refreshDataInfoRow();
   loadAgentConfigUI();
   loadAgentMemoryUI();
+}
+
+// ============================================================
+// ДИАГНОСТИКА: tech-статус системы (паттерн Linear health-check).
+// Каждая строка: имя · статус-точка · детали · Last Updated · действие.
+// ============================================================
+
+function diagActionBtn(label, call) {
+  return `<button class="btn-secondary" style="padding:4px 10px; font-size:10px;" onclick="${call}">${label}</button>`;
+}
+
+function diagRowsModel() {
+  const conns = DATA.connections || {};
+  const rows = [
+    { id: 'bridge', name: 'Bridge (server.py)', icon: 'ph-plugs-connected' },
+    { id: 'data', name: 'Выгрузка data.local.json', icon: 'ph-database' }
+  ];
+  Object.keys(conns).forEach(k => {
+    rows.push({ id: 'conn-' + k, name: conns[k].label || k, icon: safeIcon(conns[k].icon || 'ph-plug'), conn: k });
+  });
+  rows.push(
+    { id: 'calendar', name: 'Календарь (ICS)', icon: 'ph-calendar-check' },
+    { id: 'todos', name: 'Todoist', icon: 'ph-check-square-offset' },
+    { id: 'memory', name: 'Память агента', icon: 'ph-brain' }
+  );
+  return rows;
+}
+
+function diagRowHTML(r) {
+  return `
+    <div class="diag-row" id="diag-${r.id}">
+      <span class="diag-dot"></span>
+      <span class="diag-name"><i class="ph-light ${r.icon}"></i>${escapeHtml(r.name)}</span>
+      <span class="diag-detail">—</span>
+      <span class="diag-updated"></span>
+      <span class="diag-action"></span>
+    </div>`;
+}
+
+function setDiagRow(id, st) {
+  const row = document.getElementById('diag-' + id);
+  if (!row) return;
+  row.querySelector('.diag-dot').className = 'diag-dot ' + (st.status || '');
+  const detail = row.querySelector('.diag-detail');
+  if (st.spin) {
+    detail.innerHTML = '<span class="spinner" style="display:inline-block; vertical-align:-2px; margin-right:6px;"></span>проверяю…';
+  } else if (st.detail != null) {
+    detail.innerHTML = st.detail;
+  }
+  if (st.updated != null) row.querySelector('.diag-updated').textContent = st.updated;
+  if (st.action != null) row.querySelector('.diag-action').innerHTML = st.action;
+}
+
+// Свежесть выгрузки: >24ч — жёлтый бейдж, >7 дней — красный.
+function dataFreshness(generatedAt) {
+  const t = Date.parse(generatedAt || '');
+  if (isNaN(t)) return { status: 'warn', badge: '<span class="diag-badge warn">возраст неизвестен</span>' };
+  const ageH = (Date.now() - t) / 36e5;
+  if (ageH > 24 * 7) return { status: 'bad', badge: '<span class="diag-badge bad">старше 7 дней</span>' };
+  if (ageH > 24) return { status: 'warn', badge: '<span class="diag-badge warn">старше 24 часов</span>' };
+  return { status: 'ok', badge: '<span class="diag-badge ok">свежие</span>' };
+}
+
+// Статика при входе: то, что уже известно без запросов.
+function renderDiagnostics() {
+  const list = document.getElementById('diagList');
+  if (!list) return;
+  list.innerHTML = diagRowsModel().map(diagRowHTML).join('');
+
+  // Bridge — из последней проверки checkBridge().
+  setDiagRow('bridge', BRIDGE.ok
+    ? { status: 'ok', detail: 'онлайн · агенты: ' + (Object.keys(BRIDGE.agents).filter(a => BRIDGE.agents[a]).join(', ') || 'не найдены') }
+    : { status: BRIDGE.checked ? 'bad' : '', detail: BRIDGE.checked ? 'офлайн — /api/* недоступны' : 'ещё не проверялся', action: diagActionBtn('Как запустить', 'showBridgeHelp()') });
+
+  // Данные — из loadRealData().
+  if (REAL_DATA_META.loaded) {
+    const f = dataFreshness(REAL_DATA_META.generatedAt);
+    setDiagRow('data', { status: f.status, detail: 'подключена' + f.badge, updated: REAL_DATA_META.generatedAt ? String(REAL_DATA_META.generatedAt).slice(0, 16).replace('T', ' ') : '' });
+  } else {
+    setDiagRow('data', { status: 'warn', detail: 'не найдена — показываются демо-данные', action: diagActionBtn('В Синхронизацию', "go('sync')") });
+  }
+
+  // Источники — из DATA.connections (lastSync — строка выгрузки).
+  const conns = DATA.connections || {};
+  Object.keys(conns).forEach(k => {
+    const c = conns[k];
+    setDiagRow('conn-' + k, {
+      status: c.connected ? 'ok' : '',
+      detail: c.connected ? 'подключён' : 'не подключён',
+      updated: c.connected ? (c.lastSync || '') : '',
+      action: c.connected ? '' : diagActionBtn('Подключить', "go('sync')")
+    });
+  });
+
+  setDiagRow('calendar', { status: '', detail: 'нажми «Прогнать проверки»' });
+  setDiagRow('todos', { status: '', detail: 'нажми «Прогнать проверки»' });
+  setDiagRow('memory', { status: '', detail: 'нажми «Прогнать проверки»' });
+}
+
+// Живой прогон: последовательные fetch с таймаутами, результаты построчно.
+async function runDiagnostics() {
+  const btn = document.getElementById('diagRunBtn');
+  if (btn) btn.disabled = true;
+  const stamp = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+  // 1. Bridge.
+  setDiagRow('bridge', { spin: true });
+  try {
+    const r = await fetchWithTimeout('/api/health', 2500);
+    const j = await r.json();
+    BRIDGE.ok = !!j.ok; BRIDGE.agents = j.agents || {}; BRIDGE.checked = true;
+    applyBridgeState();
+    const agents = Object.keys(BRIDGE.agents).filter(a => BRIDGE.agents[a]);
+    setDiagRow('bridge', { status: j.ok ? 'ok' : 'bad', detail: j.ok ? 'онлайн · агенты: ' + (agents.join(', ') || 'не найдены') : 'ответил, но не ok', updated: stamp, action: '' });
+  } catch (e) {
+    BRIDGE.ok = false; BRIDGE.checked = true; applyBridgeState();
+    setDiagRow('bridge', { status: 'bad', detail: 'офлайн — запусти OpenHealth.command (server.py)', updated: stamp, action: diagActionBtn('Как запустить', 'showBridgeHelp()') });
+  }
+
+  // 2. Данные.
+  setDiagRow('data', { spin: true });
+  try {
+    const r = await fetchWithTimeout('data.local.json', 2500);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    const gen = (j._meta && j._meta.generatedAt) || null;
+    const f = dataFreshness(gen);
+    setDiagRow('data', { status: f.status, detail: 'файл читается' + f.badge, updated: gen ? String(gen).slice(0, 16).replace('T', ' ') : '—', action: f.status === 'ok' ? '' : diagActionBtn('Как обновить', "go('sync')") });
+  } catch (e) {
+    setDiagRow('data', { status: 'warn', detail: 'не найдена — дашборд на демо-данных', updated: stamp, action: diagActionBtn('В Синхронизацию', "go('sync')") });
+  }
+
+  // 3. Источники — без сетевых запросов (статусы приходят с выгрузкой).
+  const conns = DATA.connections || {};
+  Object.keys(conns).forEach(k => {
+    const c = conns[k];
+    setDiagRow('conn-' + k, {
+      status: c.connected ? 'ok' : '',
+      detail: c.connected ? 'подключён (статус из выгрузки)' : 'не подключён',
+      updated: c.connected ? (c.lastSync || '') : '',
+      action: c.connected ? '' : diagActionBtn('Подключить', "go('sync')")
+    });
+  });
+
+  // 4. Календарь.
+  setDiagRow('calendar', { spin: true });
+  try {
+    const r = await fetchWithTimeout('/api/calendar', 4000);
+    const j = await r.json();
+    if (j.configured === false) setDiagRow('calendar', { status: 'warn', detail: 'не настроен — подключи ICS в «Пульсе дня»', updated: stamp, action: diagActionBtn('Настроить', "go('pulse')") });
+    else if (j.status === 'error') setDiagRow('calendar', { status: 'bad', detail: 'настроен, но фид не читается: ' + escapeHtml(j.message || ''), updated: stamp, action: '' });
+    else setDiagRow('calendar', { status: 'ok', detail: `работает · событий в фиде: ${j.events_total != null ? j.events_total : '—'}${j.cached ? ' · из кэша' : ''}`, updated: stamp, action: '' });
+  } catch (e) {
+    setDiagRow('calendar', { status: 'bad', detail: 'bridge офлайн', updated: stamp, action: '' });
+  }
+
+  // 5. Todoist.
+  setDiagRow('todos', { spin: true });
+  try {
+    const r = await fetchWithTimeout('/api/todos', 4500);
+    const j = await r.json();
+    if (r.status === 503 || j.configured === false) setDiagRow('todos', { status: 'warn', detail: 'не настроен — нужен токен в ~/.openhealth/todoist.token', updated: stamp, action: '' });
+    else if (j.status === 'error') setDiagRow('todos', { status: 'bad', detail: 'ошибка запроса: ' + escapeHtml(j.message || ''), updated: stamp, action: '' });
+    else setDiagRow('todos', { status: 'ok', detail: `работает · закрыто сегодня: ${(j.completed || []).length} · кандидатов: ${(j.candidates || []).length}`, updated: stamp, action: '' });
+  } catch (e) {
+    setDiagRow('todos', { status: 'bad', detail: 'bridge офлайн', updated: stamp, action: '' });
+  }
+
+  // 6. Память агента.
+  setDiagRow('memory', { spin: true });
+  try {
+    const r = await fetchWithTimeout('/api/memory', 2500);
+    if (r.status === 404) setDiagRow('memory', { status: 'warn', detail: 'старый bridge — перезапусти OpenHealth.command', updated: stamp, action: '' });
+    else {
+      const j = await r.json();
+      setDiagRow('memory', { status: 'ok', detail: 'записей: ' + (j.count != null ? j.count : (j.entries || []).length), updated: stamp, action: '' });
+    }
+  } catch (e) {
+    setDiagRow('memory', { status: 'bad', detail: 'bridge офлайн', updated: stamp, action: '' });
+  }
+
+  if (btn) btn.disabled = false;
+  const note = document.getElementById('diagFootnote');
+  if (note) note.textContent = 'Последний прогон: ' + stamp + ' · проверки шли последовательно с таймаутами, все запросы локальные.';
 }
 
 // ============================================================

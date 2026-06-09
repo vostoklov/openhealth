@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from . import index
 from .contexts import refresh_contexts
 from .environment import EnvironmentService
-from .google_calendar import ensure_derived_calendar, load_google_calendar_config
+from .connectors.google_calendar import ensure_derived_calendar, load_google_calendar_config
 from .models import InsightHypothesis, Observation, SourceManifest, TimelineEvent
 from .storage import ensure_repo_structure, now_utc, write_json
 from .whoop import WHOOP_SOURCE_ID
@@ -194,7 +194,7 @@ def sync_circadian_schedule(
     google_client = client
     derived_calendar = ensure_derived_calendar(root, client=google_client)
     if google_client is None:
-        from .google_calendar import build_google_client
+        from .connectors.google_calendar import build_google_client
 
         google_client = build_google_client(root)
     date_values = _date_range(start_date, end_date)
@@ -220,7 +220,7 @@ def sync_circadian_schedule(
     )
     deleted_ids: List[str] = []
     for item in existing:
-        marker = ((item.get("extendedProperties") or {}).get("private") or {}).get("healthos_kind")
+        marker = ((item.get("extendedProperties") or {}).get("private") or {}).get("openhealth_kind")
         if marker != "circadian_hypothesis":
             continue
         if item.get("id") not in generated_event_ids:
@@ -323,11 +323,11 @@ def _build_derived_event_payload(plan: Dict[str, Any], phase: Dict[str, Any], de
         "transparency": "transparent",
         "extendedProperties": {
             "private": {
-                "healthos_kind": "circadian_hypothesis",
-                "healthos_date": plan["date"],
-                "healthos_phase": phase["phase"],
-                "healthos_confidence": "%.2f" % plan["confidence"],
-                "healthos_calendar": derived_calendar_id,
+                "openhealth_kind": "circadian_hypothesis",
+                "openhealth_date": plan["date"],
+                "openhealth_phase": phase["phase"],
+                "openhealth_confidence": "%.2f" % plan["confidence"],
+                "openhealth_calendar": derived_calendar_id,
             }
         },
     }

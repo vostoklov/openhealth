@@ -25,6 +25,9 @@ Thumbs.db
 *.health-export
 data/personal/
 
+# Dashboard real-data bridge output (real personal health data — local only)
+ui/web/data.local.json
+
 # SQLite databases
 *.db
 *.sqlite

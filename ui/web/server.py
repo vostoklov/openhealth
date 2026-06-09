@@ -10,6 +10,10 @@ stdlib only (repo rule): argparse, http.server, json, subprocess, shutil, pathli
 Endpoints:
     GET  /            -> static files from --dir (index.html by default)
     GET  /api/data    -> data.local.json from --dir (200), or {"demo": true}
+    GET  /api/behaviors -> openhealth/data/journal_behaviors.json (full WHOOP-style
+                          behavior catalog, cached in memory; 404 if missing)
+    GET  /api/providers -> openhealth/data/providers.json (device/data provider
+                          catalog for the "Источники данных" screen; cached)
     GET  /api/health  -> {"ok": true, "agents": {"claude": bool, "codex": bool,
                           "openhealth": bool}}
     GET  /api/config  -> {"config": {...agent.json...}, "agents": [{"name",
@@ -309,6 +313,40 @@ def handle_config_request(payload) -> "tuple":
         except OSError as exc:
             return 500, {"status": "error", "message": "cannot write config: {}".format(exc)}
     return 200, {"status": "ok", "config": cfg, "agents": agents_status()}
+
+
+# --- static catalogs: behaviors + providers (repo data, cached in memory) ---
+
+_CATALOG_FILES = {
+    "behaviors": _REPO_ROOT / "openhealth" / "data" / "journal_behaviors.json",
+    "providers": _REPO_ROOT / "openhealth" / "data" / "providers.json",
+}
+_catalog_cache = {}
+_catalog_cache_lock = threading.Lock()
+
+
+def load_catalog(name: str) -> "dict | None":
+    """Static JSON catalog from the repo; read once, kept in memory.
+
+    These files are versioned reference data (no personal content), so a
+    process-lifetime cache is safe; restart the bridge to pick up edits.
+    """
+    with _catalog_cache_lock:
+        if name in _catalog_cache:
+            return _catalog_cache[name]
+    path = _CATALOG_FILES.get(name)
+    if path is None:
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        log("catalog {} unreadable: {}".format(name, exc.__class__.__name__))
+        return None
+    if not isinstance(data, dict):
+        return None
+    with _catalog_cache_lock:
+        _catalog_cache[name] = data
+    return data
 
 
 # --- context: data.local.json -> compact prompt block ----------------------
@@ -925,6 +963,17 @@ class BridgeHandler(SimpleHTTPRequestHandler):
         if path == "/api/data":
             data = load_local_data(self.base_dir)
             self._send_json(data if data is not None else {"demo": True})
+            return
+        if path in ("/api/behaviors", "/api/providers"):
+            name = path.rsplit("/", 1)[1]
+            catalog = load_catalog(name)
+            if catalog is None:
+                self._send_json(
+                    {"status": "error", "message": "{}.json не найден в репозитории".format(name)},
+                    status=404,
+                )
+                return
+            self._send_json(catalog)
             return
         if path == "/api/calendar":
             query = parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}

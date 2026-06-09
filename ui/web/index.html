@@ -3196,6 +3196,426 @@
   .settings-link-row i.lead { font-size: 16px; color: var(--mut); }
   .settings-link-row .ver { font: 500 10px var(--mono); color: var(--dim); }
   .settings-link-row i.ext { margin-left: auto; font-size: 13px; color: var(--dim); }
+  /* === Глобальный селектор дня (топбар, эталон WHOOP period arrows) ====== */
+  .day-selector {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .day-selector button {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--card-outer);
+    color: var(--ink);
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .day-selector button:hover:not(:disabled) { border-color: var(--line2); }
+  .day-selector button:disabled { opacity: 0.35; cursor: default; }
+
+  .day-selector .day-label {
+    min-width: 96px;
+    text-align: center;
+    font: 600 12px var(--mono);
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    text-transform: none;
+    white-space: nowrap;
+  }
+
+  [data-theme="brutalist"] .day-selector button { border-width: 2px; border-radius: 0; }
+
+  .past-day-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 6px 16px;
+    font: 500 12px var(--mono);
+    color: var(--warn);
+    background: rgba(234, 179, 8, 0.08);
+    border-bottom: 1px solid rgba(234, 179, 8, 0.35);
+  }
+
+  .past-day-banner button {
+    border: none;
+    background: none;
+    color: var(--warn);
+    font: 600 12px var(--mono);
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  [data-theme="brutalist"] .past-day-banner { background: #ffff00; color: #000; border-bottom: 2px solid #000; }
+  [data-theme="brutalist"] .past-day-banner button { color: #000; }
+
+  /* === Циркадное колесо «Ты здесь» (эталон Flo cycle wheel) =============== */
+  .cwheel-wrap {
+    display: flex;
+    gap: 22px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .cwheel-svg { flex-shrink: 0; }
+
+  .cwheel-center-time {
+    font: 600 22px var(--mono);
+    fill: var(--ink);
+  }
+
+  .cwheel-center-label { font: 500 10px var(--sans, sans-serif); fill: var(--mut); }
+  .cwheel-tick { font: 500 9px var(--mono); fill: var(--mut); }
+
+  .cwheel-legend { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 7px; }
+
+  .cwheel-phase-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--mut);
+  }
+
+  .cwheel-phase-row .d { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .cwheel-phase-row.active { color: var(--ink); font-weight: 600; }
+  .cwheel-phase-row .t { font: 500 11px var(--mono); margin-left: auto; }
+
+  .cwheel-advice {
+    margin: 14px 0 0;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--card-inner);
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--mut);
+  }
+
+  .cwheel-advice b { color: var(--ink); }
+
+  /* === Recovery-декомпозиция (эталон Fitbit stress contributors) ========== */
+  .rec-decomp-toggle {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .rec-decomp { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+  .rdc-row { display: flex; align-items: center; gap: 12px; }
+
+  .rdc-label {
+    width: 150px;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--mut);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .rdc-bar-bg {
+    flex: 1;
+    height: 7px;
+    border-radius: 99px;
+    background: var(--line);
+    overflow: hidden;
+  }
+
+  .rdc-bar-fill { height: 100%; border-radius: 99px; transform-origin: left center; }
+
+  .rdc-pts { width: 64px; text-align: right; font: 600 12px var(--mono); color: var(--ink); flex-shrink: 0; }
+  .rdc-note { font-size: 11px; color: var(--dim, var(--mut)); margin: 4px 0 0; line-height: 1.5; }
+
+  .approx-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--warn);
+    border: 1px solid rgba(234, 179, 8, 0.4);
+    border-radius: 99px;
+    padding: 2px 8px;
+  }
+
+  /* === Личный диапазон маркера + таблица периодов ========================= */
+  .bio-prange { margin-top: 18px; }
+  .bio-prange-track {
+    position: relative;
+    height: 8px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--line) 0%, var(--line2) 50%, var(--line) 100%);
+    margin: 22px 0 6px;
+  }
+
+  .bio-prange-pin {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2.5px solid var(--card-inner);
+    box-shadow: 0 0 0 1px var(--line2);
+  }
+
+  .bio-prange-pin-cap {
+    position: absolute;
+    bottom: 14px;
+    transform: translateX(-50%);
+    font: 600 11px var(--mono);
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .bio-prange-ends { display: flex; justify-content: space-between; font: 500 10px var(--mono); color: var(--mut); }
+
+  .bio-periods { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  .bio-periods th, .bio-periods td {
+    text-align: left;
+    padding: 7px 10px;
+    font-size: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .bio-periods th { font: 600 10px var(--mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--mut); }
+  .bio-periods td.mono { font-family: var(--mono); }
+
+  /* === Эмоции (эталон How We Feel) ======================================== */
+  .mood-quad-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .mood-quad {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px 16px;
+    cursor: pointer;
+    text-align: left;
+    background: var(--card-inner);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+
+  .mood-quad:hover { transform: translateY(-2px); }
+  .mood-quad .q-dot { width: 14px; height: 14px; border-radius: 50%; margin-bottom: 10px; }
+  .mood-quad .q-name { font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.35; }
+  .mood-quad .q-sub { font-size: 11px; color: var(--mut); margin-top: 3px; }
+
+  .mood-words-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .mood-word {
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    background: var(--card-inner);
+    color: var(--ink);
+    font: 500 12.5px var(--mono);
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .mood-word:hover { transform: translateY(-1px); }
+  .mood-word.on { font-weight: 700; transform: scale(1.06); }
+
+  .mood-energy-row { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+  .mood-energy-row .lbl { font-size: 12px; color: var(--mut); }
+
+  .mood-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 99px;
+    font: 600 11px var(--mono);
+    padding: 4px 10px;
+    cursor: pointer;
+    border: 1px solid var(--line);
+  }
+
+  .mood-step-back { margin-bottom: 14px; }
+
+  .mood-ring-wrap { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .mood-ring-stats { flex: 1; min-width: 150px; }
+  .mood-ring-stats .big { font: 600 26px var(--mono); color: var(--ink); }
+  .mood-ring-stats .sub { font-size: 12px; color: var(--mut); margin-top: 3px; line-height: 1.5; }
+
+  /* === Протоколы-карточки ================================================= */
+  .proto-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 99px;
+    padding: 3px 10px;
+    border: 1px solid var(--line);
+    color: var(--mut);
+  }
+
+  .proto-status.active { color: var(--ok); border-color: rgba(16, 185, 129, 0.45); }
+
+  .proto-row { display: flex; gap: 10px; margin-top: 12px; font-size: 12.5px; line-height: 1.55; color: var(--mut); }
+  .proto-row i { flex-shrink: 0; margin-top: 2px; font-size: 15px; color: var(--mut); }
+  .proto-row b { color: var(--ink); font-weight: 600; }
+
+  .proto-schema {
+    display: flex;
+    gap: 4px;
+    margin-top: 14px;
+  }
+
+  .proto-schema .ph-seg {
+    flex: 1;
+    height: 22px;
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+    font: 600 10px var(--mono);
+    color: var(--mut);
+    background: var(--line);
+  }
+
+  .proto-schema .ph-seg.b { background: rgba(16, 185, 129, 0.18); color: var(--ok); }
+  .proto-schema .ph-seg.now { outline: 2px solid var(--accent); outline-offset: 1px; color: var(--ink); }
+
+  .proto-checkpoint {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border: 1px dashed var(--line2);
+    border-radius: 12px;
+    font-size: 12px;
+    color: var(--mut);
+    line-height: 1.55;
+  }
+
+  .proto-checkpoint .cp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .proto-checkpoint .cp-col b { display: block; font: 600 16px var(--mono); color: var(--ink); }
+
+  .proto-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+  /* строка активного протокола в чек-ине дня */
+  .habit-proto-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    border-radius: 12px;
+    background: rgba(16, 185, 129, 0.06);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--mut);
+    margin-bottom: 8px;
+  }
+
+  .habit-proto-row i { color: var(--ok); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .habit-proto-row b { color: var(--ink); }
+
+  /* === Биологический возраст ============================================== */
+  .bioage-num { font: 600 44px var(--mono); color: var(--ink); line-height: 1; }
+  .bioage-num small { font-size: 16px; color: var(--mut); font-weight: 500; }
+
+  .bioage-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+
+  .bioage-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 600 11px var(--mono);
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    padding: 4px 11px;
+    color: var(--mut);
+  }
+
+  .bioage-chip.minus { color: var(--ok); border-color: rgba(16, 185, 129, 0.4); }
+  .bioage-chip.plus { color: var(--bad); border-color: rgba(244, 63, 94, 0.4); }
+
+  /* === Тренировки ========================================================= */
+  .wk-day {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    margin-bottom: 8px;
+    background: var(--card-inner);
+  }
+
+  .wk-day:hover { border-color: var(--line2); }
+  .wk-day.active { border-color: var(--accent); }
+
+  .wk-day .wk-date { width: 76px; flex-shrink: 0; font-size: 12px; color: var(--mut); }
+  .wk-day .wk-date b { display: block; color: var(--ink); font-size: 13px; }
+
+  .wk-strain-bar { flex: 1; height: 7px; border-radius: 99px; background: var(--line); overflow: hidden; }
+  .wk-strain-fill { height: 100%; border-radius: 99px; background: #f43f5e; transform-origin: left center; }
+
+  .wk-metrics { display: flex; gap: 14px; font: 600 12px var(--mono); color: var(--ink); flex-shrink: 0; }
+  .wk-metrics .m { text-align: right; }
+  .wk-metrics .m small { display: block; font: 500 9px var(--mono); color: var(--mut); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .wk-sets { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .wk-set { display: flex; gap: 10px; font: 500 12.5px var(--mono); color: var(--ink); align-items: baseline; }
+  .wk-set .nm { color: var(--mut); min-width: 120px; }
+
+  /* === Тост со звездой GitHub ============================================ */
+  .star-toast {
+    position: fixed;
+    bottom: 26px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 18px;
+    background: var(--card-outer);
+    border: 1px solid var(--line2);
+    border-radius: 14px;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
+    font-size: 13px;
+    color: var(--ink);
+    flex-wrap: wrap;
+    max-width: min(540px, calc(100vw - 32px));
+  }
+
+  .star-toast .actions { display: flex; gap: 8px; }
+
+  /* подсветка выбранного дня в таймлайне */
+  .tl-day.selected-day {
+    border-color: var(--warn) !important;
+    background: rgba(234, 179, 8, 0.05);
+  }
+
+  @media (max-width: 760px) {
+    .topbar { flex-wrap: wrap; row-gap: 10px; }
+    .day-selector { order: 3; }
+    .day-selector .day-label { min-width: 72px; }
+    .mood-quad-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -3330,10 +3750,20 @@
         <h1 id="zoneTitle">Overview / Сегодня</h1>
       </div>
     </div>
+    <div class="day-selector" id="daySelector" role="group" aria-label="Выбор дня">
+      <button type="button" id="dayPrevBtn" aria-label="Предыдущий день" onclick="shiftSelectedDay(1)"><i class="ph-light ph-caret-left"></i></button>
+      <span class="day-label" id="dayLabel">Сегодня</span>
+      <button type="button" id="dayNextBtn" aria-label="Следующий день" onclick="shiftSelectedDay(-1)" disabled><i class="ph-light ph-caret-right"></i></button>
+    </div>
     <span class="pill" id="topPill">
       <span class="d" id="pillDot"></span>
       <span id="pillTxt">Восстановление: —</span>
     </span>
+  </div>
+  <div class="past-day-banner" id="pastDayBanner" style="display:none;">
+    <i class="ph-light ph-clock-counter-clockwise"></i>
+    <span id="pastDayBannerTxt">смотришь прошлый день</span>
+    <button type="button" onclick="setSelectedOffset(0)">вернуться к сегодня</button>
   </div>
 
   <div class="content-wrapper">
@@ -3378,9 +3808,17 @@
               </div>
               
               <div class="metrics-grid" id="board"></div>
+
+              <div class="rec-decomp-toggle">
+                <button class="btn-secondary" id="recDecompBtn" onclick="toggleRecDecomp()">
+                  <i class="ph-light ph-stack"></i> Из чего сложился
+                </button>
+                <span class="approx-chip" id="recDecompChip" style="display:none;"><i class="ph-light ph-equals"></i> приближение</span>
+              </div>
+              <div class="rec-decomp" id="recDecomp" style="display:none;"></div>
             </div>
           </div>
-          
+
           <!-- Готовность к дню -->
           <div class="card-outer col-8 today-widget" data-widget="readiness">
             <div class="card-inner">
@@ -3456,6 +3894,20 @@
             </div>
           </div>
 
+          <!-- Биологический возраст (фитнес-возраст по VO2max): только при данных -->
+          <div class="card-outer col-4 today-widget" data-widget="bioage" id="bioageCard" style="display:none;">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Биологический возраст</h3>
+                  <div class="sub">оценка по кардиофитнесу (VO2max) — не клиника</div>
+                </div>
+                <i class="ph-light ph-hourglass-medium card-header-icon"></i>
+              </div>
+              <div id="bioageBody"></div>
+            </div>
+          </div>
+
         </div>
 
         <div class="today-hidden-panel" id="todayHiddenPanel" style="display:none;"></div>
@@ -3471,7 +3923,7 @@
               <div class="card-header">
                 <div class="card-title-group">
                   <h3>Непрерывная частота сердечных сокращений (ЧСС)</h3>
-                  <div class="sub">данные за последние 24 часа</div>
+                  <div class="sub" id="pulseDaySub">данные за последние 24 часа</div>
                 </div>
                 <i class="ph-light ph-heart card-header-icon"></i>
               </div>
@@ -3523,6 +3975,34 @@
                 <i class="ph-light ph-calendar-check card-header-icon"></i>
               </div>
               <div id="pulseCalBody"></div>
+            </div>
+          </div>
+
+          <!-- Циркадное колесо «Ты здесь» (эталон Flo cycle wheel): только при DATA.circadian -->
+          <div class="card-outer col-6" id="pulseWheelCard" style="display:none;">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Циркадное колесо · ты здесь</h3>
+                  <div class="sub">24 часа дня фазами — маркер показывает текущий момент</div>
+                </div>
+                <i class="ph-light ph-compass card-header-icon"></i>
+              </div>
+              <div id="pulseWheelBody"></div>
+            </div>
+          </div>
+
+          <!-- Кольцо эмоций (эталон How We Feel check-in ring) -->
+          <div class="card-outer col-6" id="moodRingCard">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Эмоции · чек-ины</h3>
+                  <div class="sub">доля дней с отмеченной эмоцией за 14 дней</div>
+                </div>
+                <i class="ph-light ph-smiley card-header-icon"></i>
+              </div>
+              <div id="moodRingBody"></div>
             </div>
           </div>
 
@@ -4139,9 +4619,9 @@
         </div>
       </section>
 
-      <!-- SCREEN 11: WORKOUTS (empty-state) -->
+      <!-- SCREEN 11: WORKOUTS — дни с нагрузкой из strain-тренда (или empty-state) -->
       <section class="zone" id="z-workouts">
-        <div class="bento-grid">
+        <div class="bento-grid" id="workoutsContent">
           <div class="card-outer col-12">
             <div class="card-inner" style="min-height: 420px;">
               <div class="empty-state">
@@ -4163,9 +4643,9 @@
         <div class="bento-grid" id="dnaContent"></div>
       </section>
 
-      <!-- SCREEN 12: PROTOCOLS (empty-state) -->
+      <!-- SCREEN 12: PROTOCOLS — n-of-1 карточки из движка (или empty-state) -->
       <section class="zone" id="z-protocols">
-        <div class="bento-grid">
+        <div class="bento-grid" id="protocolsContent">
           <div class="card-outer col-12">
             <div class="card-inner" style="min-height: 420px;">
               <div class="empty-state">
@@ -4593,6 +5073,163 @@ const todayKey = () => {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 };
 
+// ============================================================
+// ГЛОБАЛЬНЫЙ СЕЛЕКТОР ДНЯ (топбар, эталон WHOOP period arrows).
+// Единое состояние selectedDay: in-memory SELECTED_OFFSET +
+// sessionStorage (перезапуск вкладки возвращает на сегодня).
+// ============================================================
+const SELECTED_DAY_SS = 'openhealth.selectedDay';
+let SELECTED_OFFSET = 0; // 0 = сегодня, N = дней назад от реального сегодня
+
+function realToday0() {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function selectedDayDate() {
+  const t = realToday0();
+  return new Date(t.getFullYear(), t.getMonth(), t.getDate() - SELECTED_OFFSET);
+}
+
+function selectedDayKey() {
+  const d = selectedDayDate();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// Назад можно до края trend30: последняя точка ряда = дата выгрузки (parseDataDate).
+function maxDayOffset() {
+  const len = Array.isArray(DATA.trend30Rec) ? DATA.trend30Rec.length : 0;
+  if (!len) return 0;
+  const dd = parseDataDate();
+  const edge = new Date(dd.getFullYear(), dd.getMonth(), dd.getDate() - (len - 1));
+  return Math.max(0, Math.round((realToday0() - edge) / 864e5));
+}
+
+// Индекс выбранного дня в trend-ряду длиной len (последний элемент = дата выгрузки).
+function dayTrendIndex(len) {
+  if (!len) return -1;
+  const dd = parseDataDate();
+  const diff = Math.round((new Date(dd.getFullYear(), dd.getMonth(), dd.getDate()) - selectedDayDate()) / 864e5);
+  const idx = len - 1 - diff;
+  return (idx >= 0 && idx < len) ? idx : -1;
+}
+
+// Метрики выбранного дня: сегодня — свежие значения движка, прошлое — честно
+// из trend-рядов (чего в рядах нет — null, не выдумываем).
+function selectedDayMetrics() {
+  if (SELECTED_OFFSET === 0) {
+    return { recovery: DATA.recovery, hrv: DATA.hrv, rhr: DATA.rhr, sleep: DATA.sleep, strain: DATA.strain, isToday: true };
+  }
+  const pick = arr => {
+    const a = Array.isArray(arr) ? arr : [];
+    const i = dayTrendIndex(a.length);
+    return i >= 0 ? a[i] : null;
+  };
+  return {
+    recovery: pick(DATA.trend30Rec),
+    hrv: pick(DATA.trend30Hrv),
+    rhr: pick(DATA.trend30Rhr),
+    sleep: pick(DATA.trendSleep),
+    strain: pick(DATA.trendStrain),
+    isToday: false
+  };
+}
+
+function dayLabelText() {
+  if (SELECTED_OFFSET === 0) return 'Сегодня';
+  if (SELECTED_OFFSET === 1) return 'Вчера';
+  const d = selectedDayDate();
+  return RU_WEEKDAYS_SHORT[d.getDay()] + ', ' + d.getDate() + ' ' + RU_MONTHS_SHORT[d.getMonth()];
+}
+
+function renderDaySelector() {
+  const lbl = document.getElementById('dayLabel');
+  const prev = document.getElementById('dayPrevBtn');
+  const next = document.getElementById('dayNextBtn');
+  if (lbl) lbl.textContent = dayLabelText();
+  if (prev) prev.disabled = SELECTED_OFFSET >= maxDayOffset();
+  if (next) next.disabled = SELECTED_OFFSET <= 0;
+}
+
+function updatePastDayBanner() {
+  const b = document.getElementById('pastDayBanner');
+  if (!b) return;
+  const on = SELECTED_OFFSET > 0;
+  b.style.display = on ? 'flex' : 'none';
+  const t = document.getElementById('pastDayBannerTxt');
+  if (t && on) t.textContent = 'смотришь прошлый день · ' + dayLabelText().toLowerCase();
+}
+
+function updatePulseDayHeader() {
+  const el = document.getElementById('pulseDaySub');
+  if (!el) return;
+  el.textContent = SELECTED_OFFSET === 0
+    ? 'данные за последние 24 часа'
+    : 'выбран день: ' + dayLabelText().toLowerCase() + ' — внутридневной ряд хранится только за сегодня';
+}
+
+function setSelectedOffset(off) {
+  off = Math.max(0, Math.min(off, maxDayOffset()));
+  if (off === SELECTED_OFFSET) { renderDaySelector(); return; }
+  SELECTED_OFFSET = off;
+  try { sessionStorage.setItem(SELECTED_DAY_SS, selectedDayKey()); } catch (e) { /* private mode */ }
+  onSelectedDayChange();
+}
+
+function shiftSelectedDay(delta) { setSelectedOffset(SELECTED_OFFSET + delta); }
+
+function restoreSelectedDay() {
+  try {
+    const k = sessionStorage.getItem(SELECTED_DAY_SS);
+    if (!k) return;
+    const m = k.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return;
+    const d = new Date(+m[1], +m[2] - 1, +m[3]);
+    const off = Math.round((realToday0() - d) / 864e5);
+    SELECTED_OFFSET = Math.max(0, Math.min(off, maxDayOffset()));
+  } catch (e) { /* ignore */ }
+}
+
+function onSelectedDayChange() {
+  initHabitsState();       // чек-ин читает/пишет openhealth.habits.<selectedDay>
+  updateTodayScreen();
+  animateRecoveryRing();   // кольцо анимируется на смену дня
+  renderDaySelector();
+  updatePastDayBanner();
+  updatePulseDayHeader();
+  const a = document.querySelector('aside nav a.active');
+  const z = a ? a.dataset.z : null;
+  if (z === 'timeline') renderTimeline();
+  if (z === 'pulse') renderPulseMoodRing();
+}
+
+// Свайп влево/вправо на тач листает дни (threshold 60px, только зоны
+// «Сегодня»/«Пульс дня», не конфликтует с DnD edit-mode и скраббингом графиков).
+function bindDaySwipe() {
+  const host = document.querySelector('.content-wrapper');
+  if (!host || host._swipeBound) return;
+  host._swipeBound = true;
+  let sx = 0, sy = 0, track = false;
+  host.addEventListener('touchstart', e => {
+    track = false;
+    if (todayEditMode) return;
+    const a = document.querySelector('aside nav a.active');
+    const z = a ? a.dataset.z : null;
+    if (z !== 'today' && z !== 'pulse') return;
+    if (e.target && e.target.closest && e.target.closest('svg.has-xhair')) return;
+    const t = e.touches[0];
+    sx = t.clientX; sy = t.clientY; track = true;
+  }, { passive: true });
+  host.addEventListener('touchend', e => {
+    if (!track) return;
+    track = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    shiftSelectedDay(dx > 0 ? 1 : -1); // вправо = назад во времени
+  }, { passive: true });
+}
+
 const col = v => v >= 67 ? "var(--ok)" : v >= 34 ? "var(--warn)" : "var(--bad)";
 const word = v => v >= 67 ? "Зелёная зона — организм готов к нагрузкам" : v >= 34 ? "Жёлтая зона — умеренный режим" : "Красная зона — необходим глубокий покой";
 const mood = v => v >= 67 ? "😎" : v >= 34 ? "🙂" : "😴";
@@ -4665,25 +5302,43 @@ function animateSparkline(lineId, areaId) {
 }
 
 function updateTodayScreen() {
-  const v = DATA.recovery;
-  
-  document.getElementById('pillDot').style.background = col(v);
-  document.getElementById('pillTxt').textContent = "recovery " + v + "%";
-  document.getElementById('navRec').textContent = v + "%";
-  document.getElementById('navRec').style.color = col(v);
+  const m = selectedDayMetrics();
+  const v = m.recovery;
+  const has = x => typeof x === 'number' && isFinite(x);
 
-  document.getElementById('recNum').textContent = v;
-  document.getElementById('recNum').style.color = col(v);
-  document.getElementById('recState').textContent = word(v);
-  document.getElementById('recState').style.color = col(v);
-  document.getElementById('recBlurb').textContent = `HRV ${DATA.hrv} мс  ·  RHR ${DATA.rhr} уд/мин  ·  сон ${DATA.sleep} ч  ·  strain ${DATA.strain}`;
+  // Бейдж recovery в topbar следует выбранному дню; бейдж в меню — всегда сегодня.
+  document.getElementById('pillDot').style.background = has(v) ? col(v) : 'var(--mut)';
+  document.getElementById('pillTxt').textContent = 'recovery ' + (has(v) ? v + '%' : '—') + (m.isToday ? '' : ' · ' + dayLabelText().toLowerCase());
+  document.getElementById('navRec').textContent = DATA.recovery + "%";
+  document.getElementById('navRec').style.color = col(DATA.recovery);
+
+  document.getElementById('recNum').textContent = has(v) ? v : '—';
+  document.getElementById('recNum').style.color = has(v) ? col(v) : 'var(--mut)';
+  document.getElementById('recState').textContent = has(v) ? word(v) : 'Нет данных за этот день';
+  document.getElementById('recState').style.color = has(v) ? col(v) : 'var(--mut)';
+  const blurbParts = [];
+  if (has(m.hrv)) blurbParts.push(`HRV ${m.hrv} мс`);
+  if (has(m.rhr)) blurbParts.push(`RHR ${m.rhr} уд/мин`);
+  if (has(m.sleep)) blurbParts.push(`сон ${m.sleep} ч`);
+  if (has(m.strain)) blurbParts.push(`strain ${m.strain}`);
+  document.getElementById('recBlurb').textContent = blurbParts.length
+    ? blurbParts.join('  ·  ')
+    : 'За этот день в выгрузке нет метрик tracker.';
 
   document.getElementById('board').innerHTML = [
-    ["HRV", DATA.hrv, "мс"],
-    ["Пульс покоя", DATA.rhr, "уд/мин"],
-    ["Сон", DATA.sleep, "ч"],
-    ["Strain", DATA.strain, "/21"]
+    ["HRV", m.hrv, "мс"],
+    ["Пульс покоя", m.rhr, "уд/мин"],
+    ["Сон", m.sleep, "ч"],
+    ["Strain", m.strain, "/21"]
   ].map(([k, val, u]) => {
+    if (!has(val)) {
+      return `
+    <div class="metric-tile">
+      <div class="k">${k}</div>
+      <div class="v mono" style="color:var(--mut);">—</div>
+      <div class="u">${u}</div>
+    </div>`;
+    }
     const dec = Number.isInteger(val) ? 0 : 1;
     return `
     <div class="metric-tile">
@@ -4693,17 +5348,19 @@ function updateTodayScreen() {
     </div>
   `; }).join('');
 
-  // Пульс: состояние персонажа = зона recovery (свечение/тонус через CSS-классы).
+  // Пульс: состояние персонажа = зона recovery сегодняшнего дня (маскот живёт в «сейчас»).
   const face = document.getElementById('docFace');
   face.classList.remove('zone-green', 'zone-yellow', 'zone-red');
-  face.classList.add(v >= 67 ? 'zone-green' : v >= 34 ? 'zone-yellow' : 'zone-red');
-  document.getElementById('docMini').textContent = say(v);
+  face.classList.add(DATA.recovery >= 67 ? 'zone-green' : DATA.recovery >= 34 ? 'zone-yellow' : 'zone-red');
+  document.getElementById('docMini').textContent = say(DATA.recovery);
 
   document.getElementById('readiness').textContent = DATA.readiness;
   document.getElementById('actTitle').textContent = DATA.action.title;
   document.getElementById('actWhy').textContent = DATA.action.why;
 
   renderHabits();
+  renderRecDecomp();
+  renderBioAge();
 }
 
 // --- Единый чек-ин: DATA.habits — один источник состояния для «Сегодня» и Журнала.
@@ -4711,7 +5368,7 @@ function updateTodayScreen() {
 // Формат значения дня: boolean-привычка -> true/false (как раньше),
 // scale/number-параметр -> число (1-5 или значение в единицах). Старые записи
 // из чистых boolean читаются без миграции.
-const HABITS_DONE_KEY = () => 'openhealth.habits.' + todayKey();
+const HABITS_DONE_KEY = () => 'openhealth.habits.' + selectedDayKey();
 const HABITS_LIST_KEY = 'openhealth.habits.list';
 const HABIT_TYPES = ['boolean', 'scale', 'number'];
 
@@ -4764,7 +5421,13 @@ function initHabitsState() {
   });
   DATA.allBehaviors.forEach(b => { b.selected = DATA.habits.some(h => h.id === b.id); });
 
-  // 3. Отметки за сегодня — из localStorage (boolean или число — по типу параметра).
+  // 3. Отметки за выбранный день — из localStorage (boolean или число по типу).
+  // Сначала сбрасываем: при листании дней отметки другого дня не должны «протекать».
+  let dayRecordExists = false;
+  try { dayRecordExists = localStorage.getItem(HABITS_DONE_KEY()) != null; } catch (e) { /* ignore */ }
+  if (SELECTED_OFFSET > 0 || dayRecordExists) {
+    DATA.habits.forEach(h => { h.done = false; h.value = null; });
+  }
   try {
     const done = JSON.parse(localStorage.getItem(HABITS_DONE_KEY()) || 'null');
     if (done && typeof done === 'object') {
@@ -4799,6 +5462,29 @@ function persistHabits() {
 
 function habitItemHTML(h) {
   const type = normalizeHabitType(h.type);
+
+  // «Настроение / энергия» — двухшаговый чек-ин эмоции (How We Feel):
+  // квадрант → слово; чип с выбранным словом в цвете квадранта.
+  if (h.id === MOOD_HABIT_ID) {
+    const mood = getMoodFor(selectedDayKey());
+    const q = mood && MOOD_QUADRANTS[mood.quadrant];
+    return `
+      <div class="habit-item no-toggle ${mood ? 'done' : ''}" data-habit="${h.id}">
+        <div class="habit-icon" style="font-size:17px;">
+          ${mood && mood.energy ? MOOD_EMOJI[Math.max(0, Math.min(4, Math.round(mood.energy) - 1))] : `<i class="ph-light ph-smiley"></i>`}
+        </div>
+        <div class="habit-details">
+          <span class="habit-label">${escapeHtml(h.label)}</span>
+          ${mood && q
+            ? `<span class="mood-chip" style="color:${q.color}; border-color:${q.color}66;" onclick="openMoodCheckin()" title="${escapeHtml(q.label)} · изменить">
+                 <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${q.color};"></span>${escapeHtml(mood.word)} · ${mood.energy || '—'}/5
+               </span>`
+            : `<button type="button" class="btn-secondary" style="margin-top:4px; font-size:11px; padding:4px 11px; align-self:flex-start;" onclick="openMoodCheckin()">
+                 <i class="ph-light ph-plus-circle"></i> Отметить эмоцию
+               </button>`}
+        </div>
+      </div>`;
+  }
 
   if (type === 'scale') {
     const dots = [1, 2, 3, 4, 5].map(n => `
@@ -4853,9 +5539,10 @@ function habitItemHTML(h) {
 }
 
 function renderHabits() {
-  const html = DATA.habits.length
+  // Активный протокол добавляет строку дня в чек-ин (фаза A/B по выбранному дню).
+  const html = protocolChecklistHTML() + (DATA.habits.length
     ? DATA.habits.map(habitItemHTML).join('')
-    : '<p class="muted" style="font-size:12px; margin:8px 0;">Список пуст — выбери привычки в Журнале, раздел «Настройка».</p>';
+    : '<p class="muted" style="font-size:12px; margin:8px 0;">Список пуст — выбери привычки в Журнале, раздел «Настройка».</p>');
 
   const doneCount = DATA.habits.filter(h => h.done).length;
   const totalCount = DATA.habits.length;
@@ -4913,9 +5600,17 @@ function setHabitNumber(id, raw) {
 }
 
 function animateRecoveryRing() {
-  const v = DATA.recovery;
+  const v = selectedDayMetrics().recovery;
   const C = 2 * Math.PI * 70;
   const arc = document.getElementById('ringArc');
+
+  if (typeof v !== 'number' || !isFinite(v)) {
+    // Нет данных за выбранный день — пустое кольцо, без выдуманного значения.
+    gsap.killTweensOf(arc);
+    arc.style.stroke = 'var(--line2)';
+    gsap.to(arc, { strokeDashoffset: C, duration: 0.4, ease: 'power2.out' });
+    return;
+  }
 
   arc.style.stroke = col(v);
 
@@ -5103,7 +5798,7 @@ function restoreTodayWidget(id) {
 function renderTodayHiddenPanel() {
   const panel = document.getElementById('todayHiddenPanel');
   if (!panel) return;
-  const hidden = todayLayoutFromDOM().hidden;
+  const hidden = todayLayoutFromDOM().hidden.filter(id => TODAY_WIDGETS[id]);
   if (!todayEditMode || !hidden.length) { panel.style.display = 'none'; panel.innerHTML = ''; return; }
   panel.style.display = '';
   panel.innerHTML = '<span class="lbl">Скрытые блоки</span>' + hidden.map(id => `
@@ -5502,6 +6197,9 @@ function initPulseScreen() {
 
   renderPulseCalendar();
   renderPulseEnergy();
+  renderPulseWheel();
+  renderPulseMoodRing();
+  updatePulseDayHeader();
 }
 
 // ============================================================
@@ -5629,7 +6327,8 @@ function renderPulseEnergy() {
   let curve = [];
   try {
     if (c && Array.isArray(c.curve) && c.curve.length >= 4) {
-      curve = c.curve.map(p => typeof p === 'number' ? p : (p && typeof p.v === 'number' ? p.v : NaN));
+      // Поддерживаем оба формата точки: {t, v} и {t, e} (реальная выгрузка отдаёт e).
+      curve = c.curve.map(p => typeof p === 'number' ? p : (p && typeof p.v === 'number' ? p.v : (p && typeof p.e === 'number' ? p.e : NaN)));
     }
   } catch (e) { curve = []; }
   if (!curve.length || curve.some(v => !isFinite(v))) { card.style.display = 'none'; return; }
@@ -5868,6 +6567,9 @@ function toggleBiomarkerDetail(idx) {
           </div>
         </div>
 
+        ${bioPersonalRangeHTML(b)}
+        ${bioPeriodsHTML(b)}
+
         <p class="bio-discuss">${b.discuss}</p>
 
         <div style="margin-top: 16px; display:flex; gap:10px; flex-wrap:wrap;">
@@ -5887,6 +6589,66 @@ function toggleBiomarkerDetail(idx) {
   // Значение в панели — count-up 0.8 (FRAMES); суффикс единиц — отдельный элемент.
   const dec = Number.isInteger(b.value) ? 0 : 1;
   countUp(document.getElementById('bioDetailNum'), b.value, { decimals: dec });
+}
+
+// Полоса «личный диапазон» (эталон Visible score-rangebar): min-max собственной
+// истории маркера с пином последнего значения. Меньше двух точек — честный текст.
+function bioPersonalRangeHTML(b) {
+  const hist = (Array.isArray(b.trend) ? b.trend : []).filter(v => typeof v === 'number' && isFinite(v));
+  if (hist.length < 2) {
+    return `
+      <div class="bio-prange">
+        <span class="muted" style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">Личный диапазон</span>
+        <p class="rdc-note" style="margin-top:6px;">Пока ${hist.length === 1 ? 'одно измерение' : 'нет измерений'} — полоса личного диапазона появится после второго анализа.</p>
+      </div>`;
+  }
+  const mn = Math.min(...hist), mx = Math.max(...hist);
+  const last = hist[hist.length - 1];
+  const span = (mx - mn) || 1;
+  const pos = Math.max(3, Math.min(97, ((last - mn) / span) * 100));
+  const st = BIO_STATUS[b.status] || { color: 'var(--mut)' };
+  return `
+    <div class="bio-prange">
+      <span class="muted" style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">Личный диапазон · ${hist.length} измерений</span>
+      <div class="bio-prange-track">
+        <span class="bio-prange-pin-cap" style="left:${pos.toFixed(1)}%;">${last}</span>
+        <span class="bio-prange-pin" style="left:${pos.toFixed(1)}%; background:${st.color};"></span>
+      </div>
+      <div class="bio-prange-ends"><span>min ${mn}</span><span>max ${mx}</span></div>
+    </div>`;
+}
+
+// Таблица динамики 7/30/90 дней (эталон Bevel trends periods) — только при
+// датированной истории в DATA.lab.history; иначе честная заглушка.
+function bioPeriodsHTML(b) {
+  const hist = (DATA.lab && Array.isArray(DATA.lab.history) ? DATA.lab.history : [])
+    .filter(e => e && (e.name === b.name || e.marker === b.name))
+    .map(e => ({ t: Date.parse(e.date), v: +e.value }))
+    .filter(e => isFinite(e.t) && isFinite(e.v))
+    .sort((a, z) => a.t - z.t);
+
+  if (!hist.length) {
+    return `<p class="rdc-note" style="margin-top:10px;"><i class="ph-light ph-table"></i> Динамика по периодам 7/30/90 дней появится, когда в истории лаборатории накопятся датированные значения.</p>`;
+  }
+
+  const now = Date.now();
+  const rows = [7, 30, 90].map(days => {
+    const cur = hist.filter(e => now - e.t <= days * 864e5);
+    const prev = hist.filter(e => now - e.t > days * 864e5 && now - e.t <= 2 * days * 864e5);
+    if (!cur.length) return `<tr><td>${days} дн.</td><td class="mono muted">нет точек</td><td class="mono muted">—</td></tr>`;
+    const avg = avgArr(cur.map(e => e.v));
+    const pAvg = prev.length ? avgArr(prev.map(e => e.v)) : null;
+    const delta = pAvg != null ? avg - pAvg : null;
+    const dTxt = delta == null ? '—'
+      : `<span style="color:${delta >= 0 ? 'var(--ok)' : 'var(--bad)'};">${delta >= 0 ? '↑ +' : '↓ '}${delta.toFixed(1)}</span>`;
+    return `<tr><td>${days} дн.</td><td class="mono">${avg.toFixed(1)} <span class="muted">${escapeHtml(b.unit)}</span></td><td class="mono">${dTxt}</td></tr>`;
+  }).join('');
+
+  return `
+    <table class="bio-periods">
+      <thead><tr><th>Период</th><th>Среднее</th><th>Δ к прошлому окну</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 }
 
 function simulateBiomarkerUpload() {
@@ -7281,6 +8043,826 @@ function attachCrosshair(svgOrId, cfg) {
   svg.addEventListener('touchend', hide);
 }
 
+// ============================================================
+// ЭМОЦИИ (эталон How We Feel): двухшаговый чек-ин квадрант → слово.
+// Запись дня: openhealth.mood.YYYY-MM-DD = {quadrant, word, energy}.
+// ============================================================
+
+const MOOD_DAY_KEY = k => 'openhealth.mood.' + k;
+const MOOD_QUADRANTS = {
+  hu: {
+    label: 'Высокая энергия · неприятно', short: 'Напряжение', color: '#f43f5e', energy: 4,
+    words: ['Злость', 'Тревога', 'Паника', 'Раздражение', 'Стресс', 'Напряжение', 'Испуг', 'Возмущение', 'Обида']
+  },
+  hp: {
+    label: 'Высокая энергия · приятно', short: 'Подъём', color: '#fbbf24', energy: 4,
+    words: ['Радость', 'Восторг', 'Азарт', 'Воодушевление', 'Энергичность', 'Гордость', 'Интерес', 'Игривость', 'Оптимизм']
+  },
+  lu: {
+    label: 'Низкая энергия · неприятно', short: 'Упадок', color: '#60a5fa', energy: 2,
+    words: ['Грусть', 'Усталость', 'Апатия', 'Скука', 'Одиночество', 'Разочарование', 'Опустошённость', 'Уныние', 'Вина']
+  },
+  lp: {
+    label: 'Низкая энергия · приятно', short: 'Покой', color: '#34d399', energy: 2,
+    words: ['Спокойствие', 'Умиротворение', 'Благодарность', 'Расслабленность', 'Удовлетворённость', 'Принятие', 'Безмятежность', 'Уют', 'Нежность']
+  }
+};
+
+function getMoodFor(key) {
+  try {
+    const v = JSON.parse(localStorage.getItem(MOOD_DAY_KEY(key)) || 'null');
+    if (v && v.word && MOOD_QUADRANTS[v.quadrant]) return v;
+  } catch (e) { /* повреждённая запись */ }
+  return null;
+}
+
+let moodFlow = null; // {quadrant, word, energy} — состояние модала
+
+function openMoodCheckin() {
+  const existing = getMoodFor(selectedDayKey());
+  moodFlow = existing
+    ? { quadrant: existing.quadrant, word: existing.word, energy: existing.energy || MOOD_QUADRANTS[existing.quadrant].energy }
+    : { quadrant: null, word: null, energy: null };
+  openModal('Эмоция дня', dayLabelText(), '<div id="moodFlowBody"></div>');
+  renderMoodStep();
+}
+
+function renderMoodStep() {
+  const body = document.getElementById('moodFlowBody');
+  if (!body || !moodFlow) return;
+
+  // Шаг 1: квадрант (энергия × приятность).
+  if (!moodFlow.quadrant) {
+    body.innerHTML = `
+      <p class="muted" style="font-size:12.5px; margin:0 0 14px;">Выбери зону, которая ближе всего к состоянию: вертикаль — энергия, горизонталь — приятность.</p>
+      <div class="mood-quad-grid">
+        ${['hu', 'hp', 'lu', 'lp'].map(q => {
+          const m = MOOD_QUADRANTS[q];
+          return `
+          <button type="button" class="mood-quad" style="border-color:${m.color}55;" onclick="pickMoodQuadrant('${q}')">
+            <div class="q-dot" style="background:${m.color};"></div>
+            <div class="q-name">${m.short}</div>
+            <div class="q-sub">${m.label}</div>
+          </button>`;
+        }).join('')}
+      </div>`;
+    gsap.fromTo('#moodFlowBody .mood-quad', { opacity: 0, y: 12 },
+      { opacity: 1, y: 0, duration: 0.4, stagger: 0.06, ease: 'power2.out', clearProps: 'opacity,transform' });
+    return;
+  }
+
+  // Шаг 2: слово квадранта + энергия 1-5.
+  const m = MOOD_QUADRANTS[moodFlow.quadrant];
+  const dots = [1, 2, 3, 4, 5].map(n => `
+    <button type="button" class="scale-dot ${moodFlow.energy === n ? 'on' : ''}" aria-pressed="${moodFlow.energy === n}"
+            onclick="moodFlow.energy=${n}; renderMoodStep();">${n}</button>`).join('');
+  body.innerHTML = `
+    <button type="button" class="btn-secondary mood-step-back" onclick="moodFlow.quadrant=null; moodFlow.word=null; renderMoodStep();">
+      <i class="ph-light ph-arrow-left"></i> Другая зона
+    </button>
+    <div class="cwheel-phase-row active" style="margin-bottom:10px;">
+      <span class="d" style="background:${m.color};"></span><span>${m.label}</span>
+    </div>
+    <div class="mood-words-grid">
+      ${m.words.map(w => `
+        <button type="button" class="mood-word ${moodFlow.word === w ? 'on' : ''}"
+                style="${moodFlow.word === w ? `background:${m.color}22; border-color:${m.color}; color:${m.color};` : ''}"
+                onclick="moodFlow.word='${w}'; renderMoodStep();">${w}</button>`).join('')}
+    </div>
+    <div class="mood-energy-row">
+      <span class="lbl">Энергия</span>
+      <span class="scale-dots" role="group" aria-label="Энергия 1-5">${dots}</span>
+      <span class="mono muted" style="font-size:11px;">${moodFlow.energy ? moodFlow.energy + '/5' : '—'}</span>
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:18px;">
+      ${getMoodFor(selectedDayKey()) ? '<button type="button" class="btn-secondary" onclick="clearMood()"><i class="ph-light ph-eraser"></i> Очистить</button>' : ''}
+      <button type="button" class="btn-primary" ${moodFlow.word ? '' : 'disabled'} onclick="saveMood()">
+        <i class="ph-light ph-check"></i> Сохранить
+      </button>
+    </div>`;
+  if (!moodFlow.energy) moodFlow.energy = m.energy;
+}
+
+function pickMoodQuadrant(q) {
+  if (!MOOD_QUADRANTS[q] || !moodFlow) return;
+  moodFlow.quadrant = q;
+  moodFlow.word = null;
+  moodFlow.energy = MOOD_QUADRANTS[q].energy;
+  renderMoodStep();
+}
+
+function saveMood() {
+  if (!moodFlow || !moodFlow.quadrant || !moodFlow.word) return;
+  const rec = { quadrant: moodFlow.quadrant, word: moodFlow.word, energy: moodFlow.energy || MOOD_QUADRANTS[moodFlow.quadrant].energy };
+  try { localStorage.setItem(MOOD_DAY_KEY(selectedDayKey()), JSON.stringify(rec)); } catch (e) { /* private mode */ }
+  // Синхронизируем параметр «Настроение / энергия» в чек-ине (шкала = энергия).
+  const h = DATA.habits.find(x => x.id === MOOD_HABIT_ID);
+  if (h) { h.value = rec.energy; h.done = true; persistHabits(); }
+  closeModal();
+  renderHabits();
+  afterMoodChange();
+  showToast('Эмоция сохранена: ' + rec.word);
+}
+
+function clearMood() {
+  try { localStorage.removeItem(MOOD_DAY_KEY(selectedDayKey())); } catch (e) { /* ignore */ }
+  const h = DATA.habits.find(x => x.id === MOOD_HABIT_ID);
+  if (h) { h.value = null; h.done = false; persistHabits(); }
+  closeModal();
+  renderHabits();
+  afterMoodChange();
+  showToast('Запись эмоции удалена');
+}
+
+function afterMoodChange() {
+  const a = document.querySelector('aside nav a.active');
+  const z = a ? a.dataset.z : null;
+  if (z === 'timeline') renderTimeline();
+  if (z === 'pulse') renderPulseMoodRing();
+}
+
+// Кольцо чек-инов на «Пульсе дня»: дуга = доля дней с эмоцией за 14 дней.
+function renderPulseMoodRing() {
+  const body = document.getElementById('moodRingBody');
+  if (!body) return;
+  const today = realToday0();
+  let withMood = 0;
+  const lastDays = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const mood = getMoodFor(key);
+    if (mood) withMood++;
+    lastDays.push({ key, mood });
+  }
+  const frac = withMood / 14;
+  const C = 2 * Math.PI * 55;
+  const todayMood = lastDays[lastDays.length - 1].mood;
+  const ringColor = todayMood ? MOOD_QUADRANTS[todayMood.quadrant].color : 'var(--accent)';
+
+  body.innerHTML = `
+    <div class="mood-ring-wrap">
+      <div class="ring-container" style="width:140px; height:140px;">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="55" fill="none" stroke="var(--line2)" stroke-width="10"></circle>
+          <circle id="moodRingArc" cx="70" cy="70" r="55" fill="none" stroke="${ringColor}" stroke-width="10"
+                  stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}"
+                  transform="rotate(-90 70 70)" ${withMood === 0 ? 'opacity="0"' : ''}></circle>
+        </svg>
+        <div class="val">
+          <div class="num mono" style="font-size:26px;" id="moodRingNum">${withMood}/14</div>
+        </div>
+      </div>
+      <div class="mood-ring-stats">
+        ${todayMood ? `
+          <div class="big" style="color:${MOOD_QUADRANTS[todayMood.quadrant].color};">${escapeHtml(todayMood.word)}</div>
+          <div class="sub">сегодняшняя эмоция · энергия ${todayMood.energy || '—'}/5</div>`
+        : `
+          <div class="big" style="font-size:16px;">Сегодня без отметки</div>
+          <div class="sub">Эмоция дня — самый дешёвый сигнал для корреляций с HRV.</div>`}
+        <div style="margin-top:12px;">
+          <button class="btn-primary" onclick="openMoodCheckin()"><i class="ph-light ph-smiley"></i> Чек-ин эмоции</button>
+        </div>
+      </div>
+    </div>`;
+
+  // FRAMES: ring 1.2 back.out(1.2), при заполнении >90% — power3.out.
+  const arc = document.getElementById('moodRingArc');
+  if (arc) gsap.fromTo(arc, { strokeDashoffset: C },
+    { strokeDashoffset: C * (1 - frac), duration: 1.2, ease: frac > 0.9 ? 'power3.out' : 'back.out(1.2)' });
+}
+
+// ============================================================
+// ЦИРКАДНОЕ КОЛЕСО «ТЫ ЗДЕСЬ» (эталон Flo cycle wheel):
+// 24 часа дуг-фаз из DATA.circadian.phases, маркер текущего времени.
+// ============================================================
+
+const CWHEEL_COLORS = {
+  'grogginess': '#f59e0b',
+  'morning-peak': '#34d399',
+  'afternoon-dip': '#fbbf24',
+  'evening-peak': '#2dd4bf',
+  'wind-down': '#a78bfa',
+  'melatonin-window': '#8b5cf6',
+  'sleep-window': '#60a5fa'
+};
+
+function cwToMin(s) {
+  const m = String(s || '').match(/^(\d{1,2}):(\d{2})/);
+  return m ? (+m[1]) * 60 + (+m[2]) : null;
+}
+
+function renderPulseWheel() {
+  const card = document.getElementById('pulseWheelCard');
+  const body = document.getElementById('pulseWheelBody');
+  if (!card || !body) return;
+
+  const c = DATA.circadian;
+  const phases = c && Array.isArray(c.phases) ? c.phases.filter(p => cwToMin(p.start) != null && cwToMin(p.end) != null) : [];
+  if (!phases.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+
+  const size = 240, cx = size / 2, cy = size / 2, r = 92;
+  const pt = min => {
+    const ang = (min / 1440) * 2 * Math.PI - Math.PI / 2; // полночь сверху, по часовой
+    return [cx + r * Math.cos(ang), cy + r * Math.sin(ang)];
+  };
+  // Дуга a→b по часовой; перенос через полночь — сплитом на два сегмента.
+  const arcSeg = (a, b) => {
+    const [x1, y1] = pt(a), [x2, y2] = pt(b);
+    const large = (b - a) > 720 ? 1 : 0;
+    return `M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+  };
+
+  const nowD = new Date();
+  const nowMin = nowD.getHours() * 60 + nowD.getMinutes();
+  let active = null;
+  phases.forEach(p => {
+    const a = cwToMin(p.start), b = cwToMin(p.end);
+    const inside = a <= b ? (nowMin >= a && nowMin < b) : (nowMin >= a || nowMin < b);
+    if (inside) active = p; // при перекрытии (окно мелатонина) побеждает последняя
+  });
+
+  const arcs = phases.map((p, i) => {
+    const colr = CWHEEL_COLORS[String(p.phase || '').toLowerCase()] || 'var(--mut)';
+    const a = cwToMin(p.start), b = cwToMin(p.end);
+    const isMel = String(p.phase || '').toLowerCase() === 'melatonin-window';
+    const w = isMel ? 16 : 11;
+    const segs = a <= b ? [[a, b]] : [[a, 1440], [0, b]];
+    return segs.map(([s, e], j) => e - s > 0
+      ? `<path class="cwheel-arc" data-ph="${i}" d="${arcSeg(s, e)}" fill="none" stroke="${colr}" stroke-width="${w}" stroke-linecap="round" opacity="${p === active ? 1 : 0.75}"></path>`
+      : '').join('');
+  }).join('');
+
+  const ticks = [0, 6, 12, 18].map(h => {
+    const ang = (h / 24) * 2 * Math.PI - Math.PI / 2;
+    const tx = cx + (r + 22) * Math.cos(ang), ty = cy + (r + 22) * Math.sin(ang) + 3;
+    return `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" class="cwheel-tick">${String(h).padStart(2, '0')}</text>`;
+  }).join('');
+
+  const [mx, my] = pt(nowMin);
+  const activeMeta = active ? (CWHEEL_COLORS[String(active.phase || '').toLowerCase()] || 'var(--accent)') : 'var(--accent)';
+  const timeTxt = String(nowD.getHours()).padStart(2, '0') + ':' + String(nowD.getMinutes()).padStart(2, '0');
+
+  const legend = phases.map(p => {
+    const colr = CWHEEL_COLORS[String(p.phase || '').toLowerCase()] || 'var(--mut)';
+    return `
+      <div class="cwheel-phase-row ${p === active ? 'active' : ''}">
+        <span class="d" style="background:${colr};"></span>
+        <span>${escapeHtml(p.label || p.phase)}</span>
+        <span class="t">${escapeHtml(p.start)}–${escapeHtml(p.end)}</span>
+      </div>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="cwheel-wrap">
+      <svg class="cwheel-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="Циркадное колесо 24 часа">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--line)" stroke-width="11"></circle>
+        ${arcs}
+        ${ticks}
+        <line id="cwheelNeedle" x1="${cx}" y1="${cy}" x2="${mx.toFixed(1)}" y2="${my.toFixed(1)}" stroke="var(--mut)" stroke-width="1" stroke-dasharray="3 4" opacity="0.5"></line>
+        <circle id="cwheelDot" cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="6" fill="${activeMeta}" stroke="var(--card-inner)" stroke-width="2.5"></circle>
+        <text x="${cx}" y="${cy - 4}" text-anchor="middle" class="cwheel-center-time">${timeTxt}</text>
+        <text x="${cx}" y="${cy + 14}" text-anchor="middle" class="cwheel-center-label">${escapeHtml(active ? 'ты здесь · ' + (active.label || '') : 'ты здесь')}</text>
+      </svg>
+      <div class="cwheel-legend">${legend}</div>
+    </div>
+    ${active && active.advice ? `
+      <div class="cwheel-advice"><b>${escapeHtml(active.label || '')}</b> — ${escapeHtml(active.advice)}
+        ${active.confidence ? ` <span class="biomarker-grade">${escapeHtml(active.confidence)}</span>` : ''}
+      </div>` : ''}`;
+
+  // FRAMES: line-draw дуг 1.0-1.2 power1.inOut со стаггером, маркер fade после.
+  document.querySelectorAll('#pulseWheelBody .cwheel-arc').forEach((el, i) => {
+    drawPath(el, { duration: 1.0, delay: Math.min(0.45, i * 0.05) });
+  });
+  const dot = document.getElementById('cwheelDot');
+  const needle = document.getElementById('cwheelNeedle');
+  if (dot) gsap.fromTo(dot, { opacity: 0, scale: 0.5, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.4, delay: 0.9, ease: 'back.out(1.6)' });
+  if (needle) gsap.fromTo(needle, { opacity: 0 }, { opacity: 0.5, duration: 0.4, delay: 0.9, ease: 'power1.out' });
+}
+
+// ============================================================
+// RECOVERY-ДЕКОМПОЗИЦИЯ (эталон Fitbit stress contributors):
+// если движок не отдал components — честная отображаемая раскладка
+// из HRV vs baseline, RHR и сна с пометкой «приближение».
+// ============================================================
+
+let recDecompOpen = false;
+
+function toggleRecDecomp() {
+  recDecompOpen = !recDecompOpen;
+  const btn = document.getElementById('recDecompBtn');
+  if (btn) btn.innerHTML = recDecompOpen
+    ? '<i class="ph-light ph-caret-up"></i> Свернуть раскладку'
+    : '<i class="ph-light ph-stack"></i> Из чего сложился';
+  renderRecDecomp(true);
+}
+
+function recDecompRows() {
+  // 1. Готовые компоненты движка, если есть.
+  if (Array.isArray(DATA.recoveryComponents) && DATA.recoveryComponents.length) {
+    return {
+      approx: false,
+      rows: DATA.recoveryComponents.map(c => ({
+        label: c.label || c.id, icon: 'ph-puzzle-piece', color: 'var(--accent)',
+        pts: Math.round(+c.points || 0), max: Math.round(+c.max || 100), note: c.note || ''
+      })),
+      missing: []
+    };
+  }
+
+  // 2. Честное приближение из имеющихся рядов.
+  const m = selectedDayMetrics();
+  const has = x => typeof x === 'number' && isFinite(x);
+  const rows = [], missing = [];
+
+  const hrvBaseArr = Array.isArray(DATA.trend30Hrv) ? DATA.trend30Hrv.filter(v => isFinite(v)) : [];
+  const hrvBase = hrvBaseArr.length ? avgArr(hrvBaseArr) : null;
+  if (has(m.hrv) && hrvBase) {
+    const score = Math.max(0, Math.min(1.25, m.hrv / hrvBase)) / 1.25;
+    rows.push({ label: 'HRV vs baseline', icon: 'ph-heartbeat', color: '#a855f7', pts: Math.round(score * 40), max: 40, note: `${m.hrv} мс против среднего ${Math.round(hrvBase)} мс за 30 дней` });
+  } else missing.push('HRV: нет значения за день или 30-дневного ряда');
+
+  const rhrBaseArr = Array.isArray(DATA.trend30Rhr) ? DATA.trend30Rhr.filter(v => isFinite(v)) : [];
+  const rhrBase = rhrBaseArr.length ? avgArr(rhrBaseArr) : null;
+  if (has(m.rhr) && rhrBase) {
+    const score = Math.max(0, Math.min(1.15, rhrBase / m.rhr)) / 1.15;
+    rows.push({ label: 'Пульс покоя', icon: 'ph-heart', color: '#f43f5e', pts: Math.round(score * 30), max: 30, note: `${m.rhr} уд/мин против среднего ${Math.round(rhrBase)} за 30 дней` });
+  } else missing.push('RHR: в выгрузке нет 30-дневного ряда пульса покоя');
+
+  if (has(m.sleep) && DATA.sleepNeeded) {
+    const score = Math.max(0, Math.min(1, m.sleep / DATA.sleepNeeded));
+    rows.push({ label: 'Сон vs потребность', icon: 'ph-moon', color: '#60a5fa', pts: Math.round(score * 30), max: 30, note: `${m.sleep} ч из ${DATA.sleepNeeded} ч потребности` });
+  } else missing.push('Сон: нет значения за выбранный день (ряд сна — 14 дней)');
+
+  return { approx: true, rows, missing };
+}
+
+function renderRecDecomp(animate) {
+  const box = document.getElementById('recDecomp');
+  const chip = document.getElementById('recDecompChip');
+  if (!box) return;
+  if (!recDecompOpen) {
+    box.style.display = 'none';
+    if (chip) chip.style.display = 'none';
+    return;
+  }
+  const { approx, rows, missing } = recDecompRows();
+  box.style.display = '';
+  if (chip) chip.style.display = approx ? '' : 'none';
+
+  box.innerHTML = rows.map(r => `
+    <div class="rdc-row">
+      <div class="rdc-label"><i class="ph-light ${r.icon}"></i>${escapeHtml(r.label)}</div>
+      <div class="rdc-bar-bg"><div class="rdc-bar-fill" style="width:${Math.round(r.pts / r.max * 100)}%; background:${r.color};"></div></div>
+      <div class="rdc-pts">${r.pts}/${r.max}</div>
+    </div>
+    ${r.note ? `<p class="rdc-note" style="margin:-4px 0 0 162px;">${escapeHtml(r.note)}</p>` : ''}`).join('')
+    + (missing.length ? `<p class="rdc-note"><i class="ph-light ph-info"></i> ${missing.map(escapeHtml).join(' · ')}</p>` : '')
+    + (approx ? '<p class="rdc-note">Отображаемая раскладка нормирована к личному baseline — это приближение, точный recovery считает движок tracker.</p>' : '');
+
+  if (animate) {
+    gsap.fromTo('#recDecomp .rdc-bar-fill',
+      { scaleX: 0, transformOrigin: 'left center' },
+      { scaleX: 1, duration: 0.6, stagger: 0.08, ease: 'power3.out', clearProps: 'transform' });
+  }
+}
+
+// ============================================================
+// БИОЛОГИЧЕСКИЙ ВОЗРАСТ: фитнес-возраст по VO2max (таблица возрастных
+// норм, C2). Без VO2max в данных карточка не показывается вовсе.
+// ============================================================
+
+// Средний VO2max мужчин по возрасту (середины декад, мл/кг/мин) — категория
+// «average» сводных таблиц кардиореспираторного фитнеса. Линейная интерполяция.
+const VO2_AGE_NORMS = [[25, 44], [35, 42], [45, 39], [55, 36], [65, 33], [75, 30]];
+
+function fitnessAgeFromVo2max(v) {
+  const t = VO2_AGE_NORMS;
+  if (v >= t[0][1]) {
+    const slope = (t[1][0] - t[0][0]) / (t[1][1] - t[0][1]); // лет на единицу VO2max
+    return Math.max(22, Math.round(t[0][0] + (v - t[0][1]) * slope));
+  }
+  for (let i = 0; i < t.length - 1; i++) {
+    const [a1, v1] = t[i], [a2, v2] = t[i + 1];
+    if (v <= v1 && v >= v2) return Math.round(a1 + (v1 - v) / (v1 - v2) * (a2 - a1));
+  }
+  const [aL, vL] = t[t.length - 1];
+  return Math.min(85, Math.round(aL + (vL - v) / 0.3));
+}
+
+function sleepConsistencyStd() {
+  const arr = (Array.isArray(DATA.trendSleep) ? DATA.trendSleep : []).filter(v => isFinite(v) && v > 0);
+  if (arr.length < 5) return null;
+  const mean = avgArr(arr);
+  return Math.sqrt(avgArr(arr.map(v => (v - mean) * (v - mean))));
+}
+
+function renderBioAge() {
+  const card = document.getElementById('bioageCard');
+  const body = document.getElementById('bioageBody');
+  if (!card || !body) return;
+
+  const v = +(DATA.vo2max != null ? DATA.vo2max : (DATA.fitness && DATA.fitness.vo2max));
+  if (!isFinite(v) || v <= 0) {
+    delete TODAY_WIDGETS.bioage;
+    card.style.display = 'none';
+    return;
+  }
+
+  // Регистрируем виджет (скрываемый через «Редактировать», как остальные).
+  TODAY_WIDGETS.bioage = { label: 'Биологический возраст' };
+  if (!TODAY_DEFAULT_LAYOUT.order.includes('bioage')) {
+    TODAY_DEFAULT_LAYOUT.order.push('bioage');
+    TODAY_DEFAULT_LAYOUT.spans.bioage = 4;
+  }
+  const hiddenByUser = currentTodayLayout().hidden.includes('bioage');
+  card.style.display = hiddenByUser ? 'none' : '';
+
+  // Пока пользователь не расставил виджет сам — держим карточку в конце сетки
+  // (applyTodayLayout на старте раскладывает только известные ему виджеты).
+  const savedLayout = loadTodayLayout();
+  if (!savedLayout || !Array.isArray(savedLayout.order) || !savedLayout.order.includes('bioage')) {
+    const grid = document.getElementById('todayGrid');
+    if (grid && card.parentElement === grid && grid.lastElementChild !== card) grid.appendChild(card);
+  }
+
+  const age = fitnessAgeFromVo2max(v);
+  const chips = [];
+  chips.push({ label: `VO2max ${v}`, dir: v >= 42 ? 'minus' : (v <= 35 ? 'plus' : '') });
+  if (isFinite(DATA.rhr)) chips.push({ label: `RHR ${DATA.rhr}`, dir: DATA.rhr < 60 ? 'minus' : (DATA.rhr > 70 ? 'plus' : '') });
+  const std = sleepConsistencyStd();
+  if (std != null) chips.push({ label: `сон ±${std.toFixed(1)} ч`, dir: std < 1 ? 'minus' : (std > 1.5 ? 'plus' : '') });
+
+  body.innerHTML = `
+    <div class="bioage-num" id="bioageNum" data-age="${age}">${age <= 22 ? '≤ 22' : '≈ ' + age}<small> лет</small></div>
+    <div class="bioage-chips">
+      ${chips.map(c => `
+        <span class="bioage-chip ${c.dir}">
+          ${c.dir === 'minus' ? '<i class="ph-light ph-arrow-down"></i>' : c.dir === 'plus' ? '<i class="ph-light ph-arrow-up"></i>' : '<i class="ph-light ph-minus"></i>'}
+          ${escapeHtml(c.label)}
+        </span>`).join('')}
+    </div>
+    <p class="rdc-note" style="margin-top:14px;">Фитнес-возраст по таблице возрастных норм VO2max <span class="biomarker-grade">C2</span> — оценка по кардиофитнесу, не клиническая. Стрелки чипов — направление вклада, без точных лет.</p>`;
+}
+
+// ============================================================
+// ПРОТОКОЛЫ: n-of-1 карточки из DATA.protocols (движок) + локальный
+// запуск: openhealth.protocol.active = {id, started}.
+// ============================================================
+
+const PROTOCOL_ACTIVE_KEY = 'openhealth.protocol.active';
+
+function getActiveProtocol() {
+  try {
+    const v = JSON.parse(localStorage.getItem(PROTOCOL_ACTIVE_KEY) || 'null');
+    if (v && v.id && /^\d{4}-\d{2}-\d{2}$/.test(String(v.started || ''))) return v;
+  } catch (e) { /* ignore */ }
+  return null;
+}
+
+function protocolSegments(p) {
+  const schema = String(p.schema || 'AB').toUpperCase().replace(/[^AB]/g, '') || 'AB';
+  return schema.split('').map(ch => ({
+    ph: ch,
+    days: ch === 'A' ? (p.baseline_days || 7) : (p.intervention_days || 7)
+  }));
+}
+
+// Номер дня и фаза протокола на дату d (1-based от старта).
+function protocolDayInfo(p, act, d) {
+  const m = String(act.started).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const start = new Date(+m[1], +m[2] - 1, +m[3]);
+  const dayN = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - start) / 864e5) + 1;
+  if (dayN < 1) return { dayN, phase: null, segIdx: -1 };
+  let rest = dayN;
+  const segs = protocolSegments(p);
+  for (let i = 0; i < segs.length; i++) {
+    if (rest <= segs[i].days) return { dayN, phase: segs[i].ph, segIdx: i, dayInPhase: rest, segDays: segs[i].days };
+    rest -= segs[i].days;
+  }
+  return { dayN, phase: 'done', segIdx: segs.length };
+}
+
+function startProtocol(id) {
+  const p = (DATA.protocols || []).find(x => x.id === id);
+  if (!p) return;
+  try { localStorage.setItem(PROTOCOL_ACTIVE_KEY, JSON.stringify({ id, started: todayKey() })); } catch (e) { /* private mode */ }
+  showToast('Протокол запущен — строка добавлена в чек-ин дня');
+  renderProtocolsScreen();
+  renderHabits();
+}
+
+function stopProtocol() {
+  try { localStorage.removeItem(PROTOCOL_ACTIVE_KEY); } catch (e) { /* ignore */ }
+  showToast('Протокол остановлен');
+  renderProtocolsScreen();
+  renderHabits();
+}
+
+function askProtocolAgent(idx) {
+  const p = (DATA.protocols || [])[idx];
+  if (!p) return;
+  runAgentTask({
+    boxId: 'protoAgentBox' + idx, btnId: 'protoAgentBtn' + idx,
+    task: 'insight', param: 'протокол n-of-1: ' + (p.hypothesis_ru || p.id),
+    retryCall: 'askProtocolAgent(' + idx + ')'
+  });
+}
+
+// Строка активного протокола в чек-ине дня (зависит от выбранного дня).
+function protocolChecklistHTML() {
+  const act = getActiveProtocol();
+  if (!act) return '';
+  const p = (DATA.protocols || []).find(x => x.id === act.id);
+  if (!p) return '';
+  const info = protocolDayInfo(p, act, selectedDayDate());
+  if (!info || info.dayN < 1) return '';
+  if (info.phase === 'done') {
+    return `
+      <div class="habit-proto-row">
+        <i class="ph-light ph-flag-checkered"></i>
+        <span><b>Протокол завершён</b> — смотри чекпоинт на экране Protocols.</span>
+      </div>`;
+  }
+  const isB = info.phase === 'B';
+  return `
+    <div class="habit-proto-row">
+      <i class="ph-light ${isB ? 'ph-flask' : 'ph-ruler'}"></i>
+      <span><b>Протокол · день ${info.dayN} · фаза ${info.phase}</b> —
+        ${isB ? escapeHtml(p.intervention_ru || 'вмешательство') : 'обычный режим (baseline), ничего не меняй'}
+        <span class="mono muted" style="font-size:10px;">(${info.dayInPhase}/${info.segDays} дней фазы)</span>
+      </span>
+    </div>`;
+}
+
+// Промежуточный чекпоинт: средние recovery по дням фаз A/B из trend30Rec.
+function protocolCheckpointHTML(p, act) {
+  if (!act || act.id !== p.id) {
+    return `<div class="proto-checkpoint"><i class="ph-light ph-hourglass"></i> Чекпоинт «В НОРМУ / МИМО» появится после первой фазы — протокол ещё не запущен.</div>`;
+  }
+  const info = protocolDayInfo(p, act, realToday0());
+  const segs = protocolSegments(p);
+  if (!info || info.segIdx < 1 && info.phase !== 'done') {
+    const left = segs[0].days - (info ? info.dayInPhase : 0) + 1;
+    return `<div class="proto-checkpoint"><i class="ph-light ph-hourglass"></i> Чекпоинт появится после первой фазы (A, baseline) — осталось ~${Math.max(1, left)} дн.</div>`;
+  }
+  // Первая фаза пройдена: честное промежуточное сравнение средних по A и B.
+  const m = String(act.started).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const start = new Date(+m[1], +m[2] - 1, +m[3]);
+  const arr = Array.isArray(DATA.trend30Rec) ? DATA.trend30Rec : [];
+  const dd = parseDataDate();
+  const valsA = [], valsB = [];
+  const totalDays = Math.min(info.dayN, segs.reduce((s, x) => s + x.days, 0));
+  for (let n = 1; n <= totalDays; n++) {
+    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + (n - 1));
+    const diff = Math.round((new Date(dd.getFullYear(), dd.getMonth(), dd.getDate()) - d) / 864e5);
+    const idx = arr.length - 1 - diff;
+    if (idx < 0 || idx >= arr.length || !isFinite(arr[idx])) continue;
+    let rest = n, ph = null;
+    for (const s of segs) { if (rest <= s.days) { ph = s.ph; break; } rest -= s.days; }
+    (ph === 'B' ? valsB : valsA).push(arr[idx]);
+  }
+  if (valsA.length < 3 || valsB.length < 3) {
+    return `<div class="proto-checkpoint"><i class="ph-light ph-hourglass"></i> Точек recovery с данными пока мало (A: ${valsA.length}, B: ${valsB.length}) — чекпоинт «В НОРМУ / МИМО» появится, когда обе фазы наберут по 3+ дня с данными tracker.</div>`;
+  }
+  const avgA = avgArr(valsA), avgB = avgArr(valsB);
+  const delta = avgB - avgA;
+  const hit = delta >= 5;
+  return `
+    <div class="proto-checkpoint" style="border-style:solid; border-color:${hit ? 'rgba(16,185,129,0.45)' : 'var(--line2)'};">
+      <span style="font: 600 10px var(--mono); text-transform:uppercase; letter-spacing:0.05em; color:${hit ? 'var(--ok)' : 'var(--warn)'};">
+        Промежуточный чекпоинт · ${hit ? 'В НОРМУ' : 'пока МИМО'}
+      </span>
+      <div class="cp-grid">
+        <div class="cp-col">A (baseline)<b>${avgA.toFixed(1)}</b><span class="mono muted" style="font-size:10px;">${valsA.length} дн. с данными</span></div>
+        <div class="cp-col">B (вмешательство)<b>${avgB.toFixed(1)}</b><span class="mono muted" style="font-size:10px;">${valsB.length} дн. с данными</span></div>
+      </div>
+      <p style="margin:8px 0 0;">Δ = ${delta >= 0 ? '+' : ''}${delta.toFixed(1)} (критерий: ≥ +5). Это промежуточная оценка по recovery — финальный вердикт после всех фаз.</p>
+    </div>`;
+}
+
+function renderProtocolsScreen() {
+  const wrap = document.getElementById('protocolsContent');
+  if (!wrap) return;
+  const list = Array.isArray(DATA.protocols) ? DATA.protocols : [];
+  if (!list.length) return; // данных нет — остаётся честный empty-state из HTML
+
+  const act = getActiveProtocol();
+  wrap.innerHTML = list.map((p, idx) => {
+    const mine = act && act.id === p.id;
+    const info = mine ? protocolDayInfo(p, act, realToday0()) : null;
+    const segs = protocolSegments(p);
+    const schemaStrip = segs.map((s, i) => `
+      <span class="ph-seg ${s.ph === 'B' ? 'b' : ''} ${mine && info && info.segIdx === i ? 'now' : ''}">${s.ph} · ${s.days}д</span>`).join('');
+    const statusHTML = mine
+      ? (info && info.phase === 'done'
+        ? '<span class="proto-status active"><i class="ph-light ph-flag-checkered"></i> Завершён</span>'
+        : `<span class="proto-status active"><i class="ph-light ph-play"></i> Активен · день ${info ? info.dayN : '—'} · фаза ${info ? info.phase : '—'}</span>`)
+      : '<span class="proto-status"><i class="ph-light ph-lightbulb"></i> Предложен движком</span>';
+
+    return `
+    <div class="card-outer col-4">
+      <div class="card-inner">
+        <div class="card-header" style="margin-bottom:10px;">
+          <div class="card-title-group">
+            ${statusHTML}
+            <h3 style="margin-top:10px;">${escapeHtml(p.hypothesis_ru || p.id)}</h3>
+          </div>
+          <span class="biomarker-grade" title="${escapeHtml(GRADE_NOTES[p.confidence_cap] || '')}">${escapeHtml(p.confidence_cap || 'C2')}</span>
+        </div>
+
+        <div class="proto-row"><i class="ph-light ph-flask"></i><span><b>Вмешательство:</b> ${escapeHtml(p.intervention_ru || '—')}</span></div>
+        <div class="proto-row"><i class="ph-light ph-target"></i><span><b>Критерий успеха:</b> ${escapeHtml(p.success_criteria_ru || '—')}</span></div>
+        <div class="proto-row"><i class="ph-light ph-chart-line"></i><span><b>Метрика:</b> ${escapeHtml(p.metric || '—')} · схема ${escapeHtml(p.schema || 'AB')}</span></div>
+
+        <div class="proto-schema">${schemaStrip}</div>
+
+        ${protocolCheckpointHTML(p, act)}
+
+        <div class="proto-actions">
+          ${mine
+            ? '<button class="btn-secondary" onclick="stopProtocol()"><i class="ph-light ph-stop"></i> Остановить</button>'
+            : `<button class="btn-primary" onclick="startProtocol('${escapeHtml(p.id)}')"${act ? ' title="Сначала останови активный протокол: один фактор за раз"' : ''} ${act ? 'disabled' : ''}><i class="ph-light ph-play"></i> Начать</button>`}
+          <button class="btn-secondary agent-btn" id="protoAgentBtn${idx}" onclick="askProtocolAgent(${idx})">
+            <i class="ph-light ph-sparkle"></i> Спросить агента
+          </button>
+        </div>
+        <div class="agent-box" id="protoAgentBox${idx}" style="margin-top:12px; display:none;"></div>
+
+        ${p.safety_note_ru ? `<p class="rdc-note" style="margin-top:12px;">${escapeHtml(p.safety_note_ru)}</p>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  gsap.fromTo('#protocolsContent .card-outer',
+    { opacity: 0, y: 20 },
+    { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: 'power2.out', clearProps: 'opacity,transform' });
+}
+
+// ============================================================
+// ТРЕНИРОВКИ: дни со strain ≥ 8 из trendStrain + парс сетов из заметок
+// журнала («жим 40кг×10»), деталь-панель и предложение от агента.
+// ============================================================
+
+let WK_DAYS = [];
+
+function parseWorkoutSets(text) {
+  const out = [];
+  if (!text) return out;
+  const re = /([A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё \-]*?)\s*(\d+(?:[.,]\d+)?)\s*кг\s*[x×х*]\s*(\d+)/gi;
+  let m;
+  while ((m = re.exec(text)) !== null && out.length < 20) {
+    out.push({ name: m[1].trim(), kg: m[2].replace(',', '.'), reps: +m[3] });
+  }
+  return out;
+}
+
+function renderWorkoutsScreen() {
+  const wrap = document.getElementById('workoutsContent');
+  if (!wrap) return;
+  const arr = Array.isArray(DATA.trendStrain) ? DATA.trendStrain : [];
+  const dd = parseDataDate();
+  const rec30 = Array.isArray(DATA.trend30Rec) ? DATA.trend30Rec : [];
+
+  WK_DAYS = [];
+  arr.forEach((v, i) => {
+    if (typeof v !== 'number' || !isFinite(v) || v < 8) return;
+    const back = arr.length - 1 - i;
+    const d = new Date(dd.getFullYear(), dd.getMonth(), dd.getDate() - back);
+    const recIdx = rec30.length - 1 - back;
+    WK_DAYS.push({
+      date: d, key: dateKeyOf(d), strain: v,
+      recovery: (recIdx >= 0 && recIdx < rec30.length) ? rec30[recIdx] : null,
+      sleep: (i >= 0 && Array.isArray(DATA.trendSleep) && i < DATA.trendSleep.length) ? DATA.trendSleep[i] : null
+    });
+  });
+  WK_DAYS.reverse(); // свежие сверху
+
+  if (!WK_DAYS.length) return; // strain-тренда нет — честный empty-state из HTML
+
+  wrap.innerHTML = `
+    <div class="card-outer col-7">
+      <div class="card-inner">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h3>Тренировочные дни</h3>
+            <div class="sub">дни со strain ≥ 8 за окно strain-тренда (${arr.length} дн.) · клик — деталь дня</div>
+          </div>
+          <i class="ph-light ph-barbell card-header-icon"></i>
+        </div>
+        <div id="wkList">
+          ${WK_DAYS.map((w, i) => `
+            <div class="wk-day" data-wk="${i}" onclick="openWorkoutDay(${i})">
+              <div class="wk-date"><b>${w.date.getDate()} ${RU_MONTHS_SHORT[w.date.getMonth()]}</b>${RU_WEEKDAYS_SHORT[w.date.getDay()]}</div>
+              <div class="wk-strain-bar"><div class="wk-strain-fill" style="width:${Math.min(100, Math.round(w.strain / 21 * 100))}%;"></div></div>
+              <div class="wk-metrics">
+                <span class="m">${w.strain.toFixed(1)}<small>strain</small></span>
+                <span class="m" style="color:${w.recovery != null ? col(w.recovery) : 'var(--mut)'};">${w.recovery != null ? w.recovery + '%' : '—'}<small>recovery</small></span>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="card-outer col-5">
+      <div class="card-inner">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h3>Деталь дня</h3>
+            <div class="sub">метрики, сеты из заметок журнала</div>
+          </div>
+          <i class="ph-light ph-list-magnifying-glass card-header-icon"></i>
+        </div>
+        <div id="wkDetail">
+          <p class="muted" style="font-size:12px; margin:8px 0 0;">Выбери день слева — здесь появятся метрики и распарсенные сеты.</p>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+          <button class="btn-primary agent-btn" id="wkSuggestBtn" onclick="suggestWorkout()">
+            <i class="ph-light ph-sparkle"></i> Предложить сегодня
+          </button>
+        </div>
+        <div class="agent-box" id="wkAgentBox" style="margin-top:12px; display:none;"></div>
+      </div>
+    </div>`;
+
+  // FRAMES: узкие прогресс-бары — width-исключение (0.6 power3.out, stagger 0.06).
+  gsap.from('#wkList .wk-strain-fill', { width: 0, duration: 0.6, stagger: 0.06, ease: 'power3.out' });
+  gsap.fromTo('#wkList .wk-day', { opacity: 0, x: -8 },
+    { opacity: 1, x: 0, duration: 0.4, stagger: 0.04, ease: 'power2.out', clearProps: 'opacity,transform' });
+}
+
+function openWorkoutDay(i) {
+  const w = WK_DAYS[i];
+  const box = document.getElementById('wkDetail');
+  if (!w || !box) return;
+  document.querySelectorAll('#wkList .wk-day').forEach(el => el.classList.toggle('active', +el.dataset.wk === i));
+
+  let note = null;
+  try { note = localStorage.getItem('openhealth.journal.notes.' + w.key); } catch (e) { /* ignore */ }
+  const sets = parseWorkoutSets(note);
+
+  box.innerHTML = `
+    <div class="cal-fact-row"><span class="k">Дата</span><span class="v">${w.date.getDate()} ${RU_MONTHS_SHORT[w.date.getMonth()]} · ${RU_WEEKDAYS_SHORT[w.date.getDay()]}</span></div>
+    <div class="cal-fact-row"><span class="k">Strain</span><span class="v mono">${w.strain.toFixed(1)} /21</span></div>
+    <div class="cal-fact-row"><span class="k">Recovery в тот день</span><span class="v mono" style="color:${w.recovery != null ? col(w.recovery) : 'var(--mut)'};">${w.recovery != null ? w.recovery + '%' : 'нет в ряду'}</span></div>
+    <div class="cal-fact-row"><span class="k">Сон той ночи</span><span class="v mono">${w.sleep != null ? w.sleep + ' ч' : 'нет в ряду'}</span></div>
+    ${sets.length ? `
+      <div class="wk-sets">
+        <span class="muted" style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">Сеты из заметки</span>
+        ${sets.map(s => `<div class="wk-set"><span class="nm">${escapeHtml(s.name)}</span><span>${s.kg} кг × ${s.reps}</span></div>`).join('')}
+      </div>`
+    : `
+      <p class="cand-hint" style="margin-top:14px;"><i class="ph-light ph-note-pencil"></i>
+        <span>${note ? 'В заметке дня не нашлось сетов формата «жим 40кг×10».' : 'Заметки за этот день нет.'} Пиши заметки тренировок в Журнале — здесь появятся сеты.</span>
+      </p>
+      <div style="margin-top:10px;"><button class="btn-secondary" onclick="go('journal')"><i class="ph-light ph-notebook"></i> В Журнал</button></div>`}`;
+
+  gsap.fromTo(box, { opacity: 0.4, y: 6 }, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out', clearProps: 'opacity,transform' });
+}
+
+function suggestWorkout() {
+  runAgentTask({ boxId: 'wkAgentBox', btnId: 'wkSuggestBtn', task: 'insight', param: 'тренировка под recovery', retryCall: 'suggestWorkout()' });
+}
+
+// ============================================================
+// ЗВЕЗДА GITHUB: один раз после первого успешного insight-ответа агента.
+// openhealth.star.asked = '1' — больше никогда не спрашиваем.
+// ============================================================
+
+const STAR_ASKED_KEY = 'openhealth.star.asked';
+
+function maybeAskStar(task) {
+  if (task !== 'insight') return;
+  try {
+    if (localStorage.getItem(STAR_ASKED_KEY) === '1') return;
+    localStorage.setItem(STAR_ASKED_KEY, '1');
+  } catch (e) { return; }
+  showStarToast();
+}
+
+function showStarToast() {
+  document.querySelectorAll('.star-toast').forEach(t => t.remove());
+  const el = document.createElement('div');
+  el.className = 'star-toast';
+  el.setAttribute('role', 'status');
+  el.innerHTML = `
+    <span>Полезно? Звезда на GitHub помогает проекту ⭐</span>
+    <div class="actions">
+      <button class="btn-primary" type="button"><i class="ph-light ph-star"></i> Поставить</button>
+      <button class="btn-secondary" type="button">Не показывать</button>
+    </div>`;
+  const [yes, no] = el.querySelectorAll('button');
+  const dismiss = () => gsap.to(el, { opacity: 0, y: 8, duration: 0.25, ease: 'power2.in', onComplete: () => el.remove() });
+  yes.addEventListener('click', () => { window.open('https://github.com/igindin/openhealth', '_blank', 'noopener'); dismiss(); });
+  no.addEventListener('click', dismiss);
+  document.body.appendChild(el);
+  gsap.fromTo(el, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' });
+  setTimeout(() => { if (el.isConnected) dismiss(); }, 30000);
+}
+
 const titles = {
   today: "Overview / Сегодня",
   pulse: "Пульс дня",
@@ -7585,6 +9167,7 @@ function runAgentTask(opts) {
       if (r.status === 'ok') {
         box.innerHTML = agentResultHTML(r);
         gsap.fromTo(box, { opacity: 0.4 }, { opacity: 1, duration: 0.4, ease: 'power1.out' });
+        maybeAskStar(opts.task); // первый успешный insight → один раз просим звезду
       } else if (r.status === 'no_agent') {
         box.innerHTML = agentErrorHTML(r.message || 'Агент не найден: установи Claude Code или Codex CLI.', opts.retryCall);
       } else if (r.status === 'timeout') {
@@ -7788,6 +9371,10 @@ function go(z) {
         renderSyncScreen();
       } else if (z === 'dna') {
         renderDnaScreen();
+      } else if (z === 'protocols') {
+        renderProtocolsScreen();
+      } else if (z === 'workouts') {
+        renderWorkoutsScreen();
       }
     }
   });
@@ -7902,6 +9489,7 @@ function renderDashboard() {
   document.querySelectorAll('aside nav a').forEach(a => a.classList.toggle('active', a.dataset.z === 'today'));
   document.getElementById('zoneTitle').textContent = titles.today;
 
+  restoreSelectedDay(); // sessionStorage → SELECTED_OFFSET (клампится к окну данных)
   initHabitsState();
   updateTodayScreen();
   exploreCorrelations();
@@ -7912,6 +9500,9 @@ function renderDashboard() {
   updateSourceBadges();
   applyBridgeState();
   syncNavIcons();
+  renderDaySelector();
+  updatePastDayBanner();
+  updatePulseDayHeader();
 
   gsap.fromTo('#z-today .card-outer',
     { opacity: 0, y: 25 },
@@ -7925,6 +9516,7 @@ window.addEventListener('DOMContentLoaded', () => {
   bindProfileInputs();
   applyTodayLayout();
   bindTodayDrag();
+  bindDaySwipe();
   updateSurveyReminder();
   // Render immediately with whatever DATA we have, then re-render if real
   // local data loads (keeps demo instant and avoids a blank first paint).
@@ -8074,6 +9666,17 @@ function tlDayEventsHTML(key, labels) {
   const parts = [];
   let count = 0;
 
+  // Эмоция дня (двухшаговый чек-ин How We Feel): слово + цвет квадранта.
+  try {
+    const mood = JSON.parse(localStorage.getItem('openhealth.mood.' + key) || 'null');
+    if (mood && mood.word && MOOD_QUADRANTS[mood.quadrant]) {
+      const q = MOOD_QUADRANTS[mood.quadrant];
+      parts.push(`<span class="tl-chip" style="color:${q.color}; border-color:${q.color};" title="${escapeHtml(q.label)} · энергия ${mood.energy || '—'}/5">
+        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${q.color};"></span>${escapeHtml(mood.word)}</span>`);
+      count++;
+    }
+  } catch (e) { /* повреждённая запись эмоции — пропускаем */ }
+
   try {
     const done = JSON.parse(localStorage.getItem('openhealth.habits.' + key) || 'null');
     if (done && typeof done === 'object') {
@@ -8148,7 +9751,7 @@ function renderTimeline() {
     if (ev.count) daysWithEvents++;
 
     rows.push(`
-      <div class="tl-day">
+      <div class="tl-day ${key === selectedDayKey() ? 'selected-day' : ''}">
         <div class="tl-date">
           <b>${d.getDate()} ${RU_MONTHS_SHORT[d.getMonth()]}</b>
           <span>${RU_WEEKDAYS_SHORT[d.getDay()]}${key === realToday ? ' · <span class="tl-today-badge">сегодня</span>' : ''}</span>

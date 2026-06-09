@@ -67,6 +67,26 @@ def build_parser() -> argparse.ArgumentParser:
     whoop_verify.add_argument("--signature", required=True, help="Value of the X-WHOOP-Signature header.")
     whoop_verify.add_argument("--timestamp", required=True, help="Value of the X-WHOOP-Signature-Timestamp header.")
 
+    withings_auth = subparsers.add_parser("withings-auth-url", help="Generate a Withings OAuth authorization URL.")
+    withings_auth.add_argument("--redirect-uri", required=True, help="Callback URL registered in the Withings app, e.g. http://localhost:8765/callback.")
+    withings_auth.add_argument("--state", help="Eight-character CSRF state. Generated automatically if omitted.")
+
+    withings_exchange = subparsers.add_parser(
+        "withings-exchange-code",
+        help="Exchange a Withings OAuth code for tokens (saved to ~/.openhealth/withings.json).",
+    )
+    withings_exchange.add_argument("--code", required=True, help="Authorization code returned by Withings.")
+    withings_exchange.add_argument("--redirect-uri", required=True, help="Same redirect URI as withings-auth-url.")
+
+    withings_sync = subparsers.add_parser(
+        "withings-sync", help="Fetch Withings measures and sleep summaries into the index."
+    )
+    withings_sync.add_argument("--start", help="Start date YYYY-MM-DD (default: 30 days back).")
+    withings_sync.add_argument("--end", help="End date YYYY-MM-DD (default: today).")
+    withings_sync.add_argument("--no-sleep", action="store_true", help="Skip the sleep summary fetch.")
+    withings_sync.add_argument("--no-measures", action="store_true", help="Skip the body measures fetch.")
+    withings_sync.add_argument("--no-save", action="store_true", help="Fetch and summarize without saving.")
+
     subparsers.add_parser("bot-start", help="Start the Telegram intake bot (polling mode).")
 
     subparsers.add_parser("modules", help="List available health domain modules.")
@@ -161,6 +181,32 @@ def main(argv: Optional[List[str]] = None) -> int:
                 timestamp_header=args.timestamp,
             )
         }
+    elif args.command == "withings-auth-url":
+        from .connectors import withings
+        state = args.state or secrets.token_hex(4)
+        result = {"authorization_url": withings.auth_url(args.redirect_uri, state), "state": state}
+    elif args.command == "withings-exchange-code":
+        from .connectors import withings
+        tokens = withings.exchange_code(args.code, args.redirect_uri)
+        result = {
+            "config_path": str(withings.withings_config_path()),
+            "expires_at": tokens["expires_at"],
+        }
+    elif args.command == "withings-sync":
+        from .connectors import withings
+        records = []
+        if not args.no_measures:
+            records.extend(withings.fetch_measures(args.start, args.end))
+        if not args.no_sleep:
+            records.extend(withings.fetch_sleep_summary(args.start, args.end))
+        saved = 0
+        if not args.no_save and records:
+            paths = ensure_repo_structure(repo_root)
+            index.init_db(paths.db_path)
+            for record in records:
+                index.upsert_record(paths.db_path, record)
+                saved += 1
+        result = {"summary": withings.summarize(records), "saved_to_index": saved}
     elif args.command == "bot-start":
         from .bot import start_bot
         start_bot(repo_root)

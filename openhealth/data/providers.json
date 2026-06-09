@@ -399,7 +399,7 @@
       "label": "Withings",
       "category": "scale",
       "auth": "oauth2",
-      "status": "planned",
+      "status": "supported",
       "api_base": "https://wbsapi.withings.net",
       "dev_portal_url": "https://developer.withings.com/",
       "docs_url": "https://developer.withings.com/api-reference/",
@@ -408,6 +408,7 @@
         "Create an application (public-cloud plan is free for personal use); set a callback/redirect URL.",
         "Copy the Client ID and Consumer Secret from the application page.",
         "Run the OAuth2 web flow (account.withings.com authorize endpoint), then call wbsapi.withings.net endpoints like /measure, /v2/sleep, /v2/heart.",
+        "Put client_id/client_secret into ~/.openhealth/withings.json (or export OPENHEALTH_WITHINGS_CLIENT_ID / OPENHEALTH_WITHINGS_CLIENT_SECRET), then run 'openhealth withings-auth-url', 'openhealth withings-exchange-code', and 'openhealth withings-sync'.",
         "Covers the whole Withings family from one integration: scales (Body+, Body Scan), BPM blood-pressure monitors, Sleep Analyzer mat, ScanWatch."
       ],
       "data_types": [
@@ -421,7 +422,7 @@
         "temperature"
       ],
       "rate_limit_note": "Documented per-client limit around 120 requests/minute — generous for daily syncs.",
-      "connector": null,
+      "connector": "openhealth/connectors/withings.py",
       "env_vars": [
         "OPENHEALTH_WITHINGS_CLIENT_ID",
         "OPENHEALTH_WITHINGS_CLIENT_SECRET"

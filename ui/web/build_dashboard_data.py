@@ -278,6 +278,66 @@ def _human_date(iso: str | None) -> str:
     return f"{weekdays[dt.weekday()]}, {dt.day} {months[dt.month - 1]} {dt.year}"
 
 
+def _daily_from_whoop(by_date: dict) -> dict:
+    """Reshape the WHOOP by-date map into the {date: {metric}} contract the
+    insights detectors expect (recovery / hrv / rhr / strain / sleep_h).
+
+    Sleep hours are not in this export, so sleep_h is approximated from
+    sleep_performance_percentage against an 8h need (the same approximation the
+    recovery block uses) and is therefore low-confidence for sleep detectors.
+    """
+    daily: dict = {}
+    for d, m in by_date.items():
+        row: dict = {}
+        if m.get("recovery_score") is not None:
+            row["recovery"] = m["recovery_score"]
+        hrv = m.get("hrv_rmssd_milli")
+        if hrv is None:
+            hrv = m.get("hrv_rmssd")
+        if hrv is not None:
+            row["hrv"] = hrv
+        if m.get("resting_heart_rate") is not None:
+            row["rhr"] = m["resting_heart_rate"]
+        if m.get("strain") is not None:
+            row["strain"] = m["strain"]
+        perf = m.get("sleep_performance_percentage")
+        if perf is not None:
+            row["sleep_h"] = round(8.0 * perf / 100.0, 1)
+        if row:
+            daily[d] = row
+    return daily
+
+
+def build_insights_block(con: sqlite3.Connection) -> dict:
+    """Compute insights + n-of-1 protocols from the engine, if importable.
+
+    Wrapped in try/except so the bridge still runs for users who only have the
+    dashboard checked out without the openhealth package on the path.
+    """
+    try:
+        import sys
+        # When run as a script, sys.path[0] is ui/web, not the repo root where
+        # the openhealth package lives; add the repo root so the import works.
+        repo_root = str(Path(__file__).resolve().parents[2])
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
+        from openhealth import insights as _insights
+        from openhealth import protocols as _protocols
+    except Exception:
+        return {"insights": [], "protocols": []}
+
+    daily = _daily_from_whoop(_load_whoop_by_date(con))
+    try:
+        found = _insights.detect_insights(daily, {"sleep_h": 8.0})
+        protos = _protocols.build_protocols(found, correlations=[])
+        return {
+            "insights": _insights.insights_to_dicts(found),
+            "protocols": _protocols.protocols_to_dicts(protos),
+        }
+    except Exception:
+        return {"insights": [], "protocols": []}
+
+
 def build_payload(db_path: Path) -> dict:
     con = sqlite3.connect(str(db_path))
     try:
@@ -285,6 +345,7 @@ def build_payload(db_path: Path) -> dict:
         biomarkers = build_biomarkers(con)
         connections = build_connections(con)
         readiness = build_readiness(rec_block.get("recovery"))
+        insights_block = build_insights_block(con)
     finally:
         con.close()
 
@@ -294,6 +355,8 @@ def build_payload(db_path: Path) -> dict:
     payload["biomarkers"] = biomarkers
     payload["biomarkersConnected"] = bool(biomarkers)
     payload["connections"] = connections
+    payload["insights"] = insights_block.get("insights", [])
+    payload["protocols"] = insights_block.get("protocols", [])
     # Correlations require labeled daily behaviors (journal), which this dataset
     # does not yet contain — so we intentionally omit them and let the dashboard
     # keep its demo correlations. Same for habits / allBehaviors.
@@ -332,6 +395,7 @@ def main() -> None:
     print(f"  recovery={rec}  hrv={payload.get('hrv')}  rhr={payload.get('rhr')}  "
           f"sleep={payload.get('sleep')}  strain={payload.get('strain')}")
     print(f"  biomarkers={bm}  trend points(rec)={len(payload.get('trend30Rec', []))}")
+    print(f"  insights={len(payload.get('insights', []))}  protocols={len(payload.get('protocols', []))}")
     print("  NOTE: data.local.json is real personal data — keep it local (git-ignored).")
 
 

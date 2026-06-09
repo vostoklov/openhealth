@@ -45,7 +45,10 @@
   .rules li{display:flex;gap:10px;font-size:14.5px;}
   .rules .dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:7px;}
   .rules li.warn .dot{background:var(--warn);}
-  footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--hair);font-size:13px;color:var(--soft);}
+  .help{margin:36px 0 0;padding:14px 16px;border-radius:14px;border:1px dashed var(--hair);
+        background:transparent;font-size:14px;color:var(--soft);}
+  .help b{color:var(--ink);}
+  footer{margin-top:24px;padding-top:18px;border-top:1px solid var(--hair);font-size:13px;color:var(--soft);}
   a:focus-visible, li:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   @media (max-width:480px){ h1{font-size:28px;} ul.plain{grid-template-columns:1fr;} }
 </style>
@@ -80,6 +83,8 @@
     <li><span class="dot"></span><div><b>У каждого вывода есть уровень доверия (C1–C5).</b> Низкий — формулируется как вопрос, а не факт.</div></li>
     <li class="warn"><span class="dot"></span><div><b>Не копируй чужой скил вслепую.</b> Репозиторий может быть сложнее, чем нужно, или под другую цель. Адаптируй под свою.</div></li>
   </ul>
+
+  <p class="help"><b>Застрял или рябит в глазах?</b> Это нормально. Сделай только шаг 1 и один вопрос — остальное на следующих встречах. Спроси в чате спринта или у поддержки.</p>
 
   <footer>Local-first: ничего не загружается в облако. Реальные данные и ключи — только на твоей машине. OpenHealth ещё сыроват местами — это нормально, ты собираешь <em>свою</em> систему.</footer>
 </main>

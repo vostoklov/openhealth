@@ -27,11 +27,8 @@ def load_builtin() -> None:
         recovery,  # noqa: F401
         skin,  # noqa: F401
         sleep,  # noqa: F401
-        travel,  # noqa: F401
+        travel,  # noqa: F401  (import side-effect: registration)
     )
-    # travel maps to the "journal" domain and does not self-register on import:
-    if get_module("travel") is None:
-        register(travel.TravelModule())
 
 
 __all__ = [

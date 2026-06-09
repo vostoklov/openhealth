@@ -3,7 +3,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.error import HTTPError
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
@@ -12,7 +12,6 @@ from .. import index
 from ..contexts import build_source_brief, refresh_contexts
 from ..models import ArtifactManifest, Observation, SourceManifest, TimelineEvent
 from ..storage import ensure_repo_structure, load_json_if_exists, now_utc, sha256sum, slugify, write_json, write_text
-
 
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"

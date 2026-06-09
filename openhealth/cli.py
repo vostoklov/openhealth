@@ -83,6 +83,11 @@ def build_parser() -> argparse.ArgumentParser:
     rec.add_argument("--tag", help="Filter by a tag.")
     rec.add_argument("--limit", type=int, default=10, help="Max rows.")
 
+    ah = subparsers.add_parser("import-apple-health", help="Import an Apple Health export (export.xml or .zip) into daily observations.")
+    ah.add_argument("--path", required=True, help="Path to export.xml or the Apple Health export .zip.")
+    ah.add_argument("--days-back", type=int, help="Only import the last N days.")
+    ah.add_argument("--no-save", action="store_true", help="Parse and summarize without writing to the index.")
+
     return parser
 
 
@@ -222,6 +227,17 @@ def main(argv: Optional[List[str]] = None) -> int:
                 for r in rows[: args.limit]
             ],
         }
+    elif args.command == "import-apple-health":
+        from .connectors import apple_health
+        records = apple_health.import_apple_health(args.path, days_back=args.days_back)
+        saved = 0
+        if not args.no_save and records:
+            paths = ensure_repo_structure(repo_root)
+            index.init_db(paths.db_path)
+            for record in records:
+                index.upsert_record(paths.db_path, record)
+                saved += 1
+        result = {"summary": apple_health.summarize(records), "saved_to_index": saved}
     else:
         paths = ensure_repo_structure(repo_root)
         index.init_db(paths.db_path)

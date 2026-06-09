@@ -536,6 +536,11 @@
     aside.open { transform: translateX(0); }
     .nav-toggle { display: grid; }
     .topbar { padding: 16px 18px; }
+    /* Заголовок и пилюля не наезжают: тайтл обрезается, пилюля не сжимается. */
+    .topbar-left { flex: 1; }
+    .topbar-left > div { min-width: 0; }
+    .topbar h1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; }
+    .topbar .pill { flex-shrink: 0; }
     .bento-grid { grid-template-columns: 1fr; }
     .col-12, .col-8, .col-6, .col-4, .col-3 { grid-column: span 12; }
   }
@@ -2052,6 +2057,332 @@
 
   .rep-adapt-empty i { font-size: 16px; color: var(--dim); margin-top: 1px; flex-shrink: 0; }
 
+  /* ---- Period switcher (сегмент-контрол, паттерн WHOOP «1 wk / 1 mo») ---- */
+  .period-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--card-outer);
+  }
+
+  .period-switch button {
+    border: none;
+    background: none;
+    color: var(--mut);
+    font: 600 10.5px var(--mono);
+    letter-spacing: 0.03em;
+    padding: 4px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .period-switch button:hover { color: var(--ink); }
+
+  .period-switch button.active {
+    background: var(--card-inner);
+    color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--line2);
+  }
+
+  /* ---- Timeline: лента дней (события поверх recovery) ---- */
+  .tl-feed { margin-top: 18px; }
+
+  .tl-day {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 11px 2px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tl-day:last-child { border-bottom: none; }
+
+  .tl-date {
+    width: 76px;
+    flex-shrink: 0;
+    font: 500 11px var(--mono);
+    color: var(--mut);
+    line-height: 1.4;
+    padding-top: 2px;
+  }
+
+  .tl-date b { display: block; color: var(--ink); font-weight: 600; }
+
+  .tl-rec {
+    flex-shrink: 0;
+    min-width: 38px;
+    text-align: center;
+    font: 600 11px var(--mono);
+    padding: 4px 8px;
+    border-radius: 999px;
+  }
+
+  .tl-events {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .tl-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font: 500 11px var(--font);
+    color: var(--ink);
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px 9px;
+  }
+
+  .tl-chip i { font-size: 12px; color: var(--mut); }
+
+  .tl-note {
+    flex-basis: 100%;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--mut);
+  }
+
+  .tl-note i { font-size: 12px; margin-right: 4px; color: var(--dim); }
+
+  .tl-none { font: 500 11px var(--mono); color: var(--dim); padding-top: 3px; }
+
+  .tl-today-badge {
+    font: 600 9px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+  }
+
+  /* ---- Settings hub (вертикальные секции, паттерн Linear Settings) ---- */
+  .settings-col {
+    max-width: 860px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .settings-sec-head {
+    margin: 0 0 10px;
+    padding-left: 2px;
+    font: 600 11px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--dim);
+  }
+
+  .settings-info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--mut);
+    padding: 12px 14px;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+
+  .settings-info-row i { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+
+  /* Карточки-превью тем */
+  .theme-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  @media (max-width: 720px) {
+    .theme-cards { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .theme-card {
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 7px;
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--font);
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .theme-card:hover { border-color: var(--line2); transform: translateY(-1px); }
+
+  .theme-card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  .theme-preview {
+    display: flex;
+    gap: 4px;
+    height: 58px;
+    border-radius: 8px;
+    border: 1px solid;
+    padding: 5px;
+    overflow: hidden;
+  }
+
+  .tp-side { width: 16px; border-radius: 3px; border: 1px solid; flex-shrink: 0; }
+  .tp-main { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+
+  .tp-bar {
+    flex: 1;
+    border-radius: 3px;
+    border: 1px solid;
+    position: relative;
+    overflow: hidden;
+    display: block;
+  }
+
+  .tp-bar > span {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 40%;
+    height: 4px;
+    border-radius: 2px;
+    display: block;
+  }
+
+  .theme-card-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 7px;
+    padding: 0 2px 2px;
+    font: 600 11px var(--font);
+    color: var(--ink);
+  }
+
+  .theme-card.active .theme-card-label i { color: var(--accent); }
+
+  /* Радио-выбор агента */
+  .agent-radio-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--card-outer);
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .agent-radio-row:hover { border-color: var(--line2); }
+
+  .agent-radio-row.on {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .agent-radio-row.disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .agent-radio-row input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .agent-radio-row:focus-within {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .agent-radio-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--line2);
+    background: var(--card-inner);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .agent-radio-dot::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: transparent;
+    transition: background 0.15s ease;
+  }
+
+  .agent-radio-row.on .agent-radio-dot { border-color: var(--accent); }
+  .agent-radio-row.on .agent-radio-dot::after { background: var(--accent); }
+
+  .agent-radio-hint {
+    margin-left: auto;
+    font: 500 10px var(--mono);
+    color: var(--dim);
+    text-align: right;
+  }
+
+  /* Память агента: список выжимок */
+  .mem-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .mem-item:last-child { border-bottom: none; }
+
+  .mem-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+    font-size: 11px;
+  }
+
+  .mem-summary {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--mut);
+    overflow-wrap: anywhere;
+  }
+
+  /* ---- Toast (микро-фидбэк настроек) ---- */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 400;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card-outer);
+    border: 1px solid var(--line2);
+    color: var(--ink);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font: 500 12px var(--font);
+    box-shadow: 0 10px 30px var(--shadow-diffuse);
+    max-width: min(420px, calc(100vw - 48px));
+  }
+
+  /* ---- 800-900px: отчётные col-6 стекаются раньше, segbar компактнее ---- */
+  @media (max-width: 900px) {
+    #z-reports .col-6 { grid-column: span 12; }
+    .segbar { width: 184px; min-width: 150px; }
+  }
+
   /* ---- Print: светлая PDF-схема (эталон WHOOP Monthly PA) ---- */
   @media print {
     @page { margin: 13mm; }
@@ -2210,7 +2541,6 @@
       <a data-z="timeline" data-icon="ph-footprints" onclick="go('timeline')">
         <i class="ph-light ph-footprints"></i>
         <span>Timeline</span>
-        <span class="navdot" aria-hidden="true"></span>
       </a>
       <a data-z="body" data-icon="ph-chart-pie" onclick="go('body')">
         <i class="ph-light ph-chart-pie"></i>
@@ -2252,6 +2582,10 @@
       <a data-z="sync" data-icon="ph-arrows-clockwise" onclick="go('sync')">
         <i class="ph-light ph-arrows-clockwise"></i>
         <span>Синхронизация</span>
+      </a>
+      <a data-z="settings" data-icon="ph-gear-six" onclick="go('settings')">
+        <i class="ph-light ph-gear-six"></i>
+        <span>Настройки</span>
       </a>
     </nav>
   </div>
@@ -2768,16 +3102,16 @@
             <div class="card-inner">
               <div class="card-header">
                 <div class="card-title-group">
-                  <h3>Сводные тренды (30 дней)</h3>
+                  <h3 id="trendsTitle">Сводные тренды (30 дней)</h3>
                   <div class="sub">анализ изменений показателей восстановления и вариабельности пульса</div>
                 </div>
-                <i class="ph-light ph-chart-line card-header-icon"></i>
+                <div class="period-switch" id="psTrends" role="group" aria-label="Окно трендов"></div>
               </div>
-              
+
               <div class="spark-container">
                 <div class="spark-label">
-                  <span>Recovery Trend (30 дней)</span>
-                  <span class="mono">Среднее: 62%</span>
+                  <span id="trendsRecLabel">Recovery Trend (30 дней)</span>
+                  <span class="mono" id="trendsRecAvg">Среднее: —</span>
                 </div>
                 <svg id="trendsRecChart" class="spark-svg" style="height: 120px;" viewBox="0 0 800 120" preserveAspectRatio="none">
                   <defs>
@@ -2793,8 +3127,8 @@
 
               <div class="spark-container" style="margin-top:24px;">
                 <div class="spark-label">
-                  <span>HRV Trend (30 дней, мс)</span>
-                  <span class="mono">Среднее: 41 мс</span>
+                  <span id="trendsHrvLabel">HRV Trend (30 дней, мс)</span>
+                  <span class="mono" id="trendsHrvAvg">Среднее: —</span>
                 </div>
                 <svg id="trendsHrvChart" class="spark-svg" style="height: 120px;" viewBox="0 0 800 120" preserveAspectRatio="none">
                   <defs>
@@ -2963,20 +3297,38 @@
         </div>
       </section>
 
-      <!-- SCREEN 9: TIMELINE (empty-state) -->
+      <!-- SCREEN 9: TIMELINE — события и привычки поверх recovery -->
       <section class="zone" id="z-timeline">
         <div class="bento-grid">
           <div class="card-outer col-12">
-            <div class="card-inner" style="min-height: 420px;">
-              <div class="empty-state">
-                <div class="empty-icon-ring"><i class="ph-light ph-footprints"></i></div>
-                <h4>Хронология здоровья</h4>
-                <p class="what">Анализы, события жизни, болезни и вмешательства — на одной оси времени.</p>
-                <p class="need">Появится, когда в базе будут датированные записи: импортируй анализы или веди журнал — таймлайн соберётся сам.</p>
-                <button class="btn-primary" onclick="go('sync')">
-                  <i class="ph-light ph-arrows-clockwise"></i> К синхронизации
-                </button>
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Лента дней</h3>
+                  <div class="sub">события и привычки поверх динамики recovery — где связь?</div>
+                </div>
+                <i class="ph-light ph-footprints card-header-icon"></i>
               </div>
+
+              <div class="spark-container" style="margin-top:4px;">
+                <div class="spark-label">
+                  <span>Recovery, последние 14 дней</span>
+                  <span class="mono" id="tlSparkAvg"></span>
+                </div>
+                <svg id="tlSparkSvg" class="spark-svg" viewBox="0 0 800 70" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="tlGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.15"/>
+                      <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.0"/>
+                    </linearGradient>
+                  </defs>
+                  <path id="tlSparkArea" fill="url(#tlGlow)"></path>
+                  <path id="tlSparkLine" fill="none" stroke="var(--accent)" stroke-width="2"></path>
+                </svg>
+              </div>
+
+              <div class="tl-feed" id="tlFeed"></div>
+              <div id="tlCta"></div>
             </div>
           </div>
         </div>
@@ -3070,7 +3422,8 @@
                   <h2>Месячный отчёт</h2>
                   <div class="period" id="repPeriod">—</div>
                 </div>
-                <div class="rep-print-hide">
+                <div class="rep-print-hide" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                  <div class="period-switch" id="psReports" role="group" aria-label="Окно отчёта"></div>
                   <button class="btn-secondary" id="repPrintBtn" onclick="printReport()">
                     <i class="ph-light ph-printer"></i> Версия для печати
                   </button>
@@ -3150,6 +3503,129 @@
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 16: SETTINGS — хаб настроек (паттерн Linear Settings) -->
+      <section class="zone" id="z-settings">
+        <div class="settings-col">
+
+          <!-- Профиль -->
+          <div class="settings-sec">
+            <h2 class="settings-sec-head">Профиль</h2>
+            <div class="card-outer">
+              <div class="card-inner">
+                <div class="card-header">
+                  <div class="card-title-group">
+                    <h3>Цель и контекст</h3>
+                    <div class="sub">эти тексты агент читает при каждом разборе — чем конкретнее, тем точнее выводы</div>
+                  </div>
+                  <i class="ph-light ph-user-circle card-header-icon"></i>
+                </div>
+
+                <div class="form-group">
+                  <label for="goalInput">Цель по здоровью</label>
+                  <textarea id="goalInput" rows="3" placeholder="Хочу стабильную энергию днём; главная метрика — recovery; готов менять время отбоя"></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="aboutMeInput">Обо мне</label>
+                  <textarea id="aboutMeInput" rows="3" placeholder="Возраст-диапазон, режим работы и сна, ограничения по здоровью, что уже пробовал…"></textarea>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                  <span class="muted" id="profileSaveStatus" style="font-size:12px;"></span>
+                  <button class="btn-secondary" onclick="downloadProfileFiles()">
+                    <i class="ph-light ph-download-simple"></i> Скачать как файлы
+                  </button>
+                </div>
+
+                <p class="privacy-note">
+                  <i class="ph-light ph-lock-simple"></i>
+                  <span>Тексты хранятся локально в браузере. Кнопка выгрузит <span class="mono">goal.md</span> и <span class="mono">about-me.md</span> — положи их в свою health-папку рядом с <span class="mono">data.local.json</span>: bridge подмешает их в контекст агента при каждом разборе.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Оформление -->
+          <div class="settings-sec">
+            <h2 class="settings-sec-head">Оформление</h2>
+            <div class="card-outer">
+              <div class="card-inner">
+                <div class="card-header">
+                  <div class="card-title-group">
+                    <h3>Тема</h3>
+                    <div class="sub">синхронизировано с переключателем в сайдбаре · выбор запоминается</div>
+                  </div>
+                  <i class="ph-light ph-palette card-header-icon"></i>
+                </div>
+
+                <div class="theme-cards" id="themeCards"></div>
+
+                <div class="nav-config-note" style="margin-top:20px; font-weight:600; color: var(--ink);">Эффекты</div>
+                <div id="fxToggles"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Агент -->
+          <div class="settings-sec">
+            <h2 class="settings-sec-head">Агент</h2>
+            <div class="card-outer">
+              <div class="card-inner">
+                <div class="card-header">
+                  <div class="card-title-group">
+                    <h3>Локальный агент</h3>
+                    <div class="sub">кто разбирает твои данные: CLI и модель · хранится в ~/.openhealth/agent.json</div>
+                  </div>
+                  <i class="ph-light ph-robot card-header-icon"></i>
+                </div>
+                <div id="agentConfigBox"></div>
+              </div>
+            </div>
+
+            <div class="card-outer" style="margin-top:16px;">
+              <div class="card-inner">
+                <div class="card-header">
+                  <div class="card-title-group">
+                    <h3>Память агента</h3>
+                    <div class="sub">выжимки прошлых разборов — агент читает их, чтобы не повторяться</div>
+                  </div>
+                  <i class="ph-light ph-brain card-header-icon"></i>
+                </div>
+                <div id="agentMemoryBox"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Данные и разделы -->
+          <div class="settings-sec">
+            <h2 class="settings-sec-head">Данные и разделы</h2>
+            <div class="card-outer">
+              <div class="card-inner">
+                <div class="card-header">
+                  <div class="card-title-group">
+                    <h3>Данные и навигация</h3>
+                    <div class="sub">видимость разделов, импорт источников, состояние выгрузки</div>
+                  </div>
+                  <i class="ph-light ph-database card-header-icon"></i>
+                </div>
+
+                <div class="settings-info-row" id="dataFileInfo"></div>
+
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;">
+                  <button class="btn-secondary" onclick="openNavConfig()">
+                    <i class="ph-light ph-sliders"></i> Настроить видимость разделов
+                  </button>
+                  <button class="btn-secondary" onclick="go('sync')">
+                    <i class="ph-light ph-arrows-clockwise"></i> Перейти в Синхронизацию
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -3837,9 +4313,23 @@ function saveJournalEntry() {
 }
 
 function initTrendsScreen() {
-  renderAreaChart('trendsRecChart', 'trendsRecLine', 'trendsRecArea', DATA.trend30Rec);
-  renderAreaChart('trendsHrvChart', 'trendsHrvLine', 'trendsHrvArea', DATA.trend30Hrv);
-  // FRAMES: line-draw 1.2 + area fade 0.6/delay 0.4.
+  const n = getPeriod();
+  const rec = (Array.isArray(DATA.trend30Rec) ? DATA.trend30Rec : []).slice(-n);
+  const hrv = (Array.isArray(DATA.trend30Hrv) ? DATA.trend30Hrv : []).slice(-n);
+
+  periodSwitcher('psTrends', () => initTrendsScreen());
+
+  // Заголовки и средние пересчитываются под окно (честная длина среза).
+  const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  setTxt('trendsTitle', `Сводные тренды (${rec.length} дней)`);
+  setTxt('trendsRecLabel', `Recovery Trend (${rec.length} дн)`);
+  setTxt('trendsRecAvg', rec.length ? 'Среднее: ' + Math.round(avgArr(rec)) + '%' : 'Среднее: —');
+  setTxt('trendsHrvLabel', `HRV Trend (${hrv.length} дн, мс)`);
+  setTxt('trendsHrvAvg', hrv.length ? 'Среднее: ' + Math.round(avgArr(hrv)) + ' мс' : 'Среднее: —');
+
+  renderAreaChart('trendsRecChart', 'trendsRecLine', 'trendsRecArea', rec);
+  renderAreaChart('trendsHrvChart', 'trendsHrvLine', 'trendsHrvArea', hrv);
+  // FRAMES: line-draw 1.2 + area fade 0.6/delay 0.4 — переигрывается при смене окна.
   animateSparkline('trendsRecLine', 'trendsRecArea');
   animateSparkline('trendsHrvLine', 'trendsHrvArea');
 }
@@ -3976,14 +4466,19 @@ function repHeatHTML(arr) {
 }
 
 function renderReport(animate) {
-  const rec = Array.isArray(DATA.trend30Rec) ? DATA.trend30Rec : [];
-  const hrv = Array.isArray(DATA.trend30Hrv) ? DATA.trend30Hrv : [];
-  const sleep = Array.isArray(DATA.trendSleep) ? DATA.trendSleep : [];
-  const rhr = Array.isArray(DATA.trend30Rhr) ? DATA.trend30Rhr : [];
+  // Окно отчёта = выбранный период (openhealth.period); срезы — хвост ряда.
+  const N = getPeriod();
+  const rec = (Array.isArray(DATA.trend30Rec) ? DATA.trend30Rec : []).slice(-N);
+  const hrv = (Array.isArray(DATA.trend30Hrv) ? DATA.trend30Hrv : []).slice(-N);
+  const sleep = (Array.isArray(DATA.trendSleep) ? DATA.trendSleep : []).slice(-N);
+  const rhr = (Array.isArray(DATA.trend30Rhr) ? DATA.trend30Rhr : []).slice(-N);
+
+  periodSwitcher('psReports', () => renderReport(true));
 
   // Шапка: период из данных, честная пометка окна.
   document.getElementById('repPeriod').textContent = 'данные по: ' + (DATA.date || 'нет даты');
   const noteParts = [`окно: последние ${rec.length} дн recovery/HRV из выгрузки`];
+  if (rec.length && rec.length < N) noteParts.push(`выбран период ${N} дн — в выгрузке только ${rec.length}`);
   if (sleep.length && sleep.length !== rec.length) noteParts.push(`сон — ${sleep.length} дн`);
   if (!rhr.length) noteParts.push('дневного ряда RHR в выгрузке нет');
   document.getElementById('repWindowNote').textContent = noteParts.join(' · ');
@@ -4347,7 +4842,8 @@ const titles = {
   protocols: "Protocols",
   research: "Research",
   reports: "Отчёты",
-  digests: "Дайджесты"
+  digests: "Дайджесты",
+  settings: "Настройки"
 };
 
 // === Переиспользуемый модал ================================================
@@ -4749,27 +5245,16 @@ function openNavConfig() {
       <span>${item.label}</span>
     </label>`).join('');
 
-  const fxOn = localStorage.getItem('openhealth.fx') !== 'off';
-  const bgOn = localStorage.getItem('openhealth.bg') === 'on';
   const extras = `
-    <div class="nav-config-note" style="margin-top:14px; font-weight:600; color: var(--ink);">Оформление</div>
-    <label class="nav-config-row ${fxOn ? 'on' : ''}">
-      <span class="nav-config-check"><i class="ph-light ph-check"></i></span>
-      <input type="checkbox" ${fxOn ? 'checked' : ''}
-             onchange="localStorage.setItem('openhealth.fx', this.checked ? 'on' : 'off'); this.closest('.nav-config-row').classList.toggle('on', this.checked)">
-      <i class="ph-light ph-sparkle row-icon"></i>
-      <span>Микро-праздники при отличных показателях</span>
-    </label>
-    <label class="nav-config-row ${bgOn ? 'on' : ''}">
-      <span class="nav-config-check"><i class="ph-light ph-check"></i></span>
-      <input type="checkbox" ${bgOn ? 'checked' : ''}
-             onchange="localStorage.setItem('openhealth.bg', this.checked ? 'on' : 'off'); this.closest('.nav-config-row').classList.toggle('on', this.checked); applyZoneBackgrounds()">
-      <i class="ph-light ph-image row-icon"></i>
-      <span>Атмосферные фоны разделов (тёмная тема)</span>
-    </label>`;
+    <p class="nav-config-note" style="margin-top:14px;">Тогглы оформления (микро-праздники, атмосферные фоны) переехали в раздел «Настройки» → Оформление.</p>
+    <div class="step-action" style="margin-top:10px;">
+      <button class="btn-secondary" onclick="closeModal(); go('settings')">
+        <i class="ph-light ph-gear-six"></i> Открыть Настройки
+      </button>
+    </div>`;
 
   openModal('Настройка меню', 'какие разделы показывать в навигации',
-    rows + extras + '<p class="nav-config-note">«Сегодня» и «Синхронизация» — системные разделы, они видны всегда. Настройка хранится локально в браузере.</p>');
+    rows + extras + '<p class="nav-config-note">«Сегодня», «Синхронизация» и «Настройки» — системные разделы, они видны всегда. Настройка хранится локально в браузере.</p>');
 }
 
 function toggleDrawer(force) {
@@ -4833,6 +5318,10 @@ function go(z) {
         renderReport(true);
       } else if (z === 'biomarkers') {
         animateBiomarkersEnter();
+      } else if (z === 'timeline') {
+        renderTimeline();
+      } else if (z === 'settings') {
+        renderSettingsScreen();
       }
     }
   });
@@ -4855,19 +5344,62 @@ function syncNavIcons() {
   });
 }
 
+// === Темы: один источник правды (applyTheme), сайдбар и карточки в Настройках синхронны ===
+
+const THEME_KEY = 'openhealth.theme';
+const THEME_DEFS = [
+  { id: 'dark', label: 'Тёмная', bg: '#060709', card: '#14171d', line: '#1d212a', ink: '#f3f4f6', accent: '#10b981' },
+  { id: 'light', label: 'Светлая', bg: '#f9fafb', card: '#ffffff', line: '#e5e7eb', ink: '#111827', accent: '#10b981' },
+  { id: 'brutalist', label: 'Брутал', bg: '#ffffff', card: '#ffffff', line: '#000000', ink: '#000000', accent: '#0000ff' },
+  { id: 'bauhaus', label: 'Баухауз', bg: '#f4f4f5', card: '#ffffff', line: '#1a1a1a', ink: '#1a1a1a', accent: '#ff3b30' }
+];
+
 const themes = document.getElementById('themes');
-themes.addEventListener('click', e => {
-  const b = e.target.closest('button');
-  if (!b) return;
-  
-  document.documentElement.dataset.theme = b.dataset.t;
-  [...themes.children].forEach(x => x.setAttribute('aria-pressed', x === b));
-  
-  const activeTab = document.querySelector('aside nav a.active').dataset.z;
+
+function applyTheme(t, persist) {
+  if (!THEME_DEFS.some(x => x.id === t)) return;
+  document.documentElement.dataset.theme = t;
+  [...themes.children].forEach(x => x.setAttribute('aria-pressed', String(x.dataset.t === t)));
+  if (persist !== false) { try { localStorage.setItem(THEME_KEY, t); } catch (e) { /* ignore */ } }
+  renderThemeCards();
+  applyZoneBackgrounds();
+
+  const activeLink = document.querySelector('aside nav a.active');
+  const activeTab = activeLink ? activeLink.dataset.z : null;
   if (activeTab === 'pulse') initPulseScreen();
   else if (activeTab === 'whoop-overview') animateWhoopRings();
   else if (activeTab === 'trends') initTrendsScreen();
+}
+
+themes.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (b) applyTheme(b.dataset.t);
 });
+
+// Карточки-превью тем в Настройках (мини-превью реальных цветов темы).
+function renderThemeCards() {
+  const wrap = document.getElementById('themeCards');
+  if (!wrap) return;
+  const cur = document.documentElement.dataset.theme;
+  wrap.innerHTML = THEME_DEFS.map(t => `
+    <button type="button" class="theme-card ${t.id === cur ? 'active' : ''}" aria-pressed="${t.id === cur}"
+            onclick="applyTheme('${t.id}')">
+      <span class="theme-preview" style="background:${t.bg}; border-color:${t.line};">
+        <span class="tp-side" style="background:${t.card}; border-color:${t.line};"></span>
+        <span class="tp-main">
+          <span class="tp-bar" style="background:${t.card}; border-color:${t.line};"><span style="background:${t.accent};"></span></span>
+          <span class="tp-bar" style="background:${t.card}; border-color:${t.line};"><span style="background:${t.ink}; opacity:0.4;"></span></span>
+        </span>
+      </span>
+      <span class="theme-card-label">${t.label}${t.id === cur ? ' <i class="ph-light ph-check"></i>' : ''}</span>
+    </button>`).join('');
+}
+
+// Восстановить сохранённую тему до первого рендера зон.
+try {
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  if (savedTheme) applyTheme(savedTheme, false);
+} catch (e) { /* ignore */ }
 
 document.getElementById('toggleBiomarkerData').addEventListener('click', () => {
   DATA.biomarkersConnected = !DATA.biomarkersConnected;
@@ -4887,6 +5419,8 @@ async function loadRealData() {
     const res = await fetch('data.local.json', { cache: 'no-store' });
     if (!res.ok) return false;
     const real = await res.json();
+    REAL_DATA_META.loaded = true;
+    REAL_DATA_META.generatedAt = (real._meta && real._meta.generatedAt) || null;
     Object.keys(real).forEach(k => {
       if (k.startsWith('_')) return;            // skip _meta
       if (real[k] === null || real[k] === undefined) return;
@@ -4931,6 +5465,7 @@ function renderDashboard() {
 window.addEventListener('DOMContentLoaded', () => {
   applyNavVisibility();
   bindUploadInputs();
+  bindProfileInputs();
   // Render immediately with whatever DATA we have, then re-render if real
   // local data loads (keeps demo instant and avoids a blank first paint).
   loadRealData().then(loaded => { if (loaded) renderDashboard(); });
@@ -4941,6 +5476,517 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function exploreCorrelations() {
   updateCorrelationsScreen();
+}
+
+// ============================================================
+// Переключатель окна Д/Н/М (паттерн WHOOP «1 wk / 1 mo»).
+// Данных больше 30 дней нет — честные опции 7/14/30.
+// Выбор общий для Трендов и Отчётов: openhealth.period.
+// ============================================================
+const PERIOD_KEY = 'openhealth.period';
+const PERIOD_OPTIONS = [7, 14, 30];
+
+function getPeriod() {
+  try {
+    const v = parseInt(localStorage.getItem(PERIOD_KEY), 10);
+    if (PERIOD_OPTIONS.includes(v)) return v;
+  } catch (e) { /* ignore */ }
+  return 30;
+}
+
+// Рендерит пилюлю-сегмент в контейнер и зовёт onChange при смене окна.
+// Все пилюли на странице синхронизируются между собой (один ключ).
+function periodSwitcher(containerId, onChange) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const cur = getPeriod();
+  el.innerHTML = PERIOD_OPTIONS.map(n =>
+    `<button type="button" data-n="${n}" class="${n === cur ? 'active' : ''}" aria-pressed="${n === cur}">${n}д</button>`
+  ).join('');
+  el.querySelectorAll('button').forEach(b => {
+    b.onclick = () => {
+      const n = +b.dataset.n;
+      if (n === getPeriod()) return;
+      try { localStorage.setItem(PERIOD_KEY, String(n)); } catch (e) { /* ignore */ }
+      document.querySelectorAll('.period-switch button').forEach(x => {
+        const on = +x.dataset.n === n;
+        x.classList.toggle('active', on);
+        x.setAttribute('aria-pressed', String(on));
+      });
+      if (onChange) onChange(n);
+    };
+  });
+}
+
+// ============================================================
+// TIMELINE: лента последних 14 дней — recovery-чип + события дня
+// из локального журнала (привычки и заметки). Только реальные
+// данные из data/localStorage, никакой бутафории.
+// ============================================================
+
+const RU_MONTHS_GEN = {
+  'января': 0, 'февраля': 1, 'марта': 2, 'апреля': 3, 'мая': 4, 'июня': 5,
+  'июля': 6, 'августа': 7, 'сентября': 8, 'октября': 9, 'ноября': 10, 'декабря': 11
+};
+const RU_MONTHS_SHORT = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+const RU_WEEKDAYS_SHORT = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+
+// DATA.date в выгрузке — «суббота, 14 марта 2026». Демо («вторник, сегодня»)
+// не парсится — честный фолбэк на текущую дату.
+function parseDataDate() {
+  const m = String(DATA.date || '').match(/(\d{1,2})\s+([а-яё]+)\s+(\d{4})/i);
+  if (m) {
+    const mon = RU_MONTHS_GEN[m[2].toLowerCase()];
+    if (mon != null) {
+      const d = new Date(+m[3], mon, +m[1]);
+      if (!isNaN(d)) return d;
+    }
+  }
+  return new Date();
+}
+
+const dateKeyOf = d =>
+  d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+
+// id привычки -> {label, icon}: каталог + активный список + сохранённый список.
+function behaviorLabelMap() {
+  const map = {};
+  (DATA.allBehaviors || []).forEach(b => { map[b.id] = { label: b.label, icon: b.icon }; });
+  (DATA.habits || []).forEach(h => { if (!map[h.id]) map[h.id] = { label: h.label, icon: h.icon }; });
+  try {
+    const saved = JSON.parse(localStorage.getItem(HABITS_LIST_KEY) || 'null');
+    if (Array.isArray(saved)) saved.forEach(h => {
+      if (h && h.id && !map[h.id]) map[h.id] = { label: h.label || h.id, icon: h.icon || 'ph-check' };
+    });
+  } catch (e) { /* ignore */ }
+  return map;
+}
+
+function tlDayEventsHTML(key, labels) {
+  const parts = [];
+  let count = 0;
+
+  try {
+    const done = JSON.parse(localStorage.getItem('openhealth.habits.' + key) || 'null');
+    if (done && typeof done === 'object') {
+      Object.keys(done).filter(id => done[id]).forEach(id => {
+        const meta = labels[id] || { label: id, icon: 'ph-check' };
+        parts.push(`<span class="tl-chip"><i class="ph-light ${safeIcon(meta.icon)}"></i>${escapeHtml(meta.label)}</span>`);
+        count++;
+      });
+    }
+  } catch (e) { /* повреждённая запись дня — пропускаем */ }
+
+  try {
+    const note = localStorage.getItem('openhealth.journal.notes.' + key);
+    if (note) {
+      parts.push(`<span class="tl-note"><i class="ph-light ph-note-pencil"></i>${escapeHtml(note)}</span>`);
+      count++;
+    }
+  } catch (e) { /* ignore */ }
+
+  return { html: parts.join(''), count };
+}
+
+function renderTimeline() {
+  const feed = document.getElementById('tlFeed');
+  const cta = document.getElementById('tlCta');
+  if (!feed) return;
+
+  const all = Array.isArray(DATA.trend30Rec) ? DATA.trend30Rec : [];
+  const arr = all.slice(-14);
+
+  if (!arr.length) {
+    feed.innerHTML = '<p class="muted" style="font-size:12px; margin:14px 0 0;">Нет дневного ряда recovery в выгрузке — лента появится вместе с данными tracker.</p>';
+    if (cta) cta.innerHTML = '';
+    return;
+  }
+
+  // Мини-спарклайн recovery сверху (FRAMES: line-draw 1.2 + area 0.6/0.4).
+  renderAreaChart('tlSparkSvg', 'tlSparkLine', 'tlSparkArea', arr);
+  animateSparkline('tlSparkLine', 'tlSparkArea');
+  const avgEl = document.getElementById('tlSparkAvg');
+  if (avgEl) avgEl.textContent = 'Среднее: ' + Math.round(avgArr(arr)) + '%';
+
+  const endDate = parseDataDate();
+  const realToday = todayKey();
+  const labels = behaviorLabelMap();
+  let daysWithEvents = 0;
+
+  // Новые дни сверху: idx arr.length-1 = день выгрузки.
+  const rows = [];
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const offset = arr.length - 1 - i;
+    const d = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate() - offset);
+    const key = dateKeyOf(d);
+    const v = arr[i];
+    const ev = tlDayEventsHTML(key, labels);
+    if (ev.count) daysWithEvents++;
+
+    rows.push(`
+      <div class="tl-day">
+        <div class="tl-date">
+          <b>${d.getDate()} ${RU_MONTHS_SHORT[d.getMonth()]}</b>
+          <span>${RU_WEEKDAYS_SHORT[d.getDay()]}${key === realToday ? ' · <span class="tl-today-badge">сегодня</span>' : ''}</span>
+        </div>
+        <span class="tl-rec" style="background:${zoneRgba(v, 0.14)}; color:${col(v)};">${v}</span>
+        <div class="tl-events">${ev.html || '<span class="tl-none">— без отметок</span>'}</div>
+      </div>`);
+  }
+  feed.innerHTML = rows.join('');
+
+  // Журнал пока пустой — мягкий CTA вместо бутафорских событий.
+  if (cta) {
+    cta.innerHTML = daysWithEvents === 0 ? `
+      <div class="rep-adapt-empty" style="margin-top:16px;">
+        <i class="ph-light ph-notebook"></i>
+        <span>Пока без событий: отмечай привычки в Журнале — лента свяжет их с recovery.
+          <span class="step-action" style="display:block; margin-top:10px;">
+            <button class="btn-secondary" onclick="go('journal')"><i class="ph-light ph-notebook"></i> В Журнал</button>
+          </span>
+        </span>
+      </div>` : '';
+  }
+
+  // Каскад строк (FRAMES: fade+x 0.4; суммарная задержка ≤ 0.45).
+  gsap.fromTo('#tlFeed .tl-day',
+    { opacity: 0, x: -8 },
+    { opacity: 1, x: 0, duration: 0.4, stagger: 0.03, ease: 'power2.out', clearProps: 'opacity,transform' });
+}
+
+// ============================================================
+// Toast: микро-фидбэк настроек (FRAMES: 0.3 power2.out).
+// ============================================================
+function showToast(text, ok) {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.setAttribute('role', 'status');
+  el.innerHTML = `<i class="ph-light ${ok === false ? 'ph-warning' : 'ph-check-circle'}" style="color:${ok === false ? 'var(--warn)' : 'var(--ok)'}; font-size:15px; flex-shrink:0;"></i><span>${escapeHtml(text)}</span>`;
+  document.body.appendChild(el);
+  gsap.fromTo(el, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' });
+  setTimeout(() => {
+    gsap.to(el, { opacity: 0, y: 6, duration: 0.25, ease: 'power2.in', onComplete: () => el.remove() });
+  }, 2400);
+}
+
+// ============================================================
+// НАСТРОЙКИ: профиль, оформление, агент, данные.
+// ============================================================
+
+const REAL_DATA_META = { loaded: false, generatedAt: null };
+const GOAL_KEY = 'openhealth.goal';
+const ABOUTME_KEY = 'openhealth.aboutme';
+
+// --- Профиль: цель + «обо мне», автосохранение в localStorage ---------------
+
+let profileSaveTimer = null;
+
+function loadProfileFields() {
+  try {
+    const g = document.getElementById('goalInput');
+    const a = document.getElementById('aboutMeInput');
+    if (g && document.activeElement !== g) g.value = localStorage.getItem(GOAL_KEY) || '';
+    if (a && document.activeElement !== a) a.value = localStorage.getItem(ABOUTME_KEY) || '';
+  } catch (e) { /* ignore */ }
+}
+
+function bindProfileInputs() {
+  [['goalInput', GOAL_KEY], ['aboutMeInput', ABOUTME_KEY]].forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      clearTimeout(profileSaveTimer);
+      profileSaveTimer = setTimeout(() => {
+        try {
+          if (el.value.trim()) localStorage.setItem(key, el.value);
+          else localStorage.removeItem(key);
+        } catch (e) { /* private mode — текст не переживёт перезагрузку */ }
+        const st = document.getElementById('profileSaveStatus');
+        if (st) {
+          st.textContent = 'Сохранено локально · ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+          gsap.fromTo(st, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'power2.out' });
+        }
+      }, 500);
+    });
+  });
+}
+
+function downloadTextFile(name, text) {
+  const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+// goal.md / about-me.md: bridge читает их из data-dir (build_user_context),
+// поэтому скачанные файлы кладутся в health-папку рядом с data.local.json.
+function downloadProfileFiles() {
+  const goal = (localStorage.getItem(GOAL_KEY) || '').trim();
+  const about = (localStorage.getItem(ABOUTME_KEY) || '').trim();
+  if (!goal && !about) {
+    showToast('Сначала заполни хотя бы одно поле', false);
+    return;
+  }
+  if (goal) downloadTextFile('goal.md', '# Цель по здоровью\n\n' + goal + '\n');
+  if (about) setTimeout(() => downloadTextFile('about-me.md', '# Обо мне\n\n' + about + '\n'), goal ? 350 : 0);
+  showToast('Файлы скачаны — положи их в health-папку, агент будет опираться');
+}
+
+// --- Оформление: тогглы эффектов (перенесены из «Настроить меню») -----------
+
+function renderFxToggles() {
+  const box = document.getElementById('fxToggles');
+  if (!box) return;
+  const fxOn = localStorage.getItem('openhealth.fx') !== 'off';
+  const bgOn = localStorage.getItem('openhealth.bg') === 'on';
+  box.innerHTML = `
+    <label class="nav-config-row ${fxOn ? 'on' : ''}">
+      <span class="nav-config-check"><i class="ph-light ph-check"></i></span>
+      <input type="checkbox" ${fxOn ? 'checked' : ''}
+             onchange="localStorage.setItem('openhealth.fx', this.checked ? 'on' : 'off'); this.closest('.nav-config-row').classList.toggle('on', this.checked)">
+      <i class="ph-light ph-sparkle row-icon"></i>
+      <span>Микро-праздники при отличных показателях</span>
+    </label>
+    <label class="nav-config-row ${bgOn ? 'on' : ''}">
+      <span class="nav-config-check"><i class="ph-light ph-check"></i></span>
+      <input type="checkbox" ${bgOn ? 'checked' : ''}
+             onchange="localStorage.setItem('openhealth.bg', this.checked ? 'on' : 'off'); this.closest('.nav-config-row').classList.toggle('on', this.checked); applyZoneBackgrounds()">
+      <i class="ph-light ph-image row-icon"></i>
+      <span>Атмосферные фоны разделов (тёмная тема)</span>
+    </label>`;
+}
+
+// --- Данные: строка-инфо про data.local.json --------------------------------
+
+function refreshDataInfoRow() {
+  const el = document.getElementById('dataFileInfo');
+  if (!el) return;
+  if (REAL_DATA_META.loaded) {
+    const when = REAL_DATA_META.generatedAt
+      ? 'сгенерирован: ' + REAL_DATA_META.generatedAt
+      : (DATA.date || '');
+    el.innerHTML = `
+      <i class="ph-duotone ph-check-circle" style="color: var(--ok);"></i>
+      <span><b>data.local.json</b> подключён — дашборд на реальных данных.
+        <span class="mono dim">${escapeHtml(when)}</span></span>`;
+  } else {
+    el.innerHTML = `
+      <i class="ph-light ph-warning-circle" style="color: var(--warn);"></i>
+      <span><b>data.local.json</b> не найден — показываются демо-данные. Сгенерируй выгрузку:
+        <span class="mono">python3 ui/web/build_dashboard_data.py</span></span>`;
+  }
+}
+
+// --- Агент: конфиг (/api/config) и память (/api/memory) ---------------------
+// Graceful fallback: старый bridge без этих эндпоинтов отвечает 404 —
+// секция честно просит перезапустить OpenHealth.command, ничего не ломая.
+
+const AGENT_LABELS = {
+  auto: { label: 'Авто', hint: 'каскад: claude → codex' },
+  claude: { label: 'Claude Code', hint: 'CLI: claude' },
+  codex: { label: 'Codex CLI', hint: 'CLI: codex' },
+  antigravity: { label: 'Antigravity', hint: 'CLI: agy' }
+};
+
+let AGENT_CFG = null; // последний полученный /api/config
+
+function bridgeNeededHTML(kind, retryCall) {
+  const msg = kind === 'old'
+    ? 'Эндпоинт не найден — нужен обновлённый bridge. Перезапусти <b>OpenHealth.command</b>, чтобы подтянуть свежий server.py.'
+    : 'Bridge не отвечает — запусти <b>OpenHealth.command</b>, и секция оживёт.';
+  return `
+    <div class="agent-error">
+      <div class="agent-error-msg">
+        <i class="ph-light ${kind === 'old' ? 'ph-arrows-counter-clockwise' : 'ph-plugs'}"></i>
+        <span>${msg}</span>
+      </div>
+      <div class="agent-actions">
+        ${retryCall ? `<button class="btn-secondary" onclick="${retryCall}"><i class="ph-light ph-arrow-clockwise"></i> Проверить снова</button>` : ''}
+        <button class="btn-secondary" onclick="showBridgeHelp()"><i class="ph-light ph-question"></i> Как запустить bridge</button>
+      </div>
+    </div>`;
+}
+
+function settingsSkeletonHTML() {
+  return `
+    <div class="skeleton" aria-hidden="true">
+      <div class="skeleton-line" style="width: 70%;"></div>
+      <div class="skeleton-line" style="width: 88%;"></div>
+      <div class="skeleton-line" style="width: 52%;"></div>
+    </div>`;
+}
+
+function agentConfigFormHTML(j) {
+  const cfg = j.config || {};
+  const avail = {};
+  (j.agents || []).forEach(a => { avail[a.name] = !!a.available; });
+  const current = cfg.agent || 'auto';
+
+  const rows = Object.keys(AGENT_LABELS).map(name => {
+    const enabled = name === 'auto' || !!avail[name];
+    const meta = AGENT_LABELS[name];
+    return `
+      <label class="agent-radio-row ${current === name ? 'on' : ''} ${enabled ? '' : 'disabled'}">
+        <input type="radio" name="agentChoice" value="${name}" ${current === name ? 'checked' : ''} ${enabled ? '' : 'disabled'}
+               onchange="saveAgentChoice('${name}')">
+        <span class="agent-radio-dot"></span>
+        <span>${meta.label}</span>
+        <span class="agent-radio-hint">${enabled ? meta.hint : 'не найден в системе'}</span>
+      </label>`;
+  }).join('');
+
+  return `
+    <div role="radiogroup" aria-label="Выбор агента">${rows}</div>
+    <div class="form-group" style="margin: 16px 0 0;">
+      <label for="agentModelInput">Модель (опционально)</label>
+      <input type="text" id="agentModelInput" value="${escapeHtml(cfg.model || '')}"
+             placeholder="например claude-sonnet-4-6 или o4-mini"
+             onkeydown="if(event.key==='Enter'){this.blur();}" onblur="saveAgentModel(this)">
+      <p class="cmd-hint">Пусто — агент сам выберет дефолтную модель. Применяется со следующего запуска задачи.</p>
+    </div>`;
+}
+
+async function loadAgentConfigUI() {
+  const box = document.getElementById('agentConfigBox');
+  if (!box) return;
+  box.innerHTML = settingsSkeletonHTML();
+  try {
+    const res = await fetch('/api/config', { cache: 'no-store' });
+    if (res.status === 404) { box.innerHTML = bridgeNeededHTML('old', 'loadAgentConfigUI()'); return; }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    AGENT_CFG = j;
+    box.innerHTML = agentConfigFormHTML(j);
+  } catch (e) {
+    box.innerHTML = bridgeNeededHTML('offline', 'loadAgentConfigUI()');
+  }
+}
+
+async function postAgentConfig(payload) {
+  const res = await fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (res.status === 404) throw new Error('Нужен обновлённый bridge — перезапусти OpenHealth.command');
+  let body = null;
+  try { body = await res.json(); } catch (e) { /* не-JSON */ }
+  if (!res.ok || !body || body.status !== 'ok') {
+    throw new Error((body && body.message) || ('HTTP ' + res.status));
+  }
+  return body;
+}
+
+function saveAgentChoice(name) {
+  postAgentConfig({ agent: name })
+    .then(b => {
+      AGENT_CFG = b;
+      document.querySelectorAll('.agent-radio-row').forEach(r => {
+        const input = r.querySelector('input');
+        r.classList.toggle('on', !!input && input.value === name);
+      });
+      const meta = AGENT_LABELS[name];
+      showToast('Сохранено: агент — ' + (meta ? meta.label : name));
+    })
+    .catch(err => { showToast('Не сохранилось: ' + err.message, false); loadAgentConfigUI(); });
+}
+
+function saveAgentModel(input) {
+  const v = input.value.trim();
+  const prev = (AGENT_CFG && AGENT_CFG.config && AGENT_CFG.config.model) || '';
+  if (v === prev) return;
+  postAgentConfig({ model: v || null })
+    .then(b => {
+      AGENT_CFG = b;
+      showToast(v ? 'Сохранено: модель — ' + v : 'Модель сброшена на дефолт агента');
+    })
+    .catch(err => showToast('Не сохранилось: ' + err.message, false));
+}
+
+async function loadAgentMemoryUI() {
+  const box = document.getElementById('agentMemoryBox');
+  if (!box) return;
+  box.innerHTML = settingsSkeletonHTML();
+  try {
+    const res = await fetch('/api/memory', { cache: 'no-store' });
+    if (res.status === 404) { box.innerHTML = bridgeNeededHTML('old', 'loadAgentMemoryUI()'); return; }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    const entries = (j.entries || []).slice(0, 5); // bridge отдаёт новые первыми
+
+    if (!entries.length) {
+      box.innerHTML = `
+        <div class="agent-idle">
+          <i class="ph-light ph-brain"></i>
+          <span>Память пуста — появится после первого разбора агентом (кнопка «Сгенерировать инсайт» на экране «Сегодня»).</span>
+        </div>`;
+      return;
+    }
+
+    box.innerHTML = `
+      <div class="mem-list">${entries.map(e => `
+        <div class="mem-item">
+          <div class="mem-meta">
+            <span class="mono dim">${escapeHtml(String(e.ts || '').slice(0, 16).replace('T', ' '))}</span>
+            <span class="agent-chip" style="text-transform:none;">${escapeHtml(e.task || '?')}</span>
+          </div>
+          <div class="mem-summary">${escapeHtml(e.summary || '')}</div>
+        </div>`).join('')}
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px;">
+        <span class="cmd-hint" style="margin:0;">Всего записей: ${j.count || entries.length} · показаны последние ${entries.length}</span>
+        <button class="btn-secondary" onclick="confirmClearMemory()">
+          <i class="ph-light ph-trash"></i> Очистить память
+        </button>
+      </div>`;
+  } catch (e) {
+    box.innerHTML = bridgeNeededHTML('offline', 'loadAgentMemoryUI()');
+  }
+}
+
+function confirmClearMemory() {
+  openModal('Очистить память агента?', 'действие необратимо',
+    `<p class="step-text">Все выжимки прошлых разборов будут удалены из <span class="mono">~/.openhealth/memory</span>. Агент начнёт с чистого листа и может повторить уже сделанные наблюдения.</p>
+     <div class="agent-actions" style="margin-top:18px;">
+       <button class="btn-primary" onclick="clearAgentMemory(this)"><i class="ph-light ph-trash"></i> Да, очистить</button>
+       <button class="btn-secondary" onclick="closeModal()">Отмена</button>
+     </div>`);
+}
+
+async function clearAgentMemory(btn) {
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch('/api/memory', { method: 'DELETE' });
+    let body = null;
+    try { body = await res.json(); } catch (e) { /* не-JSON */ }
+    if (!res.ok || !body || body.status !== 'ok') {
+      throw new Error((body && body.message) || ('HTTP ' + res.status));
+    }
+    closeModal();
+    showToast('Память очищена · удалено записей: ' + (body.cleared != null ? body.cleared : '—'));
+    loadAgentMemoryUI();
+  } catch (e) {
+    closeModal();
+    showToast('Не вышло очистить: ' + e.message, false);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// Вход в зону «Настройки»: статика уже в DOM, дозаполняем динамику.
+function renderSettingsScreen() {
+  loadProfileFields();
+  renderThemeCards();
+  renderFxToggles();
+  refreshDataInfoRow();
+  loadAgentConfigUI();
+  loadAgentMemoryUI();
 }
 
 // ============================================================

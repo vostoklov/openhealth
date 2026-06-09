@@ -4,9 +4,9 @@ from datetime import datetime, time, timedelta, timezone
 from typing import Any, Dict, List, Optional, Sequence
 
 from . import index
+from .connectors.google_calendar import ensure_derived_calendar, load_google_calendar_config
 from .contexts import refresh_contexts
 from .environment import EnvironmentService
-from .connectors.google_calendar import ensure_derived_calendar, load_google_calendar_config
 from .models import InsightHypothesis, Observation, SourceManifest, TimelineEvent
 from .storage import ensure_repo_structure, now_utc, write_json
 from .whoop import WHOOP_SOURCE_ID

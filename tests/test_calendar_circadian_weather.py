@@ -8,6 +8,7 @@ from openhealth.circadian import build_circadian_plan, record_morning_light_chec
 from openhealth.connectors.google_calendar import ensure_derived_calendar, sync_google_calendar
 from openhealth.ingest import init_workspace
 from openhealth.storage import ensure_repo_structure, write_json
+from openhealth.weather_insights import assess_weather_impact, sync_weather_assessment
 from openhealth.whoop import sync_whoop
 
 
@@ -148,7 +149,7 @@ class FakeCalendarClient:
         self.deletes.append((calendar_id, event_id))
 
 
-class CalendarCircadianTests(unittest.TestCase):
+class CalendarCircadianWeatherTests(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.root = Path(self.temp_dir.name)
@@ -203,6 +204,31 @@ class CalendarCircadianTests(unittest.TestCase):
         self.assertEqual(writeback["deleted_events"], 0)
         self.assertTrue(all(calendar_id == "derived-openhealth" for calendar_id, _ in calendar_client.upserts))
         self.assertEqual(len(calendar_client.events["derived-openhealth"]), 5)
+
+    def test_weather_assessment_is_evidence_gated(self):
+        profile = {
+            "declared_sensitivities": ["dry_eyes", "migraine"],
+            "personally_supported_signals": [],
+        }
+        write_json(self.paths.weather_susceptibility_path, profile)
+        assessment = assess_weather_impact(
+            self.root,
+            date_value="2026-04-20",
+            environment_service=FakeEnvironmentService(),
+        )
+        active = assessment["active_factors"]
+        self.assertIn("low_relative_humidity", active)
+        self.assertIn("barometric_pressure_change", active)
+        self.assertTrue(assessment["findings"])
+
+        synced = sync_weather_assessment(
+            self.root,
+            date_value="2026-04-20",
+            environment_service=FakeEnvironmentService(),
+        )
+        self.assertEqual(synced["date"], "2026-04-20")
+        insight = [record for record in index.list_records(self.paths.db_path) if record["source_id"] == "weather-intelligence"]
+        self.assertTrue(insight)
 
 
 if __name__ == "__main__":

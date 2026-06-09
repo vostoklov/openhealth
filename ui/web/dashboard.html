@@ -452,6 +452,25 @@
     align-items: start;
   }
 
+  /* Левый стек «Сегодня»: recovery + готовность тянутся на высоту соседа
+     (чеклист справа длинный) — без пустоты под левой колонкой. */
+  .today-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-self: stretch;
+  }
+
+  .today-stack .today-stack-fill {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .today-stack .today-stack-fill .card-inner {
+    flex: 1;
+  }
+
   /* Double-Bezel Card Design */
   .card-outer {
     background: var(--card-outer);
@@ -2636,8 +2655,11 @@
       <section class="zone on" id="z-today">
         <div class="bento-grid">
           
+          <!-- Левый стек: recovery + готовность (заполняет высоту рядом с чеклистом) -->
+          <div class="col-8 today-stack">
+
           <!-- Recovery Ring -->
-          <div class="card-outer col-8">
+          <div class="card-outer">
             <div class="card-inner">
               <div class="card-header">
                 <div class="card-title-group">
@@ -2669,6 +2691,31 @@
             </div>
           </div>
           
+          <!-- Готовность к дню (в левом стеке, заполняет высоту) -->
+          <div class="card-outer today-stack-fill">
+            <div class="card-inner">
+              <div class="card-header" style="margin-bottom:12px;">
+                <div class="card-title-group">
+                  <h3>Готовность к дню и n-of-1 рекомендации</h3>
+                  <div class="sub">выводы на основе персонального оверлея</div>
+                </div>
+                <i class="ph-light ph-brain card-header-icon"></i>
+              </div>
+              
+              <p class="readiness-text" id="readiness">—</p>
+              
+              <div class="action-box">
+                <div class="action-badge">Сделай сегодня</div>
+                <div class="action-info">
+                  <div class="action-title" id="actTitle">—</div>
+                  <div class="action-why" id="actWhy">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          </div><!-- /today-stack -->
+
           <!-- Habit Checklist -->
           <div class="card-outer col-4">
             <div class="card-inner">
@@ -2694,28 +2741,6 @@
             </div>
           </div>
 
-          <!-- Doctor Advice -->
-          <div class="card-outer col-12">
-            <div class="card-inner">
-              <div class="card-header" style="margin-bottom:12px;">
-                <div class="card-title-group">
-                  <h3>Готовность к дню и n-of-1 рекомендации</h3>
-                  <div class="sub">выводы на основе персонального оверлея</div>
-                </div>
-                <i class="ph-light ph-brain card-header-icon"></i>
-              </div>
-              
-              <p class="readiness-text" id="readiness">—</p>
-              
-              <div class="action-box">
-                <div class="action-badge">Сделай сегодня</div>
-                <div class="action-info">
-                  <div class="action-title" id="actTitle">—</div>
-                  <div class="action-why" id="actWhy">—</div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <!-- Пульс: разбор дня (локальный агент через bridge) -->
           <div class="card-outer col-12" id="insightCard">

@@ -59,8 +59,12 @@ are authoritative.
 | Eufy scales | scale | — | export_only | app export / HA BLE |
 | Eve / HomeKit | air | local | export_only | HA HomeKit/Matter bridge |
 | Eight Sleep | sleep | — | export_only | data request / unofficial HA |
+| Todoist | todo | personal API token (PAT) | **supported** | `connectors/todoist.py` (live API) |
+| TickTick | todo | OAuth2 | planned | — |
+| Things 3 | todo | local | export_only | URL scheme / AppleScript / local DB |
+| Notion (task databases) | todo | integration token | planned | — |
 
-24 providers: 4 supported, 10 planned, 10 export_only.
+28 providers: 5 supported, 12 planned, 11 export_only.
 
 ---
 
@@ -292,6 +296,80 @@ Honest note: Eve is deliberately cloud-free (HomeKit/Thread/Matter only). Route:
 ### Eight Sleep — export_only
 
 Honest note: no official public API; community projects reverse-engineer the app's cloud API and can break anytime. Routes: personal data request to support (GDPR/CCPA); or the unofficial Home Assistant integration read via the HA bridge.
+
+## Tasks (todo)
+
+Why todo services belong in a health knowledge base: a completed task is a
+dated behavior signal. Closing "Тренировка", "Morning run" or "Записаться к
+врачу" is real evidence of something the journal should know about. The
+connector therefore turns **completed tasks of the day into journal
+candidates** — keyword-filtered suggestions a human reviews, never auto-logged
+facts — and reads today's active tasks as schedule-load context.
+
+Privacy: everything stays local. Task content is fetched directly from the
+vendor API with your own token, filtered on your machine, and only the
+candidates you approve enter the journal. Nothing is sent to any third party.
+
+### Todoist — supported
+
+- Portal: <https://developer.todoist.com/> · Docs: <https://developer.todoist.com/rest/v2/> · API: `https://api.todoist.com/rest/v2` (+ Sync v9 `completed/get_all` for history)
+- Data: completed tasks (per day), active tasks due today, projects, labels → journal candidates.
+
+Create a token (personal API token — the lowest-friction PAT route, no OAuth app needed):
+
+1. Open Todoist → **Settings → Integrations → Developer** tab.
+2. Copy the **API token** shown there (full account access — keep it local, never commit it).
+3. Set `OPENHEALTH_TODOIST_TOKEN` (or write the token to `~/.openhealth/todoist.token`).
+
+What we pull: `fetch_completed(date)` reads the day's completed tasks via Sync
+v9 `completed/get_all` (the REST API has no completed history), paginated;
+`fetch_today_tasks()` reads active tasks due today via REST v2;
+`health_candidates(tasks)` filters by RU + EN word-prefix stems (тренир, спорт,
+зал, бег, йог, массаж, врач, анализ, сон, медит, прогул / walk, run, gym,
+workout, yoga, doctor, sleep, meditat, …) plus `health` / `fitness` labels.
+Without a token the connector raises `TodoistNotConfigured` with these same
+steps instead of returning silent empties.
+
+Rate limits: REST v2 allows **450 requests per 15 minutes** per user; a daily
+pull uses a handful of calls.
+
+### TickTick — planned
+
+- Portal: <https://developer.ticktick.com/> · Docs: <https://developer.ticktick.com/docs#/openapi> · API: `https://api.ticktick.com/open/v1`
+
+Create credentials:
+
+1. Register an app at developer.ticktick.com (**Manage Apps**) — Client ID / Client Secret are issued there.
+2. Set an OAuth redirect URL, e.g. `http://localhost:8765/callback`.
+3. Run the OAuth2 code flow with scope `tasks:read`, then call the Open API with the Bearer token.
+
+Env: `OPENHEALTH_TICKTICK_CLIENT_ID`, `OPENHEALTH_TICKTICK_CLIENT_SECRET`. Open
+API quotas are not publicly documented in detail — poll once or twice a day.
+
+### Things 3 — export_only (local)
+
+Honest note: **no cloud API** — Things Cloud is sync-only with no public
+endpoints. Local routes on macOS: the [`things:///` URL scheme](https://culturedcode.com/things/support/articles/2803573/)
+(can add/show tasks, cannot read completed history); AppleScript automation or
+the local Things SQLite database for reading completed to-dos; or File →
+Export. Fully local — which fits this project, just without a cloud connector.
+
+### Notion (task databases) — planned
+
+- Portal: <https://www.notion.so/my-integrations> · Docs: <https://developers.notion.com/> · API: `https://api.notion.com/v1`
+
+Create credentials:
+
+1. Create an **internal integration** at notion.so/my-integrations and copy the integration token.
+2. Share your task database(s) with the integration (database page → connections) — without this the API sees nothing.
+3. Set `OPENHEALTH_NOTION_TOKEN` and query the data source with a filter on the status/checkbox property (use `data_source_id`, not the legacy `database_id`).
+
+Rate limit: about 3 requests/second per integration — paginate gently.
+
+Orchestrator contract (future endpoint, not implemented yet): `GET
+/api/todos?date=YYYY-MM-DD` → `{"completed": [...], "candidates": [...]}` where
+`completed` is the `fetch_completed()` output and `candidates` is
+`health_candidates(completed)`.
 
 ---
 

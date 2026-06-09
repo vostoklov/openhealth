@@ -1,7 +1,8 @@
 import hashlib
+import math
 from datetime import date as date_class
 from datetime import datetime, time, timedelta, timezone
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 from . import index
 from .connectors.google_calendar import ensure_derived_calendar, load_google_calendar_config
@@ -24,6 +25,66 @@ PHASE_DEFINITIONS = (
     ("primary-peak", "Primary Peak", timedelta(hours=2), timedelta(hours=5)),
     ("midday-dip", "Midday Dip", timedelta(hours=7), timedelta(hours=8, minutes=30)),
     ("secondary-peak", "Secondary Peak", timedelta(hours=9), timedelta(hours=12)),
+)
+
+# --- Rise-style energy schedule (two-process model of sleep regulation) ----
+#
+# Phase offsets follow the publicly documented Rise methodology: grogginess
+# (sleep inertia) right after wake, a morning peak ~+2.5-4h, an afternoon dip
+# ~+6-8h, an evening peak ~+9-11h, then wind-down and a melatonin window
+# anchored to the habitual bedtime. The two-process model itself is
+# established science (C3-C4); the *personal* placement of these windows is a
+# fit against the sleep anchor only (C2). Accumulated sleep debt (sleep_debt@v2
+# from modules.recovery) deepens/widens the dip and shortens the peaks.
+ENERGY_SCHEDULE_MODEL = "two-process-rise@v1"
+ENERGY_DEBT_SATURATION_H = 8.0  # debt hours at which the debt effect saturates
+DEFAULT_DAY_LENGTH_H = 16.5  # fallback wake->bed span when no usable anchor
+ENERGY_PHASE_INFO = {
+    "grogginess": (
+        "Инерция сна",
+        "Свет в глаза и стакан воды; разгоняйся медленно — не решай важное в первые 60-90 минут.",
+        "C4",
+    ),
+    "morning-peak": (
+        "Утренний пик",
+        "Лучшее окно дня: глубокая работа или тренировка.",
+        "C3",
+    ),
+    "afternoon-dip": (
+        "Дневной спад",
+        "Прогулка, лёгкие задачи, короткий сон до 20 минут; кофе после 15:00 лучше не пить.",
+        "C3",
+    ),
+    "evening-peak": (
+        "Вечерний пик",
+        "Вторая волна продуктивности: творческие и социальные задачи.",
+        "C3",
+    ),
+    "wind-down": (
+        "Замедление",
+        "Экраны вниз, тёплый свет, без интенсивной нагрузки и тяжёлой еды.",
+        "C3",
+    ),
+    "melatonin-window": (
+        "Окно мелатонина",
+        "Лучшее окно отбоя: уснуть в нём проще всего.",
+        "C3",
+    ),
+    "sleep-window": (
+        "Окно сна",
+        "Сон: держи целевые ~8 часов от привычного отбоя.",
+        "C3",
+    ),
+}
+# Point-labeling priority: melatonin window wins over the wider wind-down.
+_ENERGY_PHASE_PRIORITY = (
+    "melatonin-window",
+    "grogginess",
+    "morning-peak",
+    "afternoon-dip",
+    "evening-peak",
+    "wind-down",
+    "sleep-window",
 )
 
 
@@ -159,6 +220,21 @@ def build_circadian_plan(
     )
     confidence = _circadian_confidence(len(sleep_sessions), bool(environment_payload), bool(morning_light))
     summary = _circadian_summary(date_value, confidence, anchor, morning_light, environment_payload)
+    # Rise-style energy schedule keyed off the SAME anchor + light shift: the
+    # accumulated sleep debt (sleep_debt@v2) over the recent non-nap nights
+    # deepens the dip and trims the peaks.
+    nightly_hours = [
+        (session["end"] - session["start"]).total_seconds() / 3600.0
+        for session in reversed(sleep_sessions)
+        if not session.get("nap")
+    ]
+    accumulated_debt_h = _accumulated_sleep_debt(nightly_hours)
+    energy = energy_schedule(
+        wake_dt,
+        anchor=anchor,
+        sleep_debt_h=accumulated_debt_h,
+        light_shift_minutes=shift_minutes,
+    )
     return {
         "date": date_value,
         "timezone": tz_name,
@@ -167,6 +243,7 @@ def build_circadian_plan(
         "morning_light": morning_light,
         "environment": environment_payload,
         "phases": phases,
+        "energy": energy,
         "hypothesis": {
             "id": "insight-circadian-%s" % date_value,
             "title": "Circadian hypothesis for %s" % date_value,
@@ -179,6 +256,252 @@ def build_circadian_plan(
             ],
         },
     }
+
+
+def compute_sleep_anchor(sleep_sessions: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+    """Public wrapper over the weighted sleep anchor (single source of truth).
+
+    ``sleep_sessions`` is a list of dicts with tz-aware ``start``/``end``
+    datetimes and ``days_ago`` (0 = most recent night); naps should be
+    filtered out by the caller.
+    """
+    return _compute_sleep_anchor(sleep_sessions)
+
+
+def day_phases(
+    wake_time: Union[datetime, str],
+    anchor: Optional[Union[Dict[str, Any], datetime]] = None,
+    sleep_debt_h: float = 0.0,
+    light_shift_minutes: int = 0,
+) -> List[Dict[str, Any]]:
+    """Rise-style day phases for one wake->wake cycle.
+
+    Returns ``[{phase, start_iso, end_iso, label_ru, advice_ru, confidence}]``.
+    ``anchor`` is either the dict from :func:`compute_sleep_anchor` (its
+    ``bed_minutes`` defines the habitual bedtime) or an explicit bedtime
+    datetime; without it the bedtime falls back to wake + 16.5h.
+
+    Debt widens/deepens the afternoon dip, stretches sleep inertia and trims
+    both peaks. ``light_shift_minutes`` (see ``_morning_light_shift_minutes``)
+    delays the circadian phases (peaks and dip), not the wake-bound inertia.
+    """
+    wake_dt = _coerce_wake(wake_time)
+    bed_dt = _bed_from_anchor(wake_dt, anchor)
+    factor = _debt_factor(sleep_debt_h)
+    shift = timedelta(minutes=int(light_shift_minutes or 0))
+    evening_peak_end = min(
+        wake_dt + timedelta(hours=11.0 - 0.5 * factor) + shift,
+        bed_dt - timedelta(hours=2, minutes=15),
+    )
+    windows = (
+        ("grogginess", wake_dt, wake_dt + timedelta(hours=1.25 + 0.25 * factor)),
+        (
+            "morning-peak",
+            wake_dt + timedelta(hours=2.5) + shift,
+            wake_dt + timedelta(hours=4.0 - 0.5 * factor) + shift,
+        ),
+        (
+            "afternoon-dip",
+            wake_dt + timedelta(hours=6.0 - 0.25 * factor) + shift,
+            wake_dt + timedelta(hours=8.0 + 0.5 * factor) + shift,
+        ),
+        ("evening-peak", wake_dt + timedelta(hours=9.0) + shift, evening_peak_end),
+        ("wind-down", bed_dt - timedelta(hours=2), bed_dt),
+        ("melatonin-window", bed_dt - timedelta(minutes=60), bed_dt - timedelta(minutes=30)),
+        ("sleep-window", bed_dt, wake_dt + timedelta(hours=24)),
+    )
+    phases = []
+    for slug, start, end in windows:
+        label_ru, advice_ru, confidence = ENERGY_PHASE_INFO[slug]
+        phases.append(
+            {
+                "phase": slug,
+                "start_iso": start.isoformat(),
+                "end_iso": end.isoformat(),
+                "label_ru": label_ru,
+                "advice_ru": advice_ru,
+                "confidence": confidence,
+            }
+        )
+    return phases
+
+
+def energy_curve(
+    wake_time: Union[datetime, str],
+    sleep_debt_h: float = 0.0,
+    points_per_hour: int = 4,
+    anchor: Optional[Union[Dict[str, Any], datetime]] = None,
+    light_shift_minutes: int = 0,
+) -> List[Dict[str, Any]]:
+    """Continuous 24h energy wave: ``[{t_iso, energy (0-100), phase}]``.
+
+    Cosine segments between phase-derived control points keep the wave smooth
+    (zero slope at every control point). ``24 * points_per_hour`` points cover
+    one wake->wake cycle. Same anchor/debt/light inputs as :func:`day_phases`.
+    """
+    wake_dt = _coerce_wake(wake_time)
+    bed_dt = _bed_from_anchor(wake_dt, anchor)
+    factor = _debt_factor(sleep_debt_h)
+    shift_h = (int(light_shift_minutes or 0)) / 60.0
+    bed_offset_h = (bed_dt - wake_dt).total_seconds() / 3600.0
+    nodes = _energy_nodes(bed_offset_h, factor, shift_h)
+    phases = day_phases(
+        wake_dt, anchor=anchor, sleep_debt_h=sleep_debt_h, light_shift_minutes=light_shift_minutes
+    )
+    windows = _phase_windows(phases)
+    points_per_hour = max(1, int(points_per_hour))
+    points = []
+    for step in range(24 * points_per_hour):
+        offset_h = step / points_per_hour
+        point_dt = wake_dt + timedelta(hours=offset_h)
+        energy = max(0.0, min(100.0, _cosine_interpolate(nodes, offset_h)))
+        points.append(
+            {
+                "t_iso": point_dt.isoformat(),
+                "energy": round(energy, 1),
+                "phase": _phase_at(windows, point_dt),
+            }
+        )
+    return points
+
+
+def energy_schedule(
+    wake_time: Union[datetime, str],
+    anchor: Optional[Union[Dict[str, Any], datetime]] = None,
+    sleep_debt_h: float = 0.0,
+    points_per_hour: int = 4,
+    light_shift_minutes: int = 0,
+) -> Dict[str, Any]:
+    """Bundle phases + curve + melatonin window from one set of inputs."""
+    wake_dt = _coerce_wake(wake_time)
+    bed_dt = _bed_from_anchor(wake_dt, anchor)
+    phases = day_phases(
+        wake_dt, anchor=anchor, sleep_debt_h=sleep_debt_h, light_shift_minutes=light_shift_minutes
+    )
+    curve = energy_curve(
+        wake_dt,
+        sleep_debt_h=sleep_debt_h,
+        points_per_hour=points_per_hour,
+        anchor=anchor,
+        light_shift_minutes=light_shift_minutes,
+    )
+    melatonin = next(item for item in phases if item["phase"] == "melatonin-window")
+    return {
+        "model": ENERGY_SCHEDULE_MODEL,
+        "wake_time": wake_dt.isoformat(),
+        "bed_time": bed_dt.isoformat(),
+        "sleep_debt_h": round(max(0.0, float(sleep_debt_h or 0.0)), 2),
+        "light_shift_minutes": int(light_shift_minutes or 0),
+        "phases": phases,
+        "curve": curve,
+        "melatonin_window": {"start_iso": melatonin["start_iso"], "end_iso": melatonin["end_iso"]},
+        "personal_fit": "C2",
+        "evidence_note": (
+            "Two-process model (Borbely) и Rise-смещения фаз — устоявшаяся наука (C3-C4); "
+            "личная подгонка окон идёт только от анкора сна и накопленного долга (C2)."
+        ),
+    }
+
+
+def _coerce_wake(wake_time: Union[datetime, str]) -> datetime:
+    if isinstance(wake_time, datetime):
+        return wake_time
+    text = str(wake_time).strip()
+    if len(text) <= 5 and ":" in text:
+        hours, minutes = text.split(":", 1)
+        return datetime.combine(date_class.today(), time(int(hours), int(minutes)))
+    return _parse_datetime(text)
+
+
+def _bed_from_anchor(
+    wake_dt: datetime, anchor: Optional[Union[Dict[str, Any], datetime]]
+) -> datetime:
+    bed_dt: Optional[datetime] = None
+    if isinstance(anchor, datetime):
+        bed_dt = anchor
+    elif isinstance(anchor, dict) and anchor.get("bed_minutes") is not None:
+        bed_dt = _combine_bedtime(wake_dt.date(), int(anchor["bed_minutes"]), wake_dt.tzinfo)
+    if bed_dt is None:
+        return wake_dt + timedelta(hours=DEFAULT_DAY_LENGTH_H)
+    day_length_h = (bed_dt - wake_dt).total_seconds() / 3600.0
+    if day_length_h < 13.0 or day_length_h > 20.0:
+        return wake_dt + timedelta(hours=DEFAULT_DAY_LENGTH_H)
+    return bed_dt
+
+
+def _debt_factor(sleep_debt_h: Any) -> float:
+    try:
+        debt = float(sleep_debt_h or 0.0)
+    except (TypeError, ValueError):
+        debt = 0.0
+    return max(0.0, min(debt, ENERGY_DEBT_SATURATION_H)) / ENERGY_DEBT_SATURATION_H
+
+
+def _energy_nodes(bed_offset_h: float, factor: float, shift_h: float) -> List[Any]:
+    """Control points (hours-from-wake, energy 0-100) for the cosine wave."""
+    wake_level = 33.0 - 6.0 * factor
+    raw = [
+        (0.0, wake_level),
+        (3.25 + shift_h, 92.0 - 15.0 * factor),  # morning peak
+        (7.0 + 0.25 * factor + shift_h, 46.0 - 18.0 * factor),  # afternoon dip
+        (10.0 - 0.25 * factor + shift_h, 80.0 - 14.0 * factor),  # evening peak
+        (bed_offset_h - 0.75, 30.0 - 5.0 * factor),  # melatonin window
+        (bed_offset_h, 22.0),  # habitual bedtime
+        ((bed_offset_h + 24.0) / 2.0, 8.0),  # mid-sleep minimum
+        (24.0, wake_level),  # wraps back to wake level (continuity)
+    ]
+    nodes: List[Any] = [raw[0]]
+    for offset_h, energy in raw[1:]:
+        # Keep offsets strictly increasing even for unusual anchors.
+        offset_h = min(max(offset_h, nodes[-1][0] + 0.05), 24.0)
+        nodes.append((offset_h, energy))
+    return nodes
+
+
+def _cosine_interpolate(nodes: Sequence[Any], offset_h: float) -> float:
+    for (t0, e0), (t1, e1) in zip(nodes, nodes[1:]):
+        if t0 <= offset_h <= t1:
+            if t1 <= t0:
+                return e1
+            u = (offset_h - t0) / (t1 - t0)
+            return e0 + (e1 - e0) * (1.0 - math.cos(math.pi * u)) / 2.0
+    return nodes[-1][1]
+
+
+def _phase_windows(phases: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+    windows = {}
+    for item in phases:
+        windows[item["phase"]] = (
+            _parse_datetime(item["start_iso"]),
+            _parse_datetime(item["end_iso"]),
+        )
+    return windows
+
+
+def _phase_at(windows: Dict[str, Any], point_dt: datetime) -> str:
+    probe = point_dt if point_dt.tzinfo else point_dt.replace(tzinfo=timezone.utc)
+    for slug in _ENERGY_PHASE_PRIORITY:
+        window = windows.get(slug)
+        if not window or window[0] is None or window[1] is None:
+            continue
+        start, end = window
+        start = start if start.tzinfo else start.replace(tzinfo=timezone.utc)
+        end = end if end.tzinfo else end.replace(tzinfo=timezone.utc)
+        if start <= probe < end:
+            return slug
+    return "transition"
+
+
+def _accumulated_sleep_debt(nightly_hours: Sequence[float]) -> float:
+    """Accumulated debt via sleep_debt@v2 (modules.recovery), 0.0 on any gap."""
+    if not nightly_hours:
+        return 0.0
+    try:
+        from .modules.recovery import sleep_debt as _recovery_sleep_debt
+    except Exception:  # pragma: no cover - recovery module is part of the repo
+        return 0.0
+    payload = _recovery_sleep_debt(nightly_hours[-1], recent_nights_h=list(nightly_hours))
+    return float(payload.get("accumulated_debt_h") or 0.0)
 
 
 def sync_circadian_schedule(
@@ -357,6 +680,7 @@ def _load_sleep_sessions(db_path, tzinfo, target_date: date_class) -> List[Dict[
                 "start": start_dt,
                 "end": end_dt,
                 "days_ago": days_ago,
+                "nap": bool(metadata.get("nap")),
             }
         )
     return sorted(sessions, key=lambda item: item["end"], reverse=True)

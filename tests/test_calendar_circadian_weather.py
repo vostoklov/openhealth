@@ -192,6 +192,13 @@ class CalendarCircadianWeatherTests(unittest.TestCase):
         self.assertEqual(len(plan["phases"]), 5)
         self.assertGreater(plan["confidence"], 0.4)
         self.assertIn("Hypothetical circadian windows", plan["hypothesis"]["summary"])
+        # Rise-style energy schedule rides on the SAME sleep anchor.
+        energy = plan["energy"]
+        self.assertEqual(len(energy["curve"]), 96)
+        self.assertEqual(len(energy["phases"]), 7)
+        self.assertIn("melatonin_window", energy)
+        self.assertEqual(energy["wake_time"][11:16], "%02d:%02d" % divmod(plan["anchor"]["wake_minutes"], 60))
+        self.assertTrue(all(p["advice_ru"] for p in energy["phases"]))
 
         writeback = sync_circadian_schedule(
             self.root,

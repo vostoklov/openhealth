@@ -483,6 +483,7 @@ def build_payload(db_path: Path) -> dict:
         connections = build_connections(con)
         readiness = build_readiness(rec_block.get("recovery"))
         insights_block = build_insights_block(con)
+        circadian_block = build_circadian_block(con)
     finally:
         con.close()
 
@@ -498,6 +499,9 @@ def build_payload(db_path: Path) -> dict:
     if calendar_block:
         # "Пульс дня": загрузка 0-100, встречи, первая/последняя, окна >= 1ч.
         payload["calendar"] = calendar_block
+    if circadian_block:
+        # Rise-уровень: фазы энергии дня + волна 24ч + окно мелатонина.
+        payload["circadian"] = circadian_block
     # Correlations require labeled daily behaviors (journal), which this dataset
     # does not yet contain — so we intentionally omit them and let the dashboard
     # keep its demo correlations. Same for habits / allBehaviors.
@@ -543,6 +547,14 @@ def main() -> None:
               f"first={cal.get('first_event')}  gaps>1h={cal.get('gaps_over_1h')}")
     else:
         print("  calendar: not configured (POST /api/calendar or ~/.openhealth/calendar.json)")
+    circ = payload.get("circadian")
+    if circ:
+        mel = circ.get("melatonin_window", {})
+        print(f"  circadian: wake={circ.get('wake_time')}  bed={circ.get('bed_time')}  "
+              f"melatonin={mel.get('start')}-{mel.get('end')}  debt={circ.get('sleep_debt_h')}h  "
+              f"curve={len(circ.get('curve', []))}pts")
+    else:
+        print("  circadian: no sleep sessions in index (skipped)")
     print("  NOTE: data.local.json is real personal data — keep it local (git-ignored).")
 
 

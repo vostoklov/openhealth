@@ -28,7 +28,6 @@ import sqlite3
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from statistics import mean
 
 # Recovery zone thresholds match the dashboard's col()/word() helpers.
 GREEN, YELLOW = 67, 34
@@ -168,12 +167,20 @@ def build_biomarkers(con: sqlite3.Connection) -> list[dict]:
 
     # Curated phylum-level view with rough healthy-adult reference bands (%).
     spec = [
-        ("Firmicutes", "%", 20, 80, 40, 65, "Доминирующий тип бактерий. В пределах нормы для здорового кишечника. Историчный снимок Atlas (май 2020)."),
-        ("Bacteroidetes", "%", 10, 60, 20, 45, "Второй по доле тип. Соотношение Firmicutes/Bacteroidetes в норме. Снимок 2020 года, текущее состояние может отличаться."),
-        ("Proteobacteria", "%", 0, 10, 0, 5, "Низкая доля — хороший признак (высокая Proteobacteria связана с дисбиозом). Историчный снимок."),
-        ("Actinobacteria", "%", 0, 10, 1, 5, "Включает Bifidobacterium. Доля в нижней части нормы. Снимок 2020 года."),
-        ("Faecalibacterium", "%", 2, 15, 5, 12, "Ключевой производитель бутирата (противовоспалительный). В норме. Историчный снимок Atlas."),
-        ("Akkermansia", "%", 0, 5, 1, 4, "Связана со здоровьем слизистой и метаболизмом. Присутствует — хороший признак. Снимок 2020 года."),
+        ("Firmicutes", "%", 20, 80, 40, 65,
+         "Доминирующий тип бактерий здорового кишечника. "
+         "Исторический снимок микробиоты — давность отражена в уровне доверия."),
+        ("Bacteroidetes", "%", 10, 60, 20, 45,
+         "Второй по доле тип; важно соотношение Firmicutes/Bacteroidetes. "
+         "Текущее состояние может отличаться от снимка."),
+        ("Proteobacteria", "%", 0, 10, 0, 5,
+         "Низкая доля — хороший признак (высокая связана с дисбиозом)."),
+        ("Actinobacteria", "%", 0, 10, 1, 5,
+         "Включает Bifidobacterium; типично нижняя часть нормы."),
+        ("Faecalibacterium", "%", 2, 15, 5, 12,
+         "Ключевой производитель бутирата (противовоспалительный)."),
+        ("Akkermansia", "%", 0, 5, 1, 4,
+         "Связана со здоровьем слизистой и метаболизмом; присутствие — хороший признак."),
     ]
     grades = {"Firmicutes": "C2", "Bacteroidetes": "C2", "Proteobacteria": "C2",
               "Actinobacteria": "C2", "Faecalibacterium": "C2", "Akkermansia": "C2"}

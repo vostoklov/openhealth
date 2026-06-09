@@ -6,6 +6,7 @@ index. Connectors meet people where they are: the lowest-friction one (Apple
 Health export) needs only an iPhone.
 """
 
+from . import ics_calendar, weather  # noqa: F401  (модули целиком)
 from .apple_health import import_apple_health  # noqa: F401
 from .garmin import import_garmin  # noqa: F401
 from .google_calendar import (  # noqa: F401
@@ -33,6 +34,8 @@ from .todoist import (  # noqa: F401
 )
 
 __all__ = [
+    "weather",
+    "ics_calendar",
     "import_apple_health",
     "import_oura",
     "import_garmin",

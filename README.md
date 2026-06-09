@@ -6,6 +6,21 @@
 
 ---
 
+## Start in 60 seconds
+
+No terminal, no install:
+
+1. Green **Code** button above → **Download ZIP** → unpack.
+2. Open the `ui/web` folder.
+3. **macOS:** double-click `OpenHealth.command` (if blocked: right-click → Open).
+   **Windows / Linux:** double-click `index.html`.
+
+The dashboard opens with demo data. Your own data is one command away: `bash setup.sh`.
+
+**Beginner guide, step by step:** [docs/START-HERE.md](./docs/START-HERE.md) (RU) · [docs/START-HERE.en.md](./docs/START-HERE.en.md) (EN)
+
+---
+
 ## What is this?
 
 OpenHealth turns your scattered health data into one local knowledge base you can

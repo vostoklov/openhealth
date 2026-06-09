@@ -30,6 +30,7 @@ def load_builtin() -> None:
         skin,  # noqa: F401
         sleep,  # noqa: F401
         travel,  # noqa: F401  (import side-effect: registration)
+        vaccination,  # noqa: F401
         vo2max,  # noqa: F401
     )
 

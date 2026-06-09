@@ -46,6 +46,7 @@ KNOWN_DOMAINS = (
     "correlations",  # behavior <-> recovery personal impact analysis
     "medications",   # medication / supplement / habit intervention ledger
     "nutrition",     # eating-style profile + meal journal
+    "vaccination",   # immunization ledger + next-due attention prompts
 )
 
 

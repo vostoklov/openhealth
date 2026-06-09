@@ -1,0 +1,202 @@
+# Health Sprint Kit — skill registry (the hand-out catalog)
+#
+# Each card is one pointed skill/module. The /kit command reads this file, matches
+# a person's plain-language request to cards, and installs the matching skills +
+# slash commands into their .claude/. Cards cover every area from day one;
+# status: full = ready to use, stub = scaffolded, fill it in (good-first task).
+#
+# Rules for every card: local-first, no diagnosis, evidence-graded (C1-C5), red
+# flags short-circuit. area: knowledge | action | signal | trust | system.
+
+cards:
+  # --- signal connectors (get your data in) ---
+  - id: apple-health
+    area: signal
+    title: Apple Health import
+    summary: One command turns your iPhone Health export into daily layered observations.
+    inputs: export.xml or the Apple Health export .zip
+    uses: openhealth.connectors.apple_health
+    confidence: measured (high)
+    starter_prompt: "import my Apple Health export and lay it out by day"
+    status: full
+  - id: whoop
+    area: signal
+    title: WHOOP sync
+    summary: Pull recovery/sleep/strain/HRV from the WHOOP API into your timeline.
+    inputs: WHOOP OAuth (developer account)
+    uses: openhealth.whoop
+    confidence: measured (high)
+    starter_prompt: "connect my WHOOP and sync the last 30 days"
+    status: full
+  - id: csv-import
+    area: signal
+    title: Generic CSV/JSON import
+    summary: Map any tracker export (date + value columns) into canonical records.
+    inputs: a CSV/JSON export
+    uses: openhealth.parsers
+    confidence: measured (high)
+    starter_prompt: "import this CSV from my tracker"
+    status: full
+  - id: lab-pdf
+    area: signal
+    title: Lab panel (PDF)
+    summary: Pull blood-panel markers from a PDF into facts with reference ranges.
+    inputs: a lab PDF (one is enough)
+    uses: openhealth.parsers (lab-panel)
+    confidence: report-based (high) or fallback range
+    starter_prompt: "read my blood test PDF and flag anything out of range"
+    status: full
+  - id: oura
+    area: signal
+    title: Oura import
+    summary: Readiness/sleep/HRV from Oura export or API.
+    inputs: Oura export or API key
+    uses: connectors/oura (stub)
+    confidence: measured (high)
+    starter_prompt: "import my Oura data"
+    status: stub
+  - id: genetics
+    area: signal
+    title: Genetics (23andMe RAW)
+    summary: Store a raw DNA file as a reference layer (no clinical interpretation).
+    inputs: 23andMe/Ancestry RAW txt
+    uses: connectors/genetics (stub)
+    confidence: reference-only (low for inferences)
+    starter_prompt: "add my 23andMe raw file as reference"
+    status: stub
+
+  # --- knowledge domains (read your data) ---
+  - id: labs
+    area: knowledge
+    title: Labs reader
+    summary: Interpret markers cautiously against ranges; never a diagnosis.
+    uses: openhealth.modules (planned) + parsers
+    confidence: C2-C3
+    starter_prompt: "what in my labs is worth discussing with a doctor?"
+    status: full
+  - id: sleep
+    area: knowledge
+    title: Sleep & circadian
+    summary: Duration, midsleep, social jetlag, a rough phase prompt.
+    uses: openhealth.modules.sleep
+    confidence: C2-C3
+    starter_prompt: "what is moving my sleep?"
+    status: full
+  - id: pulse
+    area: knowledge
+    title: Pulse / HRV (optional)
+    summary: HRV (SDNN/RMSSD/pNN50) + a cautious readiness read. Optional — only if you track it.
+    uses: openhealth.modules.pulse
+    confidence: C2-C3
+    starter_prompt: "read my HRV and resting heart rate"
+    status: full
+  - id: cycle
+    area: knowledge
+    title: Cycle
+    summary: Cycle stats + a calendar estimate (not contraception, not diagnosis).
+    uses: openhealth.modules.cycle
+    confidence: C2-C3
+    starter_prompt: "track my cycle and estimate the next one"
+    status: full
+  - id: body
+    area: knowledge
+    title: Body (weight/fasting/habits)
+    summary: Weight trend, fasting window, habit streaks.
+    uses: openhealth.modules.body
+    confidence: C2-C3
+    starter_prompt: "show my weight trend"
+    status: full
+  - id: metabolic
+    area: knowledge
+    title: Metabolic (glucose)
+    summary: Glucose mean, time-in-range, GMI; flags critical values.
+    uses: openhealth.modules.metabolic
+    confidence: C2-C3
+    starter_prompt: "summarize my glucose and time in range"
+    status: full
+  - id: skin
+    area: knowledge
+    title: Skin
+    summary: Photo/skin observations by zone over time; recurring-issue prompt.
+    uses: openhealth.modules.skin
+    confidence: C2
+    starter_prompt: "track skin observations by zone"
+    status: full
+  - id: msk
+    area: knowledge
+    title: MSK / anatomy
+    summary: Joints/mobility notes + anatomy reference. Reference, not diagnosis.
+    uses: modules/msk (stub)
+    confidence: C2
+    starter_prompt: "help me track mobility and joint notes"
+    status: stub
+  - id: mental
+    area: knowledge
+    title: Mental / mood
+    summary: Mood/stress over time, gentle patterns. Crisis language -> seek help, hard stop.
+    uses: modules/mental (stub)
+    confidence: C2
+    starter_prompt: "track my mood and notice patterns"
+    status: stub
+
+  # --- actions (log & test) ---
+  - id: track
+    area: action
+    title: Track (custom actions)
+    summary: Define and log your own actions/habits, WHOOP-style. Domain-agnostic.
+    uses: modules/tracking (stub)
+    confidence: measured
+    starter_prompt: "let me track coffee, workouts and late screens"
+    status: stub
+  - id: checkin
+    area: action
+    title: Daily check-in
+    summary: One plain question a day for the 7-day live test.
+    uses: .claude/commands/checkin
+    confidence: self-report
+    starter_prompt: "do my daily check-in"
+    status: full
+  - id: protocol
+    area: action
+    title: n-of-1 protocol
+    summary: Turn one question into a clean self-experiment (baseline -> change one -> repeat).
+    uses: .claude/commands/protocol
+    confidence: C2 until a switch repeats
+    starter_prompt: "set up an experiment: does late coffee hurt my sleep?"
+    status: full
+
+  # --- trust (don't hallucinate) ---
+  - id: research-consilium
+    area: trust
+    title: Deep research + consilium
+    summary: Stakes-scaled research — fan-out, then hypothesis/critic/safety panel, cited, C1-C5.
+    uses: skills/research-consilium (stub) + deep-research
+    confidence: cited, graded
+    starter_prompt: "research this safely with sources and a skeptic pass"
+    status: stub
+  - id: data-confirmation
+    area: trust
+    title: Data confirmation
+    summary: Every claim gets a source + C1-C5, or an explicit 'assumption' label.
+    uses: openhealth.evidence
+    confidence: enforced
+    starter_prompt: "check this claim and label its confidence"
+    status: full
+
+  # --- system ---
+  - id: kit
+    area: system
+    title: Kit loader
+    summary: "drop a prompt -> get the modules you need" — installs matching skills.
+    uses: .claude/commands/kit
+    confidence: n/a
+    starter_prompt: "set me up for sleep + labs + daily check-in"
+    status: full
+  - id: cockpit
+    area: system
+    title: Personal cockpit (optional UI)
+    summary: A daily visual that adapts to whatever data you have. HRV is just one optional tile.
+    uses: kit/cockpit (stub) + a2ui
+    confidence: n/a
+    starter_prompt: "make me a simple daily dashboard from my data"
+    status: stub

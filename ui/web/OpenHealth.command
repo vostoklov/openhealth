@@ -15,8 +15,13 @@ if curl -s -o /dev/null -m 2 "http://localhost:${PORT}/" 2>/dev/null; then
 fi
 
 # Иначе поднять фоновый сервер (nohup → не упадёт при закрытии окна).
+# server.py = bridge: статика + /api/agent (агентные кнопки). Fallback — голый http.server.
 cd "$DIR"
-nohup python3 -m http.server "$PORT" >/tmp/openhealth-dashboard.log 2>&1 &
+if [ -f "$DIR/server.py" ]; then
+  nohup python3 "$DIR/server.py" --port "$PORT" --dir "$DIR" >/tmp/openhealth-dashboard.log 2>&1 &
+else
+  nohup python3 -m http.server "$PORT" >/tmp/openhealth-dashboard.log 2>&1 &
+fi
 disown 2>/dev/null || true
 
 # Подождать готовности и открыть.

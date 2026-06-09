@@ -794,6 +794,29 @@
       "env_vars": [
         "OPENHEALTH_NOTION_TOKEN"
       ]
+    },
+    {
+      "id": "picooc",
+      "label": "Picooc (smart scale)",
+      "category": "scale",
+      "auth": "file_export",
+      "status": "export_only",
+      "api_base": null,
+      "dev_portal_url": "https://www.picooc.com/",
+      "docs_url": "https://www.picooc.com/",
+      "key_steps": [
+        "Official open API is not available for personal use.",
+        "Export data from the Picooc app (Profile -> data export / CSV where available), or bridge via Apple Health / Google Fit sync and import that export."
+      ],
+      "data_types": [
+        "weight",
+        "body_fat",
+        "muscle_mass",
+        "bmi"
+      ],
+      "rate_limit_note": "n/a (no public API; export or Apple Health bridge)",
+      "connector": null,
+      "env_vars": []
     }
   ]
 }

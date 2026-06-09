@@ -19,6 +19,8 @@ The dashboard opens with demo data. Your own data is one command away: `bash set
 
 **Beginner guide, step by step:** [docs/START-HERE.md](./docs/START-HERE.md) (RU) · [docs/START-HERE.en.md](./docs/START-HERE.en.md) (EN)
 
+If OpenHealth ends up useful to you, starring the repo is the single best way to help others find it. ⭐
+
 ---
 
 ## What is this?

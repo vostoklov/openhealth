@@ -88,3 +88,7 @@ If you downloaded a ZIP - download a new one and move the `data/` folder (and `u
 
 **Is this medical advice?**
 No. OpenHealth is a self-tracking tool. It does not diagnose or prescribe, and it phrases findings as cautious hypotheses to test. For medical questions, see a clinician.
+
+---
+
+If OpenHealth turned out useful — a GitHub star is the single best way to help others discover it. [github.com/igindin/openhealth](https://github.com/igindin/openhealth) ⭐

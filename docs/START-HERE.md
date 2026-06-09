@@ -88,3 +88,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/igindin/openhealth/main/setu
 
 **Это медицинский совет?**
 Нет. OpenHealth - инструмент самонаблюдения. Он не ставит диагнозы и не назначает лечение, а находки формулирует как осторожные гипотезы для проверки. С медицинскими вопросами - к врачу.
+
+---
+
+Если OpenHealth оказался полезен — поставь звезду на GitHub: это лучший способ помочь другим людям найти проект. [github.com/igindin/openhealth](https://github.com/igindin/openhealth) ⭐

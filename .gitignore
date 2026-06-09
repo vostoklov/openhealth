@@ -50,3 +50,6 @@ dist/
 build/
 .ruff_cache/
 ui/web/refs/
+
+# Local Claude Code settings (machine-specific)
+.claude/settings.local.json

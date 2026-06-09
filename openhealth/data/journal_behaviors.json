@@ -1,0 +1,1968 @@
+{
+  "version": 1,
+  "source": "WHOOP Journal 'Select Behaviors' screens, transcribed in health-sprint-kit/library/behaviors.md",
+  "note": "Observational self-tracking reference, not medical. Answer types are inferred (default boolean yes/no); verify in-app.",
+  "categories": [
+    {
+      "id": "health_symptoms",
+      "label_ru": "Здоровье и симптомы"
+    },
+    {
+      "id": "hormonal_health",
+      "label_ru": "Гормональное здоровье"
+    },
+    {
+      "id": "lifestyle",
+      "label_ru": "Образ жизни"
+    },
+    {
+      "id": "mental_wellbeing",
+      "label_ru": "Ментальное состояние"
+    },
+    {
+      "id": "nutrition",
+      "label_ru": "Питание"
+    },
+    {
+      "id": "recovery_activities",
+      "label_ru": "Восстановление"
+    }
+  ],
+  "behaviors": [
+    {
+      "id": "health_symptoms.acne",
+      "name": "Acne",
+      "label_ru": "акне, высыпания",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.back_pain",
+      "name": "Back Pain",
+      "label_ru": "боль в спине",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.bloating",
+      "name": "Bloating",
+      "label_ru": "вздутие живота",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.bowel_movements",
+      "name": "Bowel Movements",
+      "label_ru": "дефекация (был стул)",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.brain_fog",
+      "name": "Brain Fog",
+      "label_ru": "туман в голове, сложно соображать",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.chills",
+      "name": "Chills",
+      "label_ru": "озноб",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.concussion",
+      "name": "Concussion",
+      "label_ru": "сотрясение (чувствовали себя как при сотрясении)",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.congestion",
+      "name": "Congestion",
+      "label_ru": "заложенность (нос/грудь)",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.constipation",
+      "name": "Constipation",
+      "label_ru": "запор",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.covid_19_symptoms",
+      "name": "COVID-19 Symptoms",
+      "label_ru": "симптомы COVID-19",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.dialysis",
+      "name": "Dialysis",
+      "label_ru": "проходили процедуру диализа",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.diarrhea",
+      "name": "Diarrhea",
+      "label_ru": "диарея",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.dizzy_lightheadedness",
+      "name": "Dizzy / Lightheadedness",
+      "label_ru": "головокружение, дурнота",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.dry_skin",
+      "name": "Dry Skin",
+      "label_ru": "сухость кожи (суше обычного)",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.energy_level",
+      "name": "Energy Level",
+      "label_ru": "уровень энергии (чувствовали себя энергичным в течение дня)",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "quantity",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.fatigue",
+      "name": "Fatigue",
+      "label_ru": "усталость, утомление",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.fever",
+      "name": "Fever",
+      "label_ru": "жар, температура",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.food_cravings",
+      "name": "Food Cravings",
+      "label_ru": "сильная тяга к еде",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.food_sensitivity",
+      "name": "Food Sensitivity",
+      "label_ru": "пищевая чувствительность (реакция на еду)",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.forgetfulness",
+      "name": "Forgetfulness",
+      "label_ru": "забывчивость, провалы в памяти",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.hair_thinning_loss",
+      "name": "Hair Thinning/Loss",
+      "label_ru": "истончение или выпадение волос",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.heartburn",
+      "name": "Heartburn",
+      "label_ru": "изжога",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.heart_palpitations",
+      "name": "Heart Palpitations",
+      "label_ru": "учащённое/ощутимое сердцебиение",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.hot_flash_during_sleep",
+      "name": "Hot Flash During Sleep",
+      "label_ru": "приливы жара во сне",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.hot_flashes_during_the_day",
+      "name": "Hot Flashes During the Day",
+      "label_ru": "приливы жара днём",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.indigestion",
+      "name": "Indigestion",
+      "label_ru": "несварение, тяжесть в желудке",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.injury",
+      "name": "Injury",
+      "label_ru": "травма или рана",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.joint_pain_or_stiffness",
+      "name": "Joint Pain or Stiffness",
+      "label_ru": "боль или скованность в суставах",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.migraine",
+      "name": "Migraine",
+      "label_ru": "мигрень",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.monkeypox_symptoms",
+      "name": "Monkeypox Symptoms",
+      "label_ru": "симптомы оспы обезьян",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.nausea",
+      "name": "Nausea",
+      "label_ru": "тошнота",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.nightmare",
+      "name": "Nightmare",
+      "label_ru": "кошмар (приснился)",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.night_sweats",
+      "name": "Night Sweats",
+      "label_ru": "ночная потливость, мешавшая сну",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.seasonal_allergies",
+      "name": "Seasonal Allergies",
+      "label_ru": "сезонная аллергия",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.sickness",
+      "name": "Sickness",
+      "label_ru": "болезнь, недомогание (чувствовали себя больным)",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.skin_changes",
+      "name": "Skin Changes",
+      "label_ru": "изменения кожи (сухость, чувствительность)",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.soreness",
+      "name": "Soreness",
+      "label_ru": "мышечная боль/крепатура",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.temperature_sensitivity",
+      "name": "Temperature Sensitivity",
+      "label_ru": "чувствительность к перепадам температуры",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.tingling_numbness",
+      "name": "Tingling / Numbness",
+      "label_ru": "покалывание или онемение в конечностях",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.tinnitus",
+      "name": "Tinnitus",
+      "label_ru": "шум/звон в ушах",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "health_symptoms.vomiting",
+      "name": "Vomiting",
+      "label_ru": "рвота",
+      "category": "health_symptoms",
+      "category_label_ru": "Здоровье и симптомы",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.anti_androgen",
+      "name": "Anti-Androgen",
+      "label_ru": "приём антиандрогена (например, спиронолактон)",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.body_odor_changes",
+      "name": "Body Odor Changes",
+      "label_ru": "изменения запаха тела",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.breast_growth",
+      "name": "Breast Growth",
+      "label_ru": "рост груди",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.breast_tenderness",
+      "name": "Breast Tenderness",
+      "label_ru": "болезненность/чувствительность груди",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.cervical_mucus_pink_brown_or_tan",
+      "name": "Cervical Mucus: Pink, Brown, or Tan",
+      "label_ru": "цервикальная слизь розового, коричневого или бежевого цвета",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.clonidine",
+      "name": "Clonidine",
+      "label_ru": "приём клонидина при симптомах менопаузы (например, приливы)",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.conception",
+      "name": "Conception",
+      "label_ru": "попытки зачатия",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.cycle_irregularity",
+      "name": "Cycle Irregularity",
+      "label_ru": "нерегулярный цикл, пропущенные месячные",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.decreased_libido",
+      "name": "Decreased Libido",
+      "label_ru": "снижение либидо",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.dhea",
+      "name": "DHEA",
+      "label_ru": "приём добавки DHEA для поддержки надпочечников",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.estrogen",
+      "name": "Estrogen",
+      "label_ru": "приём эстрогена (только эстроген, таблетки/пластыри)",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.gabapentin",
+      "name": "Gabapentin",
+      "label_ru": "приём габапентина при симптомах менопаузы",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.hrt",
+      "name": "HRT",
+      "label_ru": "комбинированная заместительная гормональная терапия",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.increased_libido",
+      "name": "Increased Libido",
+      "label_ru": "повышение либидо",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.luteinizing_hormone_lh_test",
+      "name": "Luteinizing Hormone (LH) Test",
+      "label_ru": "сделали тест на лютеинизирующий гормон",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.menstrual_cramps",
+      "name": "Menstrual Cramps",
+      "label_ru": "менструальные спазмы",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.menstruation",
+      "name": "Menstruation",
+      "label_ru": "менструация (авто через Apple Health)",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": true
+    },
+    {
+      "id": "hormonal_health.mood_swings",
+      "name": "Mood Swings",
+      "label_ru": "перепады настроения",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.no_menstrual_flow",
+      "name": "No Menstrual Flow",
+      "label_ru": "период есть, но кровотечения нет",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.ovulation",
+      "name": "Ovulation",
+      "label_ru": "овуляция",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.painful_intercourse",
+      "name": "Painful Intercourse",
+      "label_ru": "дискомфорт или боль при половом акте",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.pelvic_pain",
+      "name": "Pelvic Pain",
+      "label_ru": "боль в области таза",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.perimenopause",
+      "name": "Perimenopause",
+      "label_ru": "симптомы перименопаузы",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.postmenopause",
+      "name": "Postmenopause",
+      "label_ru": "симптомы постменопаузы",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.pregnancy",
+      "name": "Pregnancy",
+      "label_ru": "беременность",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.progesterone",
+      "name": "Progesterone",
+      "label_ru": "приём прогестерона (добавки или инъекции)",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.progesterone_creams",
+      "name": "Progesterone Creams",
+      "label_ru": "безрецептурные кремы с прогестероном",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.pumping",
+      "name": "Pumping",
+      "label_ru": "сцеживание грудного молока",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.sleep_quality_decline",
+      "name": "Sleep Quality Decline",
+      "label_ru": "ухудшение сна из-за симптомов менопаузы",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.testosterone_gel_cream",
+      "name": "Testosterone Gel/Cream",
+      "label_ru": "тестостероновый гель или крем",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.testosterone_supplements",
+      "name": "Testosterone Supplements",
+      "label_ru": "добавки тестостерона",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.thyroid_medication",
+      "name": "Thyroid Medication",
+      "label_ru": "препарат для щитовидной железы при гормональном дисбалансе",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.urinary_symptoms",
+      "name": "Urinary Symptoms",
+      "label_ru": "мочевые симптомы (срочность, недержание)",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.vaginal_discharge_creamy",
+      "name": "Vaginal Discharge - Creamy",
+      "label_ru": "вагинальные выделения, кремовые",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.vaginal_discharge_egg_white",
+      "name": "Vaginal Discharge - Egg White",
+      "label_ru": "выделения консистенции яичного белка",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.vaginal_discharge_grey",
+      "name": "Vaginal Discharge - Grey",
+      "label_ru": "выделения серого цвета",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.vaginal_discharge_sticky",
+      "name": "Vaginal Discharge - Sticky",
+      "label_ru": "липкие выделения",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.vaginal_discharge_watery",
+      "name": "Vaginal Discharge - Watery",
+      "label_ru": "водянистые выделения",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.vaginal_dryness",
+      "name": "Vaginal Dryness",
+      "label_ru": "сухость влагалища",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.vaginal_estrogen_cream",
+      "name": "Vaginal Estrogen Cream",
+      "label_ru": "вагинальный крем с эстрогеном",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.vaginal_estrogen_rings",
+      "name": "Vaginal Estrogen Rings",
+      "label_ru": "вагинальные кольца с эстрогеном",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.vaginal_estrogen_tablets",
+      "name": "Vaginal Estrogen Tablets",
+      "label_ru": "вагинальные таблетки с эстрогеном",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "hormonal_health.vaginal_spotting",
+      "name": "Vaginal Spotting",
+      "label_ru": "мажущие кровянистые выделения",
+      "category": "hormonal_health",
+      "category_label_ru": "Гормональное здоровье",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.air_travel",
+      "name": "Air Travel",
+      "label_ru": "перелёт на самолёте",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.alcohol",
+      "name": "Alcohol",
+      "label_ru": "алкоголь (были ли алкогольные напитки)",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.blood_donation",
+      "name": "Blood Donation",
+      "label_ru": "сдача крови",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.camping",
+      "name": "Camping",
+      "label_ru": "ночёвка/время на природе",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.caregiving",
+      "name": "Caregiving",
+      "label_ru": "уход за здоровьем другого человека",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.car_or_train_travel",
+      "name": "Car or Train travel",
+      "label_ru": "поездка на машине или поезде",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.family_and_friends",
+      "name": "Family and Friends",
+      "label_ru": "общение с семьёй и/или друзьями",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.feeding_baby_at_night",
+      "name": "Feeding Baby at Night",
+      "label_ru": "ночное кормление ребёнка",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.intermittent_fasting",
+      "name": "Intermittent Fasting",
+      "label_ru": "интервальное голодание",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.jet_lag",
+      "name": "Jet Lag",
+      "label_ru": "джетлаг",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.night_shifts",
+      "name": "Night Shifts",
+      "label_ru": "работа в ночную смену",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.nursing",
+      "name": "Nursing",
+      "label_ru": "грудное вскармливание",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.nursing_infant",
+      "name": "Nursing Infant",
+      "label_ru": "кормление грудного ребёнка",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.on_call_shift",
+      "name": "On-Call Shift",
+      "label_ru": "дежурная смена (on-call)",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.outdoor_time",
+      "name": "Outdoor Time",
+      "label_ru": "время на улице",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.parenting",
+      "name": "Parenting",
+      "label_ru": "забота о ребёнке (parenting an infant)",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.parenting_sick_child",
+      "name": "Parenting Sick Child",
+      "label_ru": "уход за больным ребёнком",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.plasma_donation",
+      "name": "Plasma Donation",
+      "label_ru": "сдача плазмы",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.platelet_donation",
+      "name": "Platelet Donation",
+      "label_ru": "сдача тромбоцитов",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.ramadan",
+      "name": "Ramadan",
+      "label_ru": "соблюдение Рамадана",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.relationship_status",
+      "name": "Relationship Status",
+      "label_ru": "семейное положение (например, \"single\")",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.remote_work",
+      "name": "Remote Work",
+      "label_ru": "работа из дома",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.shared_bedroom_with_child",
+      "name": "Shared Bedroom With Child",
+      "label_ru": "спали в одной комнате с ребёнком",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.social_media",
+      "name": "Social Media",
+      "label_ru": "использование соцсетей",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.standing_desk",
+      "name": "Standing Desk",
+      "label_ru": "работа за стоячим столом",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.vacation",
+      "name": "Vacation",
+      "label_ru": "выходной/отпускной день",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.video_games",
+      "name": "Video Games",
+      "label_ru": "играли в видеоигры",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.work_calls",
+      "name": "Work Calls",
+      "label_ru": "время на рабочих видеозвонках",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.work_commute",
+      "name": "Work Commute",
+      "label_ru": "дорога на работу",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "lifestyle.work_late",
+      "name": "Work Late",
+      "label_ru": "работали допоздна",
+      "category": "lifestyle",
+      "category_label_ru": "Образ жизни",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.anxiety",
+      "name": "Anxiety",
+      "label_ru": "тревожность, нервозность",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.challenge",
+      "name": "Challenge",
+      "label_ru": "столкнулись с трудностями/вызовами",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.control",
+      "name": "Control",
+      "label_ru": "ощущение контроля над своей жизнью",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.depression",
+      "name": "Depression",
+      "label_ru": "подавленность, угнетённость",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.efficacy",
+      "name": "Efficacy",
+      "label_ru": "хватало ресурсов/навыков для дневных целей",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.emotional_mental_state",
+      "name": "Emotional/Mental State",
+      "label_ru": "эмоциональная и ментальная стабильность",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.flow_state",
+      "name": "Flow State",
+      "label_ru": "состояние потока",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.gratitude",
+      "name": "Gratitude",
+      "label_ru": "выражали благодарность",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.irritability",
+      "name": "Irritability",
+      "label_ru": "раздражительность",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.journaling",
+      "name": "Journaling",
+      "label_ru": "вели дневник/записывали мысли",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.learning",
+      "name": "Learning",
+      "label_ru": "узнали что-то интересное или важное",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.loneliness",
+      "name": "Loneliness",
+      "label_ru": "одиночество",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.make_progress",
+      "name": "Make Progress",
+      "label_ru": "продвинулись к важной цели",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.motivation",
+      "name": "Motivation",
+      "label_ru": "мотивация",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.overwhelm",
+      "name": "Overwhelm",
+      "label_ru": "перегруженность, \"накрыло\"",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.positivity",
+      "name": "Positivity",
+      "label_ru": "в целом позитивный взгляд на будущее",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.purpose",
+      "name": "Purpose",
+      "label_ru": "ощущение смысла",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.reduced_motivation",
+      "name": "Reduced Motivation",
+      "label_ru": "сниженная мотивация",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.social_fulfillment",
+      "name": "Social Fulfillment",
+      "label_ru": "удовлетворённость общением",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.socially_drained",
+      "name": "Socially drained",
+      "label_ru": "истощённость от общения",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.social_withdrawal",
+      "name": "Social Withdrawal",
+      "label_ru": "социальная замкнутость, уход в себя",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.spirituality",
+      "name": "Spirituality",
+      "label_ru": "духовная практика",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.therapy_session",
+      "name": "Therapy Session",
+      "label_ru": "сессия с терапевтом",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.threat",
+      "name": "Threat",
+      "label_ru": "столкнулись с угрозой",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "mental_wellbeing.trouble_concentrating",
+      "name": "Trouble Concentrating",
+      "label_ru": "трудно сосредоточиться",
+      "category": "mental_wellbeing",
+      "category_label_ru": "Ментальное состояние",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.added_sugar",
+      "name": "Added Sugar",
+      "label_ru": "добавленный сахар (ели)",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.evening_snack",
+      "name": "Evening Snack",
+      "label_ru": "вечерний перекус",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.fiber",
+      "name": "Fiber",
+      "label_ru": "клетчатка (авто через Apple Health)",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": true
+    },
+    {
+      "id": "nutrition.fruits_and_vegetables",
+      "name": "Fruits and Vegetables",
+      "label_ru": "фрукты и/или овощи",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.hydration",
+      "name": "Hydration",
+      "label_ru": "достаточная гидратация (авто через Apple Health)",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": true
+    },
+    {
+      "id": "nutrition.meat",
+      "name": "Meat",
+      "label_ru": "мясо",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.post_meal_walk",
+      "name": "Post meal walk",
+      "label_ru": "прогулка после еды",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.protein",
+      "name": "Protein",
+      "label_ru": "белок (авто через Apple Health)",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": true
+    },
+    {
+      "id": "nutrition.afternoon_snack",
+      "name": "Afternoon Snack",
+      "label_ru": "дневной перекус",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.ate_before_workout",
+      "name": "Ate before workout",
+      "label_ru": "ели перед тренировкой",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.beans",
+      "name": "Beans",
+      "label_ru": "бобовые",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.breakfast",
+      "name": "Breakfast",
+      "label_ru": "завтрак",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.calcium",
+      "name": "Calcium",
+      "label_ru": "кальций (авто через Apple Health)",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": true
+    },
+    {
+      "id": "nutrition.calories",
+      "name": "Calories",
+      "label_ru": "трекинг калорий (авто через Apple Health) - количество/факт",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "quantity",
+      "auto_apple_health": true
+    },
+    {
+      "id": "nutrition.carbohydrates",
+      "name": "Carbohydrates",
+      "label_ru": "углеводы (авто через Apple Health)",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": true
+    },
+    {
+      "id": "nutrition.chicken_poultry",
+      "name": "Chicken/Poultry",
+      "label_ru": "курица/птица",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.clean_eating",
+      "name": "Clean Eating",
+      "label_ru": "избегали обработанной еды",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.dairy",
+      "name": "Dairy",
+      "label_ru": "молочное",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.dairy_free_diet",
+      "name": "Dairy-Free Diet",
+      "label_ru": "безмолочная диета",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.dark_chocolate",
+      "name": "Dark Chocolate",
+      "label_ru": "тёмный шоколад",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.dinner",
+      "name": "Dinner",
+      "label_ru": "ужин",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.fats",
+      "name": "Fats",
+      "label_ru": "жиры (авто через Apple Health)",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": true
+    },
+    {
+      "id": "nutrition.gluten_free_diet",
+      "name": "Gluten-Free Diet",
+      "label_ru": "безглютеновая диета",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.halal_diet",
+      "name": "Halal Diet",
+      "label_ru": "халяльное питание",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.herbal_tea",
+      "name": "Herbal Tea",
+      "label_ru": "травяной чай",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.home_cooked",
+      "name": "Home-cooked",
+      "label_ru": "домашняя еда",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.ketogenic_diet",
+      "name": "Ketogenic Diet",
+      "label_ru": "кетодиета",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.kosher_diet",
+      "name": "Kosher Diet",
+      "label_ru": "кошерное питание",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.lunch",
+      "name": "Lunch",
+      "label_ru": "обед",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.magnesium",
+      "name": "Magnesium",
+      "label_ru": "магний (авто через Apple Health)",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": true
+    },
+    {
+      "id": "nutrition.morning_snack",
+      "name": "Morning Snack",
+      "label_ru": "утренний перекус",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.nuts",
+      "name": "Nuts",
+      "label_ru": "орехи",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.paleo_diet",
+      "name": "Paleo Diet",
+      "label_ru": "палеодиета",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.plant_based_protein",
+      "name": "Plant-based protein",
+      "label_ru": "растительный белок",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.restaurant",
+      "name": "Restaurant",
+      "label_ru": "ели в ресторане",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.snacking",
+      "name": "Snacking",
+      "label_ru": "перекусы между приёмами пищи",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.sodium",
+      "name": "Sodium",
+      "label_ru": "натрий/соль (авто через Apple Health)",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": true
+    },
+    {
+      "id": "nutrition.takeout",
+      "name": "Takeout",
+      "label_ru": "еда навынос",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.tofu",
+      "name": "Tofu",
+      "label_ru": "тофу",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.vegan_diet",
+      "name": "Vegan Diet",
+      "label_ru": "веганская диета",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "nutrition.vegetarian_diet",
+      "name": "Vegetarian Diet",
+      "label_ru": "вегетарианская диета",
+      "category": "nutrition",
+      "category_label_ru": "Питание",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.ice_bath",
+      "name": "Ice Bath",
+      "label_ru": "ледяная ванна",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.recovery",
+      "name": "Recovery",
+      "label_ru": "чувствовали себя восстановившимся",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.warm_bath",
+      "name": "Warm Bath",
+      "label_ru": "тёплая ванна",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.acupuncture",
+      "name": "Acupuncture",
+      "label_ru": "иглоукалывание",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.aromatherapy",
+      "name": "Aromatherapy",
+      "label_ru": "ароматерапия, эфирные масла для расслабления",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.breathwork",
+      "name": "Breathwork",
+      "label_ru": "дыхательные практики",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.chiropractor",
+      "name": "Chiropractor",
+      "label_ru": "визит к хиропрактику",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.cold_shower",
+      "name": "Cold Shower",
+      "label_ru": "холодный душ",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.compression_therapy",
+      "name": "Compression Therapy",
+      "label_ru": "компрессионная терапия",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.contrast_therapy",
+      "name": "Contrast Therapy",
+      "label_ru": "контрастная терапия (горячее/холодное)",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.cooling_pad",
+      "name": "Cooling Pad",
+      "label_ru": "охлаждающий коврик для восстановления мышц",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.cryotherapy",
+      "name": "Cryotherapy",
+      "label_ru": "криотерапия",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.cupping",
+      "name": "Cupping",
+      "label_ru": "вакуумные банки",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.epsom_salt_bath",
+      "name": "Epsom Salt Bath",
+      "label_ru": "ванна с английской солью",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.foam_roller",
+      "name": "Foam Roller",
+      "label_ru": "ролик для мышц (миофасциальный релиз)",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.grounding_or_earthing",
+      "name": "Grounding or Earthing",
+      "label_ru": "заземление",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.grounding_sheet",
+      "name": "Grounding Sheet",
+      "label_ru": "сон на заземляющей простыне",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.heating_pad",
+      "name": "Heating Pad",
+      "label_ru": "грелка для восстановления мышц",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.hot_tub",
+      "name": "Hot Tub",
+      "label_ru": "джакузи/горячая ванна",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.hyperbaric_chamber",
+      "name": "Hyperbaric Chamber",
+      "label_ru": "барокамера",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.infrared_pemf_mat",
+      "name": "Infrared PEMF Mat",
+      "label_ru": "инфракрасный PEMF-коврик",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.inversion_table",
+      "name": "Inversion Table",
+      "label_ru": "инверсионный стол",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.massage_therapy",
+      "name": "Massage Therapy",
+      "label_ru": "массаж",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.meditation",
+      "name": "Meditation",
+      "label_ru": "медитация",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.percussive_massage",
+      "name": "Percussive Massage",
+      "label_ru": "перкуссионный массаж (Hypervolt, Theragun)",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.physical_therapy",
+      "name": "Physical Therapy",
+      "label_ru": "физиотерапия/ЛФК",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.red_light_therapy",
+      "name": "Red Light Therapy",
+      "label_ru": "терапия красным светом",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.rest_day",
+      "name": "Rest Day",
+      "label_ru": "день отдыха",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.sauna",
+      "name": "Sauna",
+      "label_ru": "сауна",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.sensory_deprivation",
+      "name": "Sensory Deprivation",
+      "label_ru": "флоат-камера (сенсорная депривация)",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.sound_bath",
+      "name": "Sound bath",
+      "label_ru": "звуковая ванна",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.steam_room",
+      "name": "Steam Room",
+      "label_ru": "парная/хаммам",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.stretching",
+      "name": "Stretching",
+      "label_ru": "растяжка",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.vagus_nerve_stimulation",
+      "name": "Vagus nerve stimulation",
+      "label_ru": "стимуляция блуждающего нерва",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    },
+    {
+      "id": "recovery_activities.zone_2_cardio",
+      "name": "Zone 2 Cardio",
+      "label_ru": "кардио во второй зоне",
+      "category": "recovery_activities",
+      "category_label_ru": "Восстановление",
+      "answer_type": "boolean",
+      "auto_apple_health": false
+    }
+  ]
+}

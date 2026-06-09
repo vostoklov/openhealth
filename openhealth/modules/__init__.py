@@ -12,17 +12,22 @@ agent) copies an existing module, fills in `schema()` and `compute()`, and the
 registry picks it up — no core changes required.
 """
 
-from .base import HealthModule, ModuleResult, register, get_module, all_modules
+from .base import HealthModule, ModuleResult, all_modules, get_module, register
 
 
 def load_builtin() -> None:
     """Import built-in modules so they self-register. Safe to call repeatedly."""
-    from . import pulse      # noqa: F401  (import side-effect: registration)
-    from . import sleep      # noqa: F401
-    from . import cycle      # noqa: F401
-    from . import body       # noqa: F401
-    from . import metabolic  # noqa: F401
-    from . import skin       # noqa: F401
+    from . import (
+        body,  # noqa: F401
+        correlations,  # noqa: F401
+        cycle,  # noqa: F401
+        journal,  # noqa: F401
+        metabolic,  # noqa: F401
+        pulse,  # noqa: F401  (import side-effect: registration)
+        recovery,  # noqa: F401
+        skin,  # noqa: F401
+        sleep,  # noqa: F401
+    )
 
 
 __all__ = [

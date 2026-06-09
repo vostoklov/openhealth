@@ -35,12 +35,15 @@ class HealthModule(Protocol):
 
 
 KNOWN_DOMAINS = (
-    "pulse",       # HRV / heart / stress / energy / readiness
-    "cycle",       # menstrual cycle / fertility
-    "body",        # weight / fasting / habits
-    "metabolic",   # nutrition / glucose
-    "skin",        # face / skin photo observations
-    "sleep",       # sleep stages proxy / circadian / light
+    "pulse",         # HRV / heart / stress / energy / readiness
+    "cycle",         # menstrual cycle / fertility
+    "body",          # weight / fasting / habits
+    "metabolic",     # nutrition / glucose
+    "skin",          # face / skin photo observations
+    "sleep",         # sleep stages proxy / circadian / light
+    "journal",       # daily behavior check-ins (WHOOP-style journal)
+    "recovery",      # versioned recovery / strain / sleep-debt scoring
+    "correlations",  # behavior <-> recovery personal impact analysis
 )
 
 

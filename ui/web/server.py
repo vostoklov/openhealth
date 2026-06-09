@@ -20,6 +20,13 @@ Endpoints:
                           ~/.openhealth/agent.json (mode 0600).
     GET  /api/memory  -> {"entries": [last 30, newest first], "count": N}
     DELETE /api/memory -> wipe agent memory; {"status": "ok", "cleared": N}
+    GET  /api/calendar?date=YYYY-MM-DD -> day load from the ICS subscription
+                          (live fetch, 10 min in-memory cache). Without a
+                          configured feed: {"configured": false, "how": [...]}.
+    POST /api/calendar -> {"ics_url": "https://...ics"}; validated and saved
+                          to ~/.openhealth/calendar.json (0600). The URL is a
+                          secret: never logged, never echoed back.
+    DELETE /api/calendar -> disable the subscription (URL kept for re-enable)
     POST /api/agent   -> run a local agent CLI for a whitelisted task.
                          body: {"task": "insight" | "correlations" | "research"
                                         | "transcript",
@@ -70,17 +77,21 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 try:
     from openhealth import agent_memory
+    from openhealth.connectors import ics_calendar
 except ImportError:  # running from a checkout without `pip install -e .`
     sys.path.insert(0, str(_REPO_ROOT))
     from openhealth import agent_memory
+    from openhealth.connectors import ics_calendar
 
 HOST = "127.0.0.1"
 DEFAULT_PORT = 8770
@@ -753,6 +764,130 @@ def handle_agent_request(payload: dict, base_dir: Path) -> "tuple":
     return 200, result
 
 
+# --- calendar: ICS subscription -> day load ----------------------------------
+
+CALENDAR_CACHE_TTL_S = 600  # live feed, refetched at most every 10 minutes
+_CALENDAR_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+CALENDAR_HOW = [
+    "Google Calendar: Settings → нужный календарь → 'Integrate calendar' → "
+    "скопируй 'Secret address in iCal format' (ссылка на .ics).",
+    "Apple iCloud: Календарь → правый клик по календарю → 'Public Calendar' → скопируй webcal://-ссылку.",
+    "Сохрани её: POST /api/calendar c JSON {\"ics_url\": \"<ссылка>\"}. "
+    "URL секретный — хранится только локально в ~/.openhealth/calendar.json.",
+]
+
+_calendar_cache = {"url": None, "fetched_at": 0.0, "parsed": None}
+_calendar_cache_lock = threading.Lock()
+
+
+def get_calendar_parsed(url: str) -> "tuple":
+    """Parsed feed for ``url`` -> (parsed, served_from_cache). May raise IcsCalendarError."""
+    now = time.monotonic()
+    with _calendar_cache_lock:
+        fresh = (
+            _calendar_cache["parsed"] is not None
+            and _calendar_cache["url"] == url
+            and now - _calendar_cache["fetched_at"] < CALENDAR_CACHE_TTL_S
+        )
+        if fresh:
+            return _calendar_cache["parsed"], True
+    text = ics_calendar.fetch_ics(url)  # network call outside the lock
+    parsed = ics_calendar.parse_ics(text)
+    with _calendar_cache_lock:
+        _calendar_cache.update({"url": url, "fetched_at": time.monotonic(), "parsed": parsed})
+    return parsed, False
+
+
+def invalidate_calendar_cache() -> None:
+    with _calendar_cache_lock:
+        _calendar_cache.update({"url": None, "fetched_at": 0.0, "parsed": None})
+
+
+def handle_calendar_get(date_str: "str | None" = None) -> "tuple":
+    """GET /api/calendar[?date=YYYY-MM-DD] -> (http_status, body)."""
+    if date_str is not None:
+        if not _CALENDAR_DATE_RE.match(date_str):
+            return 400, {"status": "error", "message": "date must be YYYY-MM-DD"}
+        try:
+            time.strptime(date_str, "%Y-%m-%d")  # rejects 2026-13-99 etc.
+        except ValueError:
+            return 400, {"status": "error", "message": "date must be a real YYYY-MM-DD date"}
+    config = ics_calendar.load_calendar_config()
+    if not config or not config.get("enabled"):
+        return 200, {"configured": False, "how": CALENDAR_HOW}
+    day = date_str or time.strftime("%Y-%m-%d")
+    try:
+        parsed, cached = get_calendar_parsed(config["ics_url"])
+    except ics_calendar.IcsCalendarError as exc:
+        # exc messages never contain the secret URL (see ics_calendar)
+        return 200, {"configured": True, "status": "error", "message": str(exc)}
+    return 200, {
+        "configured": True,
+        "status": "ok",
+        "cached": cached,
+        "events_total": len(parsed.get("events", [])),
+        "warnings": parsed.get("warnings", [])[:10],
+        "day": ics_calendar.day_load(parsed.get("events", []), day),
+    }
+
+
+def handle_todos_get(date_str: "str | None" = None) -> "tuple":
+    """GET /api/todos[?date=YYYY-MM-DD] -> (status, {completed[], candidates[]}).
+
+    Закрытые задачи Todoist за день + кандидаты в журнал здоровья.
+    Без токена — честный 503 с инструкцией (контракт connectors/todoist.py).
+    """
+    if date_str is not None:
+        if not _CALENDAR_DATE_RE.match(date_str):
+            return 400, {"status": "error", "message": "date must be YYYY-MM-DD"}
+        try:
+            time.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            return 400, {"status": "error", "message": "date must be a real YYYY-MM-DD date"}
+    day = date_str or time.strftime("%Y-%m-%d")
+    try:
+        from openhealth.connectors import todoist
+    except ImportError:
+        return 200, {"configured": False, "message": "коннектор todoist недоступен в этой установке"}
+    try:
+        completed = todoist.fetch_completed(day)
+    except todoist.TodoistNotConfigured as exc:
+        return 503, {"configured": False, "message": str(exc)}
+    except Exception as exc:  # сеть/HTTP — честная ошибка без падения сервера
+        return 200, {"configured": True, "status": "error", "message": exc.__class__.__name__}
+    return 200, {
+        "configured": True,
+        "status": "ok",
+        "completed": completed,
+        "candidates": todoist.health_candidates(completed),
+    }
+
+
+def handle_calendar_post(payload) -> "tuple":
+    """POST /api/calendar {"ics_url": ...} -> (http_status, body). URL is never echoed."""
+    if not isinstance(payload, dict):
+        return 400, {"status": "error", "message": "body must be a JSON object"}
+    try:
+        ics_calendar.save_calendar_config(payload.get("ics_url"), enabled=True)
+    except ics_calendar.IcsCalendarError as exc:
+        return 400, {"status": "error", "message": str(exc)}
+    except OSError as exc:
+        return 500, {"status": "error", "message": "cannot write config: {}".format(exc.__class__.__name__)}
+    invalidate_calendar_cache()
+    return 200, {"status": "ok", "configured": True}
+
+
+def handle_calendar_delete() -> "tuple":
+    """DELETE /api/calendar -> disable the subscription, keep the URL on disk."""
+    try:
+        was_configured = ics_calendar.disable_calendar_config()
+    except (ics_calendar.IcsCalendarError, OSError):
+        return 500, {"status": "error", "message": "cannot update calendar config"}
+    invalidate_calendar_cache()
+    return 200, {"status": "ok", "configured": False, "was_configured": was_configured}
+
+
 # --- HTTP handler ------------------------------------------------------------
 
 
@@ -791,6 +926,16 @@ class BridgeHandler(SimpleHTTPRequestHandler):
             data = load_local_data(self.base_dir)
             self._send_json(data if data is not None else {"demo": True})
             return
+        if path == "/api/calendar":
+            query = parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}
+            status, body = handle_calendar_get(query.get("date", [None])[0])
+            self._send_json(body, status=status)
+            return
+        if path == "/api/todos":
+            query = parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}
+            status, body = handle_todos_get(query.get("date", [None])[0])
+            self._send_json(body, status=status)
+            return
         super().do_GET()  # static files; index.html for directories
 
     def _read_json_body(self) -> "tuple":
@@ -813,13 +958,20 @@ class BridgeHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802 (http.server API)
         path = self.path.split("?", 1)[0]
-        if path not in ("/api/agent", "/api/config"):
+        if path not in ("/api/agent", "/api/config", "/api/calendar"):
             self._send_json({"status": "error", "message": "not found"}, status=404)
             return
 
         payload, error = self._read_json_body()
         if error is not None:
             self._send_json(error[1], status=error[0])
+            return
+
+        if path == "/api/calendar":
+            status, body = handle_calendar_post(payload)
+            # only the outcome — never the URL (it is a secret)
+            log("POST /api/calendar -> {}".format(body.get("status")))
+            self._send_json(body, status=status)
             return
 
         if path == "/api/config":
@@ -842,6 +994,11 @@ class BridgeHandler(SimpleHTTPRequestHandler):
 
     def do_DELETE(self) -> None:  # noqa: N802 (http.server API)
         path = self.path.split("?", 1)[0]
+        if path == "/api/calendar":
+            status, body = handle_calendar_delete()
+            log("DELETE /api/calendar -> {}".format(body.get("status")))
+            self._send_json(body, status=status)
+            return
         if path != "/api/memory":
             self._send_json({"status": "error", "message": "not found"}, status=404)
             return

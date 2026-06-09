@@ -26,7 +26,7 @@ import json
 import os
 import sqlite3
 from collections import defaultdict
-from datetime import datetime
+from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 
 # Recovery zone thresholds match the dashboard's col()/word() helpers.
@@ -345,6 +345,136 @@ def build_insights_block(con: sqlite3.Connection) -> dict:
         return {"insights": [], "protocols": []}
 
 
+def build_calendar_block() -> dict:
+    """Today's "day pulse" from the ICS subscription, if one is configured.
+
+    Wrapped in try/except: without ~/.openhealth/calendar.json (or with the
+    network down) the dashboard build works exactly as before — no calendar key.
+    The ICS URL is a secret and is never printed or written to the payload.
+    """
+    try:
+        import sys
+        repo_root = str(Path(__file__).resolve().parents[2])
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
+        from openhealth.connectors import ics_calendar
+
+        config = ics_calendar.load_calendar_config()
+        if not config or not config.get("enabled"):
+            return {}
+        parsed = ics_calendar.parse_ics(ics_calendar.fetch_ics(config["ics_url"]))
+        today = datetime.now().date().isoformat()
+        block = ics_calendar.day_load(parsed["events"], today)
+        block["warnings"] = parsed.get("warnings", [])[:5]
+        block["source"] = "ics"
+        return block
+    except Exception:
+        return {}
+
+
+def _tz_from_offset(offset: str | None):
+    """timezone from a WHOOP '+01:00'-style offset string; UTC fallback."""
+    try:
+        sign = 1 if offset.startswith("+") else -1
+        hours, minutes = offset.lstrip("+-").split(":")
+        return timezone(sign * timedelta(hours=int(hours), minutes=int(minutes)))
+    except Exception:
+        return timezone.utc
+
+
+def build_circadian_block(con: sqlite3.Connection) -> dict:
+    """Rise-style circadian energy schedule from the real sleep anchor.
+
+    Anchor = weighted habitual wake/bed time over the most recent (<=14 days)
+    non-nap WHOOP nights in the index; accumulated sleep debt (sleep_debt@v2)
+    deepens the afternoon dip and trims the peaks. Two-process model is
+    established science (C3-C4); the personal placement is C2. Returns {}
+    gracefully when the engine is not importable or there is no sleep data.
+    """
+    try:
+        import sys
+        repo_root = str(Path(__file__).resolve().parents[2])
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
+        from openhealth import circadian as _circadian
+        from openhealth.modules.recovery import sleep_debt as _sleep_debt
+    except Exception:
+        return {}
+    try:
+        rows = con.execute(
+            "SELECT payload_json FROM records WHERE record_type='TimelineEvent' "
+            "AND json_extract(payload_json,'$.event_kind')='whoop_sleep'"
+        ).fetchall()
+        sessions = []
+        for (payload,) in rows:
+            p = json.loads(payload)
+            md = p.get("metadata") or {}
+            if md.get("nap") or not md.get("start") or not md.get("end"):
+                continue
+            tz = _tz_from_offset(md.get("timezone_offset"))
+            sessions.append({
+                "start": datetime.fromisoformat(md["start"].replace("Z", "+00:00")).astimezone(tz),
+                "end": datetime.fromisoformat(md["end"].replace("Z", "+00:00")).astimezone(tz),
+            })
+        if not sessions:
+            return {}
+        sessions.sort(key=lambda s: s["end"], reverse=True)
+        last_night = sessions[0]["end"].date()
+        kept = []
+        for s in sessions:
+            s["days_ago"] = (last_night - s["end"].date()).days
+            if s["days_ago"] <= 14:
+                kept.append(s)
+        anchor = _circadian.compute_sleep_anchor(kept)
+        nights = [(s["end"] - s["start"]).total_seconds() / 3600.0 for s in reversed(kept)]
+        debt_h = float(_sleep_debt(nights[-1], recent_nights_h=nights).get("accumulated_debt_h") or 0.0)
+        wake_minutes = int(anchor["wake_minutes"]) % (24 * 60)
+        wake_dt = datetime.combine(
+            date.today(), time(wake_minutes // 60, wake_minutes % 60),
+            tzinfo=sessions[0]["end"].tzinfo,
+        )
+        schedule = _circadian.energy_schedule(wake_dt, anchor=anchor, sleep_debt_h=debt_h)
+
+        def _hhmm(iso: str) -> str:
+            return iso[11:16]
+
+        return {
+            "wake_time": _hhmm(schedule["wake_time"]),
+            "bed_time": _hhmm(schedule["bed_time"]),
+            "phases": [
+                {
+                    "phase": p["phase"],
+                    "start": _hhmm(p["start_iso"]),
+                    "end": _hhmm(p["end_iso"]),
+                    "label": p["label_ru"],
+                    "advice": p["advice_ru"],
+                    "confidence": p["confidence"],
+                }
+                for p in schedule["phases"]
+            ],
+            "curve": [
+                {"t": _hhmm(pt["t_iso"]), "e": round(pt["energy"]), "phase": pt["phase"]}
+                for pt in schedule["curve"]
+            ],
+            "points_per_hour": 4,
+            "melatonin_window": {
+                "start": _hhmm(schedule["melatonin_window"]["start_iso"]),
+                "end": _hhmm(schedule["melatonin_window"]["end_iso"]),
+            },
+            "sleep_debt_h": round(debt_h, 1),
+            "debt_note": (
+                f"Накопленный долг сна ~{debt_h:.1f} ч (sleep_debt@v2, окно {len(nights)} ноч.); "
+                f"анкор по ночам до {last_night.isoformat()}."
+            ),
+            "anchor_nights": len(kept),
+            "anchor_last_date": last_night.isoformat(),
+            "model": schedule["model"],
+            "confidence": "C2",
+        }
+    except Exception:
+        return {}
+
+
 def build_payload(db_path: Path) -> dict:
     con = sqlite3.connect(str(db_path))
     try:
@@ -364,6 +494,10 @@ def build_payload(db_path: Path) -> dict:
     payload["connections"] = connections
     payload["insights"] = insights_block.get("insights", [])
     payload["protocols"] = insights_block.get("protocols", [])
+    calendar_block = build_calendar_block()
+    if calendar_block:
+        # "Пульс дня": загрузка 0-100, встречи, первая/последняя, окна >= 1ч.
+        payload["calendar"] = calendar_block
     # Correlations require labeled daily behaviors (journal), which this dataset
     # does not yet contain — so we intentionally omit them and let the dashboard
     # keep its demo correlations. Same for habits / allBehaviors.
@@ -403,6 +537,12 @@ def main() -> None:
           f"sleep={payload.get('sleep')}  strain={payload.get('strain')}")
     print(f"  biomarkers={bm}  trend points(rec)={len(payload.get('trend30Rec', []))}")
     print(f"  insights={len(payload.get('insights', []))}  protocols={len(payload.get('protocols', []))}")
+    cal = payload.get("calendar")
+    if cal:
+        print(f"  calendar: load={cal.get('day_load_score')}/100  meetings={cal.get('meetings_count')}  "
+              f"first={cal.get('first_event')}  gaps>1h={cal.get('gaps_over_1h')}")
+    else:
+        print("  calendar: not configured (POST /api/calendar or ~/.openhealth/calendar.json)")
     print("  NOTE: data.local.json is real personal data — keep it local (git-ignored).")
 
 

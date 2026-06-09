@@ -484,6 +484,86 @@
       "rate_limit_note": "Not applicable — no official API; unofficial clients should poll sparingly.",
       "connector": null,
       "env_vars": []
+    },
+    {
+      "id": "todoist",
+      "label": "Todoist",
+      "category": "todo",
+      "auth": "pat",
+      "status": "supported",
+      "api_base": "https://api.todoist.com/rest/v2",
+      "dev_portal_url": "https://developer.todoist.com/",
+      "docs_url": "https://developer.todoist.com/rest/v2/",
+      "key_steps": [
+        "Open Todoist → Settings → Integrations → Developer tab.",
+        "Copy the personal 'API token' shown there — a PAT, no OAuth app needed for your own data (lowest-friction route).",
+        "Set OPENHEALTH_TODOIST_TOKEN (or write the token to ~/.openhealth/todoist.token).",
+        "The connector reads active tasks via REST v2 (api.todoist.com/rest/v2) and completed history via Sync v9 completed/get_all; completed health-looking tasks ('тренировка', 'yoga', label health/fitness) become journal candidates for human review."
+      ],
+      "data_types": ["completed_tasks", "active_tasks", "projects", "labels", "journal_candidates"],
+      "rate_limit_note": "REST v2: 450 requests per 15 minutes per user; Sync v9 has comparable per-user quotas. A daily pull uses a handful of calls.",
+      "connector": "openhealth/connectors/todoist.py",
+      "env_vars": ["OPENHEALTH_TODOIST_TOKEN"]
+    },
+    {
+      "id": "ticktick",
+      "label": "TickTick",
+      "category": "todo",
+      "auth": "oauth2",
+      "status": "planned",
+      "api_base": "https://api.ticktick.com/open/v1",
+      "dev_portal_url": "https://developer.ticktick.com/",
+      "docs_url": "https://developer.ticktick.com/docs#/openapi",
+      "key_steps": [
+        "Register an app at developer.ticktick.com (Manage Apps) with your TickTick account — Client ID and Client Secret are issued there.",
+        "Set an OAuth redirect URL, e.g. http://localhost:8765/callback.",
+        "Run the OAuth2 code flow with scopes tasks:read (tasks:write optional) against ticktick.com/oauth/authorize and /oauth/token.",
+        "Call the Open API at api.ticktick.com/open/v1 (projects, tasks, completed task lookup by project) with the Bearer token."
+      ],
+      "data_types": ["completed_tasks", "active_tasks", "projects", "habits_via_export"],
+      "rate_limit_note": "Open API quotas are not publicly documented in detail — poll once or twice a day, not continuously.",
+      "connector": null,
+      "env_vars": ["OPENHEALTH_TICKTICK_CLIENT_ID", "OPENHEALTH_TICKTICK_CLIENT_SECRET"]
+    },
+    {
+      "id": "things",
+      "label": "Things 3 (Cultured Code)",
+      "category": "todo",
+      "auth": "local",
+      "status": "export_only",
+      "api_base": null,
+      "dev_portal_url": null,
+      "docs_url": "https://culturedcode.com/things/support/articles/2803573/",
+      "key_steps": [
+        "Honest status: Things has no cloud API — Things Cloud is sync-only with no public endpoints, and Cultured Code offers no developer portal.",
+        "Local route 1: the things:/// URL scheme (docs link above) can add and show tasks, but cannot read completed history.",
+        "Local route 2 (the real one for journal candidates): on macOS read completed to-dos via AppleScript automation or the local Things SQLite database (~/Library/Group Containers/JLMPQHK86H.com.culturedcode.ThingsMac/), fully local.",
+        "Route 3: Things → File → Export, then ingest the exported file."
+      ],
+      "data_types": ["completed_tasks", "active_tasks", "projects", "tags"],
+      "rate_limit_note": "Not applicable — local URL scheme / AppleScript / database read only, no cloud API.",
+      "connector": null,
+      "env_vars": []
+    },
+    {
+      "id": "notion_tasks",
+      "label": "Notion (task databases)",
+      "category": "todo",
+      "auth": "pat",
+      "status": "planned",
+      "api_base": "https://api.notion.com/v1",
+      "dev_portal_url": "https://www.notion.so/my-integrations",
+      "docs_url": "https://developers.notion.com/",
+      "key_steps": [
+        "Create an internal integration at notion.so/my-integrations and copy the integration token (a PAT for your workspace).",
+        "Share the task database(s) with the integration (database page → connections → add your integration) — without this the API sees nothing.",
+        "Set OPENHEALTH_NOTION_TOKEN and query the database's data source with a filter on the status/checkbox property to find tasks completed on a given day.",
+        "Note: use the data_source_id (not the legacy database_id) in modern API versions."
+      ],
+      "data_types": ["completed_tasks", "active_tasks", "databases", "properties"],
+      "rate_limit_note": "About 3 requests/second per integration on average — paginate gently and cache database schemas.",
+      "connector": null,
+      "env_vars": ["OPENHEALTH_NOTION_TOKEN"]
     }
   ]
 }

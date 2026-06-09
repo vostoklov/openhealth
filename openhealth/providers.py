@@ -32,7 +32,7 @@ _RESOURCE_PATH = Path(__file__).resolve().parent / "data" / "providers.json"
 
 _CACHE: Optional[Dict[str, Any]] = None
 
-CATEGORIES = ("tracker", "scale", "cgm", "air", "sleep", "bp", "hub")
+CATEGORIES = ("tracker", "scale", "cgm", "air", "sleep", "bp", "hub", "todo")
 AUTH_KINDS = ("oauth2", "pat", "api_key", "file_export", "local")
 STATUSES = ("supported", "planned", "export_only")
 

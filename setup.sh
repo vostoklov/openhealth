@@ -176,3 +176,12 @@ note "- Агент: поставь Claude Code (https://claude.com/claude-code) 
 note "- Telegram-бот: docs/TELEGRAM.md"
 note "- Календарь и другие интеграции: docs/INTEGRATIONS.md"
 note "- Полный путеводитель: docs/START-HERE.md (RU) / docs/START-HERE.en.md (EN)"
+
+# Момент ценности — самое честное место для просьбы (один раз, тепло).
+if [ ! -f "$HOME/.openhealth/.star-asked" ]; then
+  mkdir -p "$HOME/.openhealth" 2>/dev/null || true
+  touch "$HOME/.openhealth/.star-asked" 2>/dev/null || true
+  echo ""
+  note "P.S. Если OpenHealth оказался полезен — звезда на GitHub реально помогает"
+  note "проекту находить людей: https://github.com/igindin/openhealth ⭐"
+fi

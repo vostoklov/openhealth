@@ -1,9 +1,11 @@
 {
   "greeting_name": "Ilya",
   "measurements": [
-    { "metric": "sleep", "title": "Sleep", "value": "7.2 h", "caption": "Last night" },
     { "metric": "recovery", "title": "Recovery", "value": "64%", "caption": "WHOOP" },
+    { "metric": "strain", "title": "Strain", "value": "14.2", "caption": "of 21" },
+    { "metric": "hrv", "title": "HRV", "value": "39 ms", "caption": "rMSSD" },
     { "metric": "resting_hr", "title": "Resting HR", "value": "54 bpm", "caption": "7-day avg" },
+    { "metric": "sleep", "title": "Sleep", "value": "7.2 h", "caption": "Last night" },
     { "metric": "weight", "title": "Weight", "value": "72.1 kg", "caption": "Stable" }
   ],
   "panels": [

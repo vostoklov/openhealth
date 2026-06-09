@@ -77,6 +77,20 @@
   .links .lt{font-weight:600;color:var(--ink);}
   .links .ld{font-size:13px;color:var(--soft);margin-top:2px;font-family:var(--mono);word-break:break-all;}
 
+  .prompts{display:flex;flex-direction:column;gap:10px;}
+  .prompt{background:var(--card);border:1px solid var(--hair);border-radius:12px;padding:12px 14px;position:relative;}
+  .prompt .pl{font-size:11px;color:var(--soft);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+  .prompt pre{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:var(--ink);}
+  .copy{position:absolute;top:11px;right:11px;font-family:var(--mono);font-size:11px;border:1px solid var(--hair);
+        background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:5px 10px;cursor:pointer;}
+  .copy:hover{border-color:var(--accent);}
+  .copy.done{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .dl{display:flex;gap:10px;flex-wrap:wrap;}
+  .dl a{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border:none;
+        border-radius:10px;padding:11px 16px;font-weight:600;font-size:14px;}
+  .dl a.secondary{background:var(--card);color:var(--accent-ink);border:1px solid var(--hair);}
+  .dl a:hover{opacity:.92;}
+  .note-sm{font-size:13px;color:var(--soft);margin:10px 0 0;}
   .help{margin:36px 0 0;padding:15px 17px;border-radius:14px;border:1px dashed #D8C9AE;
         background:var(--warn-soft);font-size:14px;color:#6b5a3a;}
   .help b{color:var(--ink);}
@@ -120,6 +134,16 @@
     <li><b>Доверие</b><span>deep-research + консилиум, оценка C1–C5</span></li>
   </ul>
 
+  <h2>Быстрые промты — копируй и вставляй</h2>
+  <div class="prompts">
+    <div class="prompt"><div class="pl">Завестись</div><button class="copy" type="button">Копировать</button><pre>Открой этот репозиторий, запусти make setup и покажи мне доступные модули.</pre></div>
+    <div class="prompt"><div class="pl">Импорт Apple Health</div><button class="copy" type="button">Копировать</button><pre>У меня есть экспорт Apple Health в ~/Downloads (.zip). Импортируй его, разложи мои данные по слоям и покажи сводку: какие метрики и за какой период.</pre></div>
+    <div class="prompt"><div class="pl">Один вопрос → n-of-1</div><button class="copy" type="button">Копировать</button><pre>Помоги проверить один вопрос про меня: «что ломает мой сон». Сделай простой n-of-1: базовый период, что меняем, как мерим. Запиши протокол. Без диагнозов.</pre></div>
+    <div class="prompt"><div class="pl">Ежедневный чек-ин</div><button class="copy" type="button">Копировать</button><pre>Сделай мой ежедневный чек-ин одним коротким вопросом и запиши ответ в таймлайн.</pre></div>
+    <div class="prompt"><div class="pl">Осторожный ресёрч</div><button class="copy" type="button">Копировать</button><pre>Подготовь и проведи осторожный deep-research по вопросу X: с источниками, уровнем доверия C1–C5 и красными флагами. Не давай медсоветов из головы.</pre></div>
+  </div>
+  <p class="note-sm">Ещё промты — в <a href="https://github.com/igindin/health-sprint-kit/blob/main/quick-prompts.md">quick-prompts.md</a>.</p>
+
   <h2>Три правила</h2>
   <ul class="rules">
     <li><span class="dot"></span><div><b>Помощник для размышления, не врач.</b> Без диагнозов. Решения — с врачом. Тревожное → стоп и к специалисту.</div></li>
@@ -135,9 +159,29 @@
     <a href="https://t.me/trolyaa"><div class="lt">Поддержка · операционка</div><div class="ld">t.me/trolyaa</div></a>
   </div>
 
+  <h2>Скачать скилы</h2>
+  <div class="dl">
+    <a href="https://github.com/igindin/health-sprint-kit/raw/main/skills.zip">⤓ Все скилы (.zip)</a>
+    <a class="secondary" href="https://github.com/igindin/health-sprint-kit/tree/main/skills">Посмотреть файлы</a>
+    <a class="secondary" href="https://github.com/igindin/health-sprint-kit/blob/main/quick-prompts.md">Все quick-prompts</a>
+  </div>
+  <p class="note-sm">Скилы = slash-команды (<code>/kit</code>, <code>/checkin</code>, <code>/protocol</code>…) + оркестратор. Распакуй в <code>.claude/</code> своего проекта.</p>
+
   <p class="help"><b>Застрял или рябит в глазах?</b> Это нормально. Сделай только шаг 1 и один вопрос — остальное на следующих встречах. Спроси в чате спринта или у поддержки.</p>
 
   <footer>Local-first: ничего не загружается в облако. Реальные данные и ключи — только на твоей машине. OpenHealth ещё сыроват местами — это нормально, ты собираешь <em>свою</em> систему.</footer>
 </main>
+<script>
+  document.querySelectorAll('.copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var pre = btn.parentElement.querySelector('pre');
+      if(!pre) return;
+      navigator.clipboard.writeText(pre.textContent.trim()).then(function(){
+        var prev = btn.textContent; btn.textContent = '✓ Скопировано'; btn.classList.add('done');
+        setTimeout(function(){ btn.textContent = prev; btn.classList.remove('done'); }, 1400);
+      });
+    });
+  });
+</script>
 </body>
 </html>

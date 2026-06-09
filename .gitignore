@@ -56,3 +56,6 @@ ui/web/refs/
 
 # Local Claude Code settings (machine-specific)
 .claude/settings.local.json
+
+# Атмосферные фоны: локальные (cosmos-артворки, не для распространения)
+ui/web/assets/bg/

@@ -3,212 +3,2575 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OpenHealth</title>
+<title>OpenHealth Premium Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Подключение Phosphor Icons Light -->
+<link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<!-- Подключение GSAP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <style>
-  :root{
-    --font:"Geist","Geist Fallback",system-ui,-apple-system,sans-serif;
-    --mono:"Geist Mono",ui-monospace,SFMono-Regular,monospace;
-    --ok:#34c759; --warn:#e8b339; --bad:#e5484d;
-    --sb:248px;
+  :root {
+    --font: "Geist", "Geist Fallback", system-ui, -apple-system, sans-serif;
+    --mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
+    
+    --ok: #10b981;
+    --ok-glow: rgba(16, 185, 129, 0.15);
+    --warn: #eab308;
+    --warn-glow: rgba(234, 179, 8, 0.15);
+    --bad: #f43f5e;
+    --bad-glow: rgba(244, 63, 94, 0.15);
+    
+    --sb: 260px;
   }
-  /* Linear-class dark (default) */
-  [data-theme="dark"]{--bg:#0c0d10;--side:#08090b;--card:#14161b;--card2:#101216;--line:#1f2228;--line2:#2a2e36;--ink:#e6e9ef;--mut:#7d8694;--dim:#565d68;--accent:#5b8def;--radius:12px;}
-  [data-theme="light"]{--bg:#fbfcfd;--side:#f3f5f8;--card:#ffffff;--card2:#f7f9fb;--line:#e6eaef;--line2:#d6dce3;--ink:#0e1217;--mut:#5d6675;--dim:#8a93a1;--accent:#2f6df0;--radius:12px;}
-  [data-theme="brutalist"]{--bg:#ffffff;--side:#ffffff;--card:#ffffff;--card2:#fafafa;--line:#000;--line2:#000;--ink:#000;--mut:#444;--dim:#666;--accent:#0000ff;--radius:0px;}
-  [data-theme="bauhaus"]{--bg:#f3efe6;--side:#111;--card:#fff;--card2:#faf7f0;--line:#111;--line2:#111;--ink:#111;--mut:#555;--dim:#777;--accent:#e5322d;--radius:0px;--ok:#2c6e49;--warn:#ffd400;--bad:#e5322d;}
 
-  *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
-  body{display:flex;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;-webkit-font-smoothing:antialiased;line-height:1.5}
-  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-  .muted{color:var(--mut)} .dim{color:var(--dim)}
+  /* Темы оформления */
+  [data-theme="dark"] {
+    --bg: #060709;
+    --side: #0a0b0d;
+    --card-outer: #0f1115;
+    --card-inner: #14171d;
+    --line: #1d212a;
+    --line2: #2a303d;
+    --ink: #f3f4f6;
+    --mut: #8e96a3;
+    --dim: #5c6470;
+    --accent: #10b981;
+    --accent-glow: rgba(16, 185, 129, 0.15);
+    --radius-outer: 22px;
+    --radius-inner: 16px;
+    --shadow-diffuse: rgba(0, 0, 0, 0.4);
+  }
 
-  /* ---- Sidebar (Linear-class) ---- */
-  aside{width:var(--sb);flex:0 0 var(--sb);background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:14px 10px;height:100vh;position:sticky;top:0}
-  .logo{display:flex;align-items:center;gap:9px;padding:6px 8px 14px;font-weight:600;font-size:15px;letter-spacing:-.01em}
-  .logo .mark{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--accent),var(--ok));display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700}
-  .cmd{display:flex;align-items:center;justify-content:space-between;margin:0 4px 14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;color:var(--dim);font-size:13px;cursor:pointer}
-  .cmd kbd{font:500 11px var(--mono);border:1px solid var(--line2);border-radius:4px;padding:1px 5px;color:var(--mut)}
-  .navsec{font:600 10px/1 var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--dim);padding:14px 12px 6px}
-  nav a{display:flex;align-items:center;gap:10px;padding:7px 11px;border-radius:8px;color:var(--mut);text-decoration:none;cursor:pointer;font-weight:500}
-  nav a .ic{width:16px;text-align:center;opacity:.85}
-  nav a:hover{background:var(--card2);color:var(--ink)}
-  nav a.active{background:var(--card);color:var(--ink)}
-  nav a .tag{margin-left:auto;font:600 10px var(--mono);color:var(--dim)}
-  .sidefoot{margin-top:auto;padding:10px 6px 2px;border-top:1px solid var(--line)}
-  .docmini{display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;background:var(--card2)}
-  .docmini .face{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:17px;background:var(--bg);border:1px solid var(--line)}
-  .docmini .t{font-size:11px;line-height:1.35}
-  .themes{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
-  .themes button{font:500 10px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--dim);background:none;border:1px solid var(--line);border-radius:6px;padding:6px 7px;cursor:pointer}
-  .themes button[aria-pressed="true"]{color:var(--ink);border-color:var(--accent)}
+  [data-theme="light"] {
+    --bg: #f9fafb;
+    --side: #f3f4f6;
+    --card-outer: #ffffff;
+    --card-inner: #f9fafb;
+    --line: #e5e7eb;
+    --line2: #d1d5db;
+    --ink: #111827;
+    --mut: #4b5563;
+    --dim: #9ca3af;
+    --accent: #10b981;
+    --accent-glow: rgba(16, 185, 129, 0.1);
+    --radius-outer: 22px;
+    --radius-inner: 16px;
+    --shadow-diffuse: rgba(0, 0, 0, 0.03);
+  }
 
-  /* ---- Main ---- */
-  main{flex:1;min-width:0;height:100vh;overflow:auto}
-  .topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 28px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-  .topbar h1{font-size:15px;font-weight:600;margin:0}
-  .topbar .date{font:500 12px var(--mono);color:var(--mut)}
-  .pill{display:inline-flex;align-items:center;gap:7px;font:600 12px var(--mono);padding:6px 11px;border-radius:999px;border:1px solid var(--line)}
-  .pill .d{width:8px;height:8px;border-radius:50%}
-  .content{padding:24px 28px 70px;max-width:1100px}
-  .zone{display:none} .zone.on{display:block}
-  .grid{display:grid;gap:16px} .cols{grid-template-columns:1.15fr .85fr}
-  @media(max-width:900px){.cols{grid-template-columns:1fr} aside{--sb:64px}}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
-  .card h3{margin:0 0 2px;font-size:13px;font-weight:600}
-  .card .sub{font-size:12px;color:var(--mut);margin-bottom:16px}
+  [data-theme="brutalist"] {
+    --bg: #ffffff;
+    --side: #ffffff;
+    --card-outer: #ffffff;
+    --card-inner: #ffffff;
+    --line: #000000;
+    --line2: #000000;
+    --ink: #000000;
+    --mut: #333333;
+    --dim: #666666;
+    --accent: #0000ff;
+    --accent-glow: transparent;
+    --radius-outer: 0px;
+    --radius-inner: 0px;
+    --shadow-diffuse: transparent;
+  }
 
-  .hero{display:flex;gap:26px;align-items:center;flex-wrap:wrap}
-  .ring{position:relative;width:188px;height:188px;flex:0 0 auto}
-  .ring svg{transform:rotate(-90deg)}
-  .ring .val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .ring .num{font-family:var(--mono);font-weight:600;font-size:60px;line-height:1;letter-spacing:-.04em}
-  .ring .pct{font:500 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--mut);margin-top:6px}
-  .read{flex:1;min-width:220px}
-  .read .state{font-size:21px;font-weight:600;letter-spacing:-.01em;margin:0 0 6px}
-  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}
-  @media(max-width:600px){.board{grid-template-columns:repeat(2,1fr)}}
-  .tile{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:13px}
-  .tile .k{font:500 10px var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--mut)}
-  .tile .v{font-family:var(--mono);font-size:23px;font-weight:600;margin-top:7px;letter-spacing:-.02em}
-  .tile .u{font-size:11px;color:var(--dim)}
-  .action{display:flex;gap:12px;align-items:flex-start;padding:15px;border:1px solid var(--line2);border-radius:11px;margin-top:16px;background:var(--card2)}
-  .action .badge{font:600 10px/1 var(--mono);text-transform:uppercase;letter-spacing:.07em;padding:6px 9px;border-radius:6px;background:var(--ok);color:#04130b;white-space:nowrap}
-  .corr{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
-  .corr:last-child{border-bottom:0}
-  .corr .delta{font-family:var(--mono);font-weight:600} .down{color:var(--bad)} .up{color:var(--ok)}
-  .cgrade{font:600 10px var(--mono);padding:4px 7px;border-radius:5px;background:var(--card2);color:var(--mut);border:1px solid var(--line)}
-  .spark{display:block;width:100%;height:52px;margin-top:8px}
-  .askbox{display:flex;gap:10px}
-  .askbox input{flex:1;background:var(--card2);border:1px solid var(--line);border-radius:10px;color:var(--ink);font:400 14px var(--font);padding:12px 14px}
-  .askbox button{background:var(--accent);color:#fff;border:0;border-radius:10px;font:600 14px var(--font);padding:0 18px;cursor:pointer}
-  .answer{margin-top:16px;font-size:14px} .answer .src{font-size:12px;color:var(--mut);margin-top:8px}
-  .disc{font-size:11px;color:var(--dim);margin-top:14px}
+  [data-theme="bauhaus"] {
+    --bg: #f4f4f5;
+    --side: #1a1a1a;
+    --card-outer: #ffffff;
+    --card-inner: #f7f7f8;
+    --line: #1a1a1a;
+    --line2: #1a1a1a;
+    --ink: #1a1a1a;
+    --mut: #4d4d4d;
+    --dim: #808080;
+    --accent: #ff3b30;
+    --accent-glow: rgba(255, 59, 48, 0.1);
+    --radius-outer: 0px;
+    --radius-inner: 0px;
+    --shadow-diffuse: transparent;
+    --ok: #2e7d32;
+    --warn: #f9a825;
+    --bad: #c62828;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    overflow: hidden;
+  }
+
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .muted { color: var(--mut); }
+  .dim { color: var(--dim); }
+
+  /* ---- Sidebar (Linear/Issues-sidebar style) ---- */
+  aside {
+    width: var(--sb);
+    flex: 0 0 var(--sb);
+    background: var(--side);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 14px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px 20px;
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: -0.02em;
+  }
+  
+  .logo .mark {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, var(--accent), #34d399);
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .nav-scroll {
+    flex: 1;
+    overflow-y: auto;
+    margin-right: -10px;
+    padding-right: 10px;
+  }
+
+  .navsec {
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--dim);
+    padding: 16px 12px 6px;
+  }
+  
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    color: var(--mut);
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    margin-bottom: 2px;
+  }
+  
+  nav a i {
+    font-size: 16px;
+    opacity: 0.85;
+  }
+  
+  nav a:hover {
+    background: var(--card-outer);
+    color: var(--ink);
+  }
+  
+  nav a.active {
+    background: var(--card-outer);
+    color: var(--ink);
+    border-left: 2px solid var(--accent);
+    padding-left: 10px;
+  }
+  
+  nav a .tag {
+    margin-left: auto;
+    font: 600 10px var(--mono);
+    color: var(--dim);
+    background: var(--line);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .sidefoot {
+    margin-top: auto;
+    padding: 16px 6px 0;
+    border-top: 1px solid var(--line);
+  }
+  
+  .docmini {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+  }
+  
+  .docmini .face {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  
+  .docmini .t {
+    font-size: 11px;
+    line-height: 1.35;
+    overflow: hidden;
+  }
+
+  .docmini .t b {
+    display: block;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+
+  .themes {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  
+  .themes button {
+    font: 500 9px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--dim);
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 5px 6px;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+  
+  .themes button:hover {
+    color: var(--ink);
+    border-color: var(--line2);
+  }
+
+  .themes button[aria-pressed="true"] {
+    color: var(--ink);
+    border-color: var(--accent);
+    background: var(--card-outer);
+  }
+
+  /* ---- Main Area ---- */
+  main {
+    flex: 1;
+    min-width: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+  
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 18px 32px;
+    background: rgba(6, 7, 9, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  [data-theme="light"] .topbar {
+    background: rgba(249, 250, 251, 0.75);
+  }
+  
+  .topbar h1 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  
+  .topbar .date {
+    font: 500 12px var(--mono);
+    color: var(--dim);
+    margin-top: 2px;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  .nav-toggle {
+    display: none;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: var(--card-outer);
+    color: var(--ink);
+    font-size: 19px;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .nav-toggle:hover { border-color: var(--line2); }
+
+  .nav-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    background: rgba(0, 0, 0, 0.55);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.28s ease;
+  }
+
+  .nav-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font: 600 11px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--card-outer);
+  }
+  
+  .pill .d {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+
+  .content-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px;
+  }
+  
+  .content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 60px;
+  }
+  
+  .zone {
+    display: none;
+    opacity: 0;
+  }
+  
+  .zone.on {
+    display: block;
+    opacity: 1;
+  }
+
+  /* ---- Bento Grid Layout ---- */
+  .bento-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 20px;
+  }
+
+  /* Double-Bezel Card Design */
+  .card-outer {
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-outer);
+    padding: 6px;
+    box-shadow: 0 10px 30px var(--shadow-diffuse);
+    transition: border-color 0.3s ease;
+  }
+
+  .card-outer:hover {
+    border-color: var(--line2);
+  }
+
+  .card-inner {
+    background: var(--card-inner);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-inner);
+    padding: 24px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.02);
+  }
+
+  [data-theme="light"] .card-inner {
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .card-title-group h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .card-title-group .sub {
+    font-size: 11px;
+    color: var(--mut);
+    margin-top: 2px;
+  }
+
+  .card-header-icon {
+    font-size: 18px;
+    color: var(--mut);
+  }
+
+  /* Card span helpers */
+  .col-12 { grid-column: span 12; }
+  .col-8 { grid-column: span 8; }
+  .col-6 { grid-column: span 6; }
+  .col-4 { grid-column: span 4; }
+  .col-3 { grid-column: span 3; }
+
+  @media (max-width: 1024px) {
+    .col-8, .col-6, .col-4, .col-3 { grid-column: span 6; }
+  }
+
+  @media (max-width: 768px) {
+    aside {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      height: 100%;
+      transform: translateX(-100%);
+      transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 48px rgba(0, 0, 0, 0.55);
+    }
+    aside.open { transform: translateX(0); }
+    .nav-toggle { display: grid; }
+    .topbar { padding: 16px 18px; }
+    .bento-grid { grid-template-columns: 1fr; }
+    .col-12, .col-8, .col-6, .col-4, .col-3 { grid-column: span 12; }
+  }
+
+  /* ---- Screen Specific Components ---- */
+  
+  /* Overview: Recovery Circle */
+  .recovery-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+  }
+
+  .ring-container {
+    position: relative;
+    width: 170px;
+    height: 170px;
+    flex-shrink: 0;
+  }
+
+  .ring-container svg {
+    transform: rotate(-90deg);
+  }
+
+  .ring-container .val {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ring-container .num {
+    font-family: var(--mono);
+    font-weight: 300;
+    font-size: 56px;
+    line-height: 1;
+    letter-spacing: -0.05em;
+  }
+
+  .ring-container .label {
+    font: 600 9px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--dim);
+    margin-top: 2px;
+  }
+
+  .recovery-text {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .recovery-text .state {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+  }
+
+  .recovery-text .desc {
+    color: var(--mut);
+    line-height: 1.45;
+    margin: 0;
+    font-size: 13px;
+  }
+
+  /* Metrics Grid (RHR, HRV, Sleep, Strain) */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  @media (max-width: 600px) {
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .metric-tile {
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    transition: border-color 0.2s ease;
+  }
+
+  .metric-tile:hover {
+    border-color: var(--line2);
+  }
+
+  .metric-tile .k {
+    font: 500 9px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--dim);
+  }
+
+  .metric-tile .v {
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 400;
+    margin-top: 6px;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+  }
+
+  .metric-tile .u {
+    font-size: 10px;
+    color: var(--dim);
+    margin-top: 2px;
+  }
+
+  /* Habit Tracker (Substack-style) */
+  .habit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 12px;
+  }
+
+  .habit-progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .habit-progress-bar {
+    width: 80px;
+    height: 4px;
+    background: var(--line2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .habit-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  .habit-progress-text {
+    font: 600 11px var(--mono);
+    color: var(--accent);
+  }
+
+  .habit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .habit-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .habit-item:hover {
+    border-color: var(--line2);
+    transform: translateY(-1px);
+  }
+
+  .habit-item.done {
+    border-color: rgba(16, 185, 129, 0.25);
+    background: rgba(16, 185, 129, 0.02);
+  }
+
+  .habit-checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1px solid var(--line2);
+    display: grid;
+    place-items: center;
+    background: var(--card-inner);
+    color: transparent;
+    transition: all 0.2s ease;
+  }
+
+  .habit-item.done .habit-checkbox {
+    background: var(--ok);
+    border-color: var(--ok);
+    color: #fff;
+  }
+
+  .habit-checkbox i {
+    font-size: 12px;
+  }
+
+  .habit-details {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .habit-label {
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--ink);
+  }
+
+  .habit-impact {
+    font: 500 10px var(--mono);
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--line);
+  }
+
+  .habit-impact.up { color: var(--ok); }
+  .habit-impact.down { color: var(--bad); }
+
+  .habit-icon {
+    font-size: 16px;
+    color: var(--dim);
+  }
+
+  /* Doctor Advice / Readiness Box */
+  .readiness-text {
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 16px;
+  }
+
+  .action-box {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .action-box::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent);
+  }
+
+  .action-badge {
+    font: 600 9px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 6px;
+    background: var(--accent-glow);
+    color: var(--accent);
+    border-radius: 4px;
+    align-self: flex-start;
+  }
+
+  .action-info {
+    flex: 1;
+  }
+
+  .action-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .action-why {
+    font-size: 11px;
+    color: var(--mut);
+    line-height: 1.4;
+  }
+
+  /* ---- Biomarkers Screen ---- */
+  .biomarker-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  .biomarker-table th, .biomarker-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .biomarker-table th {
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--dim);
+    padding-bottom: 14px;
+  }
+
+  .biomarker-row {
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .biomarker-row:hover {
+    background: rgba(255, 255, 255, 0.01);
+  }
+
+  [data-theme="light"] .biomarker-row:hover {
+    background: rgba(0, 0, 0, 0.01);
+  }
+
+  .biomarker-name {
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .biomarker-value {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  /* Biomarker Scale Visualization */
+  .biomarker-scale-wrapper {
+    width: 180px;
+    min-width: 120px;
+  }
+
+  .scale-container {
+    position: relative;
+    height: 5px;
+    background: var(--line);
+    border-radius: 3px;
+    width: 100%;
+  }
+
+  .scale-ref {
+    position: absolute;
+    height: 100%;
+    background: var(--line2);
+    border-radius: 2px;
+  }
+
+  .scale-opt {
+    position: absolute;
+    height: 100%;
+    background: rgba(16, 185, 129, 0.25);
+    border-radius: 2px;
+  }
+
+  .scale-marker {
+    position: absolute;
+    top: 50%;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    border: 2.5px solid var(--card-inner);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  .scale-marker.low, .scale-marker.high, .scale-marker.deficient {
+    background: var(--bad);
+  }
+
+  .scale-marker.normal {
+    background: var(--warn);
+  }
+
+  .scale-marker.optimal {
+    background: var(--ok);
+  }
+
+  .biomarker-grade {
+    font: 600 10px var(--mono);
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--mut);
+    display: inline-block;
+  }
+
+  /* Expanded Discuss Box for Biomarkers */
+  .discuss-box {
+    grid-column: span 12;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    border-left: 3px solid var(--accent);
+    display: none;
+  }
+
+  /* Empty State / CTA styling */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
+
+  .empty-icon {
+    font-size: 40px;
+    color: var(--dim);
+    margin-bottom: 16px;
+  }
+
+  .empty-state h4 {
+    margin: 0 0 6px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .empty-state p {
+    font-size: 12px;
+    color: var(--mut);
+    max-width: 300px;
+    margin: 0 0 20px;
+    line-height: 1.4;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    font: 600 12px var(--font);
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font: 500 11px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-secondary:hover {
+    background: var(--card-outer);
+    border-color: var(--line2);
+  }
+
+  /* ---- WHOOP Screens Components ---- */
+  
+  /* Correlations list */
+  .corr-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .corr-item:last-child {
+    border-bottom: none;
+  }
+
+  .corr-item-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+  }
+
+  .corr-item-label i {
+    font-size: 16px;
+    color: var(--mut);
+  }
+
+  .corr-item-metrics {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .corr-delta {
+    font: 600 13px var(--mono);
+  }
+
+  .corr-delta.up { color: var(--ok); }
+  .corr-delta.down { color: var(--bad); }
+
+  /* Sparklines / Graphs */
+  .spark-container {
+    margin-top: 14px;
+    position: relative;
+  }
+
+  .spark-label {
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--dim);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .spark-svg {
+    display: block;
+    width: 100%;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.01);
+    border-radius: 8px;
+    border: 1px solid var(--line);
+  }
+
+  /* WHOOP Overview Rings */
+  .whoop-rings-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin: 20px 0;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .whoop-ring-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .whoop-ring-caption {
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 10px;
+    color: var(--ink);
+  }
+
+  .whoop-ring-val {
+    font: 500 11px var(--mono);
+    color: var(--mut);
+    margin-top: 2px;
+  }
+
+  /* Zone Tracker (Pulse screen) */
+  .zone-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .zone-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .zone-label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .zone-range {
+    font-family: var(--mono);
+    color: var(--dim);
+  }
+
+  .zone-bar-bg {
+    height: 6px;
+    background: var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .zone-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+  }
+
+  /* ---- Journal screen ---- */
+  .journal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .behavior-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+  }
+
+  .behavior-pill:hover {
+    border-color: var(--line2);
+  }
+
+  .behavior-pill.active {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .behavior-pill i {
+    font-size: 16px;
+    color: var(--mut);
+  }
+
+  .behavior-pill.active i {
+    color: var(--accent);
+  }
+
+  .journal-input-card {
+    background: var(--card-inner);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    display: block;
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--dim);
+    margin-bottom: 6px;
+  }
+
+  .form-group input[type="text"], .form-group textarea {
+    width: 100%;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 13px;
+    transition: border-color 0.2s ease;
+  }
+
+  .form-group input[type="text"]:focus, .form-group textarea:focus {
+    outline: none;
+    border-color: var(--line2);
+  }
+
+  /* Sync Connections screen */
+  .sync-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .sync-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .sync-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+  }
+
+  .sync-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .sync-indicator .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .sync-indicator.connected {
+    color: var(--ok);
+  }
+
+  .sync-indicator.connected .dot {
+    background: var(--ok);
+    box-shadow: 0 0 6px var(--ok);
+  }
+
+  .sync-indicator.disconnected {
+    color: var(--dim);
+  }
+
+  .sync-indicator.disconnected .dot {
+    background: var(--dim);
+  }
+
+  /* ---- Footer hints ---- */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 16px 32px;
+    background: var(--side);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font: 500 11px var(--mono);
+    color: var(--dim);
+  }
+
+  footer a {
+    color: var(--mut);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  footer a:hover {
+    color: var(--ink);
+  }
 </style>
 </head>
 <body>
+
 <aside>
-  <div class="logo"><span class="mark">◍</span> OpenHealth</div>
-  <div class="cmd">Поиск и команды <kbd>⌘K</kbd></div>
-  <div class="navsec">Сегодня</div>
-  <nav id="navTop">
-    <a data-z="today" class="active"><span class="ic">◎</span> Today <span class="tag mono" id="navRec">—</span></a>
-    <a data-z="explore"><span class="ic">⌁</span> Explore</a>
-    <a data-z="ask"><span class="ic">✦</span> Ask</a>
-  </nav>
-  <div class="navsec">Данные</div>
-  <nav>
-    <a data-z="explore"><span class="ic">✎</span> Журнал</a>
-    <a data-z="explore"><span class="ic">⊞</span> Тренды</a>
-    <a data-z="ask"><span class="ic">⚗</span> Анализы</a>
-  </nav>
+  <div class="logo">
+    <span class="mark">◍</span>
+    <span>OpenHealth</span>
+  </div>
+  
+  <div class="nav-scroll">
+    <div class="navsec">Сегодня</div>
+    <nav>
+      <a data-z="today" class="active" onclick="go('today')">
+        <i class="ph-light ph-activity"></i>
+        <span>Overview / Сегодня</span>
+        <span class="tag mono" id="navRec">—</span>
+      </a>
+      <a data-z="pulse" onclick="go('pulse')">
+        <i class="ph-light ph-heart"></i>
+        <span>Пульс дня</span>
+      </a>
+    </nav>
+    
+    <div class="navsec">Данные</div>
+    <nav>
+      <a data-z="biomarkers" onclick="go('biomarkers')">
+        <i class="ph-light ph-flask"></i>
+        <span>Biomarkers (Анализы)</span>
+      </a>
+      <a data-z="whoop-overview" onclick="go('whoop-overview')">
+        <i class="ph-light ph-chart-line-up"></i>
+        <span>WHOOP Overview</span>
+      </a>
+      <a data-z="whoop-correlations" onclick="go('whoop-correlations')">
+        <i class="ph-light ph-scales"></i>
+        <span>WHOOP Correlations</span>
+      </a>
+      <a data-z="journal" onclick="go('journal')">
+        <i class="ph-light ph-notebook"></i>
+        <span>Журнал</span>
+      </a>
+      <a data-z="trends" onclick="go('trends')">
+        <i class="ph-light ph-calendar"></i>
+        <span>Тренды</span>
+      </a>
+      <a class="dim" style="opacity: 0.5; cursor: not-allowed;">
+        <i class="ph-light ph-footprints"></i>
+        <span>Timeline</span>
+      </a>
+      <a class="dim" style="opacity: 0.5; cursor: not-allowed;">
+        <i class="ph-light ph-chart-pie"></i>
+        <span>Состав тела</span>
+      </a>
+      <a class="dim" style="opacity: 0.5; cursor: not-allowed;">
+        <i class="ph-light ph-barbell"></i>
+        <span>Тренировки</span>
+      </a>
+    </nav>
+
+    <div class="navsec">Знание</div>
+    <nav>
+      <a class="dim" style="opacity: 0.5; cursor: not-allowed;">
+        <i class="ph-light ph-book-open"></i>
+        <span>Protocols</span>
+      </a>
+      <a class="dim" style="opacity: 0.5; cursor: not-allowed;">
+        <i class="ph-light ph-microscope"></i>
+        <span>Research</span>
+      </a>
+    </nav>
+
+    <div class="navsec">Система</div>
+    <nav>
+      <a class="dim" style="opacity: 0.5; cursor: not-allowed;">
+        <i class="ph-light ph-file-text"></i>
+        <span>Отчёты</span>
+      </a>
+      <a class="dim" style="opacity: 0.5; cursor: not-allowed;">
+        <i class="ph-light ph-bell"></i>
+        <span>Дайджесты</span>
+      </a>
+      <a data-z="sync" onclick="go('sync')">
+        <i class="ph-light ph-arrows-clockwise"></i>
+        <span>Синхронизация</span>
+      </a>
+    </nav>
+  </div>
+  
   <div class="sidefoot">
-    <div class="docmini"><div class="face" id="docFace">🩺</div><div class="t"><b>Доктор Контекст</b><div class="muted" id="docMini">—</div></div></div>
-    <div class="themes" id="themes" role="group" aria-label="Тема">
+    <div class="docmini">
+      <div class="face" id="docFace">🩺</div>
+      <div class="t">
+        <b>Доктор Контекст</b>
+        <div class="muted" id="docMini">Загрузка...</div>
+      </div>
+    </div>
+    
+    <div class="themes" id="themes" role="group" aria-label="Тема оформления">
       <button data-t="dark" aria-pressed="true">Тёмная</button>
       <button data-t="light">Светлая</button>
       <button data-t="brutalist">Брутал</button>
-      <button data-t="bauhaus">Баухаус</button>
+      <button data-t="bauhaus">Баухауз</button>
     </div>
   </div>
 </aside>
 
+<div class="nav-backdrop" id="navBackdrop" onclick="toggleDrawer(false)"></div>
+
 <main>
   <div class="topbar">
-    <div><h1 id="zoneTitle">Today</h1><div class="date" id="date"></div></div>
-    <span class="pill"><span class="d" id="pillDot"></span><span id="pillTxt">—</span></span>
+    <div class="topbar-left">
+      <button class="nav-toggle" id="navToggle" aria-label="Открыть меню" onclick="toggleDrawer()">☰</button>
+      <div>
+        <h1 id="zoneTitle">Overview / Сегодня</h1>
+        <div class="date" id="date"></div>
+      </div>
+    </div>
+    <span class="pill" id="topPill">
+      <span class="d" id="pillDot"></span>
+      <span id="pillTxt">Восстановление: —</span>
+    </span>
   </div>
 
-  <div class="content">
-    <!-- TODAY -->
-    <section class="zone on" id="z-today">
-      <div class="grid cols">
-        <div class="card">
-          <h3>Восстановление</h3><div class="sub">recovery сегодня · из твоих данных WHOOP</div>
-          <div class="hero">
-            <div class="ring">
-              <svg width="188" height="188" viewBox="0 0 188 188">
-                <circle cx="94" cy="94" r="80" fill="none" stroke="var(--line2)" stroke-width="13"></circle>
-                <circle id="ringArc" cx="94" cy="94" r="80" fill="none" stroke="var(--warn)" stroke-width="13" stroke-linecap="round"></circle>
-              </svg>
-              <div class="val"><div class="num mono" id="recNum">—</div><div class="pct">recovery</div></div>
-            </div>
-            <div class="read">
-              <p class="state" id="recState">—</p>
-              <p class="muted" id="recBlurb" style="margin:0;font-size:14px"></p>
+  <div class="content-wrapper">
+    <div class="content">
+      
+      <!-- SCREEN 1: TODAY / OVERVIEW -->
+      <section class="zone on" id="z-today">
+        <div class="bento-grid">
+          
+          <!-- Recovery Ring -->
+          <div class="card-outer col-8">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Физиологическое восстановление</h3>
+                  <div class="sub">recovery сегодня из твоих данных tracker</div>
+                </div>
+                <i class="ph-light ph-shield card-header-icon"></i>
+              </div>
+              
+              <div class="recovery-wrapper">
+                <div class="ring-container">
+                  <svg width="170" height="170" viewBox="0 0 170 170">
+                    <circle cx="85" cy="85" r="70" fill="none" stroke="var(--line2)" stroke-width="12"></circle>
+                    <circle id="ringArc" cx="85" cy="85" r="70" fill="none" stroke="var(--accent)" stroke-width="12" stroke-linecap="round" stroke-dasharray="439.8" stroke-dashoffset="439.8"></circle>
+                  </svg>
+                  <div class="val">
+                    <div class="num mono" id="recNum">—</div>
+                    <div class="label">recovery</div>
+                  </div>
+                </div>
+                
+                <div class="recovery-text">
+                  <p class="state" id="recState">—</p>
+                  <p class="desc" id="recBlurb">—</p>
+                </div>
+              </div>
+              
+              <div class="metrics-grid" id="board"></div>
             </div>
           </div>
-          <div class="board" id="board"></div>
-        </div>
-        <div class="card">
-          <h3>Готовность к дню</h3><div class="sub">recovery + расписание + цель</div>
-          <p id="readiness" style="margin:.1em 0 0;font-size:15px"></p>
-          <div class="action"><span class="badge">Сделай сегодня</span>
-            <div><b id="actTitle"></b><div class="muted" id="actWhy" style="font-size:13px;margin-top:4px"></div></div></div>
-          <p class="disc">Помощник для размышления, не врач. Тревожное — к специалисту.</p>
-        </div>
-      </div>
-    </section>
+          
+          <!-- Habit Checklist -->
+          <div class="card-outer col-4">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Что сделано сегодня</h3>
+                  <div class="sub">набор целевых привычек</div>
+                </div>
+                <i class="ph-light ph-check-square card-header-icon"></i>
+              </div>
+              
+              <div class="habit-header">
+                <span class="muted" style="font-size:12px;">Прогресс</span>
+                <div class="habit-progress-wrap">
+                  <div class="habit-progress-bar">
+                    <div class="habit-progress-fill" id="habitFill"></div>
+                  </div>
+                  <span class="habit-progress-text" id="habitProgText">0/0</span>
+                </div>
+              </div>
+              
+              <div class="habit-list" id="habitList"></div>
+            </div>
+          </div>
 
-    <!-- EXPLORE -->
-    <section class="zone" id="z-explore">
-      <div class="grid cols">
-        <div class="card"><h3>Что влияет на восстановление</h3><div class="sub">журнал · personal baseline · порог 5 да / 5 нет</div><div id="corrs"></div></div>
-        <div class="card"><h3>Тренды · 14 дней</h3><div class="sub">recovery и HRV</div>
-          <div class="dim mono" style="font-size:11px;text-transform:uppercase;letter-spacing:.08em">Recovery</div>
-          <svg class="spark" id="sparkRec" viewBox="0 0 300 52" preserveAspectRatio="none"></svg>
-          <div class="dim mono" style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-top:12px">HRV, мс</div>
-          <svg class="spark" id="sparkHrv" viewBox="0 0 300 52" preserveAspectRatio="none"></svg>
+          <!-- Doctor Advice -->
+          <div class="card-outer col-12">
+            <div class="card-inner">
+              <div class="card-header" style="margin-bottom:12px;">
+                <div class="card-title-group">
+                  <h3>Готовность к дню и n-of-1 рекомендации</h3>
+                  <div class="sub">выводы на основе персонального оверлея</div>
+                </div>
+                <i class="ph-light ph-brain card-header-icon"></i>
+              </div>
+              
+              <p class="readiness-text" id="readiness">—</p>
+              
+              <div class="action-box">
+                <div class="action-badge">Сделай сегодня</div>
+                <div class="action-info">
+                  <div class="action-title" id="actTitle">—</div>
+                  <div class="action-why" id="actWhy">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ASK -->
-    <section class="zone" id="z-ask">
-      <div class="card"><h3>Спроси про свои данные</h3><div class="sub">обоснованный ответ поверх твоих записей, с уровнем доверия</div>
-        <div class="askbox"><input id="q" value="как кофе после обеда влияет на мой сон?"><button id="ask">Спросить</button></div>
-        <div class="answer" id="ans" hidden></div>
-      </div>
-    </section>
+      <!-- SCREEN 2: PULSE OF THE DAY -->
+      <section class="zone" id="z-pulse">
+        <div class="bento-grid">
+          
+          <!-- Heart Rate Graph -->
+          <div class="card-outer col-8">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Непрерывная частота сердечных сокращений (ЧСС)</h3>
+                  <div class="sub">данные за последние 24 часа</div>
+                </div>
+                <i class="ph-light ph-heart card-header-icon"></i>
+              </div>
+              
+              <div class="spark-container">
+                <div class="spark-label">
+                  <span>Пульс в течение дня (уд/мин)</span>
+                  <span class="mono">52 - 168 уд/мин</span>
+                </div>
+                <svg id="pulseChart" class="spark-svg" style="height: 220px;" viewBox="0 0 600 220" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="pulseGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.2"/>
+                      <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.0"/>
+                    </linearGradient>
+                  </defs>
+                  <path id="pulseArea" fill="url(#pulseGlow)"></path>
+                  <path id="pulseLine" fill="none" stroke="var(--accent)" stroke-width="2.5"></path>
+                  <circle id="pulsePoint" r="4" fill="var(--accent)" stroke="var(--card-inner)" stroke-width="2"></circle>
+                </svg>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Heart Rate Zones -->
+          <div class="card-outer col-4">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Распределение зон ЧСС</h3>
+                  <div class="sub">время нахождения в кардиозонах</div>
+                </div>
+                <i class="ph-light ph-timer card-header-icon"></i>
+              </div>
+              
+              <div class="zone-list" id="zoneList"></div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- SCREEN 3: BIOMARKERS -->
+      <section class="zone" id="z-biomarkers">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+          <span class="muted" style="font-size:12px;">Управление данными</span>
+          <button class="btn-secondary" id="toggleBiomarkerData">Симулировать пустые анализы</button>
+        </div>
+
+        <div class="bento-grid" id="biomarkersContent">
+          <!-- Table Panel -->
+          <div class="card-outer col-12" id="biomarkersMainCard">
+            <div class="card-inner" style="padding: 12px 0;">
+              <div class="card-header" style="padding: 12px 24px 0;">
+                <div class="card-title-group">
+                  <h3>Биохимическая панель</h3>
+                  <div class="sub">сравнение результатов с клиническими и оптимальными нормами (C1-C5)</div>
+                </div>
+                <i class="ph-light ph-test-tube card-header-icon"></i>
+              </div>
+              
+              <div style="overflow-x: auto; margin-top: 16px;">
+                <table class="biomarker-table">
+                  <thead>
+                    <tr>
+                      <th>Название</th>
+                      <th>Результат</th>
+                      <th>Референс</th>
+                      <th style="width: 200px;">Шкала нормы / оптимума</th>
+                      <th>Оптимум</th>
+                      <th>Статус</th>
+                      <th>Доверие</th>
+                    </tr>
+                  </thead>
+                  <tbody id="biomarkerTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-12" id="biomarkerDetailPanel"></div>
+        </div>
+
+        <!-- Connection empty state template if no data -->
+        <div class="card-outer col-12" id="biomarkersEmptyCard" style="display: none;">
+          <div class="card-inner" style="min-height: 350px;">
+            <div class="empty-state">
+              <div class="empty-icon"><i class="ph-light ph-file-arrow-up"></i></div>
+              <h4>Анализы не загружены</h4>
+              <p class="muted">Загрузите PDF-файл результатов из клиник или подключите интеграцию Helix для отображения клинических оптимумов.</p>
+              <button class="btn-primary" onclick="simulateBiomarkerUpload()">
+                <i class="ph-light ph-upload-simple"></i> Загрузить PDF / Подключить анализы
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: WHOOP OVERVIEW -->
+      <section class="zone" id="z-whoop-overview">
+        <div class="bento-grid">
+          
+          <!-- Triple rings overview -->
+          <div class="card-outer col-12">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Показатели жизнедеятельности WHOOP</h3>
+                  <div class="sub">суточный баланс по ключевым осям</div>
+                </div>
+                <i class="ph-light ph-arrows-out-cardinal card-header-icon"></i>
+              </div>
+              
+              <div class="whoop-rings-container">
+                <div class="whoop-ring-block">
+                  <div class="ring-container" style="width: 140px; height: 140px;">
+                    <svg width="140" height="140" viewBox="0 0 140 140">
+                      <circle cx="70" cy="70" r="55" fill="none" stroke="var(--line2)" stroke-width="10"></circle>
+                      <circle id="whoopRingRec" cx="70" cy="70" r="55" fill="none" stroke="var(--accent)" stroke-width="10" stroke-linecap="round" stroke-dasharray="345.6" stroke-dashoffset="345.6"></circle>
+                    </svg>
+                    <div class="val">
+                      <div class="num mono" style="font-size:36px;" id="whoopRecVal">—</div>
+                    </div>
+                  </div>
+                  <div class="whoop-ring-caption">Восстановление</div>
+                  <div class="whoop-ring-val mono" id="whoopRecSub">—</div>
+                </div>
+
+                <div class="whoop-ring-block">
+                  <div class="ring-container" style="width: 140px; height: 140px;">
+                    <svg width="140" height="140" viewBox="0 0 140 140">
+                      <circle cx="70" cy="70" r="55" fill="none" stroke="var(--line2)" stroke-width="10"></circle>
+                      <circle id="whoopRingSleep" cx="70" cy="70" r="55" fill="none" stroke="#60a5fa" stroke-width="10" stroke-linecap="round" stroke-dasharray="345.6" stroke-dashoffset="345.6"></circle>
+                    </svg>
+                    <div class="val">
+                      <div class="num mono" style="font-size:36px;" id="whoopSleepVal">—</div>
+                    </div>
+                  </div>
+                  <div class="whoop-ring-caption">Сон</div>
+                  <div class="whoop-ring-val mono" id="whoopSleepSub">—</div>
+                </div>
+
+                <div class="whoop-ring-block">
+                  <div class="ring-container" style="width: 140px; height: 140px;">
+                    <svg width="140" height="140" viewBox="0 0 140 140">
+                      <circle cx="70" cy="70" r="55" fill="none" stroke="var(--line2)" stroke-width="10"></circle>
+                      <circle id="whoopRingStrain" cx="70" cy="70" r="55" fill="none" stroke="#f43f5e" stroke-width="10" stroke-linecap="round" stroke-dasharray="345.6" stroke-dashoffset="345.6"></circle>
+                    </svg>
+                    <div class="val">
+                      <div class="num mono" style="font-size:36px;" id="whoopStrainVal">—</div>
+                    </div>
+                  </div>
+                  <div class="whoop-ring-caption">Нагрузка</div>
+                  <div class="whoop-ring-val mono" id="whoopStrainSub">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Trends -->
+          <div class="card-outer col-6">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Производительность сна</h3>
+                  <div class="sub">время сна против необходимого по дням</div>
+                </div>
+              </div>
+              <div class="spark-container">
+                <div class="spark-label"><span>Сон за 14 дней (часы)</span></div>
+                <svg id="chartSleep" class="spark-svg" viewBox="0 0 400 120" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="sleepGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.15"/>
+                      <stop offset="100%" stop-color="#60a5fa" stop-opacity="0.0"/>
+                    </linearGradient>
+                  </defs>
+                  <path id="sleepArea" fill="url(#sleepGlow)"></path>
+                  <path id="sleepLine" fill="none" stroke="#60a5fa" stroke-width="2"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-outer col-6">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Динамика дневной нагрузки</h3>
+                  <div class="sub">strain в рамках шкалы от 0 до 21</div>
+                </div>
+              </div>
+              <div class="spark-container">
+                <div class="spark-label"><span>Strain за 14 дней</span></div>
+                <svg id="chartStrain" class="spark-svg" viewBox="0 0 400 120" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="strainGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.15"/>
+                      <stop offset="100%" stop-color="#f43f5e" stop-opacity="0.0"/>
+                    </linearGradient>
+                  </defs>
+                  <path id="strainArea" fill="url(#strainGlow)"></path>
+                  <path id="strainLine" fill="none" stroke="#f43f5e" stroke-width="2"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- SCREEN 5: WHOOP CORRELATIONS -->
+      <section class="zone" id="z-whoop-correlations">
+        <div class="bento-grid">
+          
+          <div class="card-outer col-7">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Влияние привычек на Восстановление</h3>
+                  <div class="sub">разница baseline в дни «да» против «нет»</div>
+                </div>
+                <i class="ph-light ph-scales card-header-icon"></i>
+              </div>
+              
+              <div class="habit-list" id="corrList" style="margin-top: 10px;"></div>
+            </div>
+          </div>
+          
+          <div class="card-outer col-5">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Что это значит</h3>
+                  <div class="sub">методология n-of-1 исследований</div>
+                </div>
+                <i class="ph-light ph-info card-header-icon"></i>
+              </div>
+              
+              <div style="font-size:13px; line-height: 1.6;">
+                <p>Данные корреляции показывают среднюю разницу в показателе восстановления (Recovery) на следующее утро в зависимости от того, была ли отмечена привычка накануне.</p>
+                <p>Уровень доверия <b>(C1-C5)</b> определяется длительностью сбора данных и стабильностью связи:</p>
+                <ul style="padding-left: 18px; margin: 10px 0; display:flex; flex-direction:column; gap: 6px;">
+                  <li><b>C5:</b> Доказанная сильная связь (повторяющиеся фазы тестирования).</li>
+                  <li><b>C3:</b> Рабочая гипотеза (корреляция устойчива на 30+ днях).</li>
+                  <li><b>C2:</b> Слабый сигнал (недостаточно точек сравнения).</li>
+                </ul>
+                <p class="muted">Наблюдение является поводом для построения гипотезы, а не медицинским предписанием.</p>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+
+      <!-- SCREEN 6: JOURNAL (ДНЕВНИК) -->
+      <section class="zone" id="z-journal">
+        <div class="bento-grid">
+          
+          <div class="card-outer col-12">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Настройка отслеживания</h3>
+                  <div class="sub">выберите привычки из каталога поведения (200+) для ежедневного журнала</div>
+                </div>
+                <i class="ph-light ph-sliders-horizontal card-header-icon"></i>
+              </div>
+              
+              <div class="journal-grid" id="behaviorGrid"></div>
+            </div>
+          </div>
+          
+          <div class="card-outer col-8">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Журнал за сегодня</h3>
+                  <div class="sub">быстрый ежедневный чек-ин по выбранным метрикам</div>
+                </div>
+                <i class="ph-light ph-pencil-line card-header-icon"></i>
+              </div>
+              
+              <div id="journalFormContainer"></div>
+              
+              <div class="form-group" style="margin-top: 14px;">
+                <label>Заметки о самочувствии / Контекст</label>
+                <textarea id="journalNotes" rows="3" placeholder="Стрессовые звонки во второй половине дня, умеренная головная боль..."></textarea>
+              </div>
+              
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                <span class="muted" id="journalSaveStatus" style="font-size:12px;"></span>
+                <button class="btn-primary" id="saveJournalBtn" onclick="saveJournalEntry()">
+                  <span>Сохранить запись</span>
+                  <i class="ph-light ph-arrow-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card-outer col-4">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Контекст фиксации</h3>
+                  <div class="sub">почему это важно</div>
+                </div>
+              </div>
+              
+              <div style="font-size:12px; line-height: 1.5; color: var(--mut);">
+                <p>Фиксация поведения позволяет соотносить жизненный контекст (сон, добавки, кофеин, экраны) с объективными физиологическими показателями HRV и RHR.</p>
+                <p>Записи остаются полностью локальными на вашем устройстве в соответствии с манифестом OpenHealth.</p>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+
+      <!-- SCREEN 7: TRENDS (30 ДНЕЙ) -->
+      <section class="zone" id="z-trends">
+        <div class="bento-grid">
+          
+          <div class="card-outer col-12">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Сводные тренды (30 дней)</h3>
+                  <div class="sub">анализ изменений показателей восстановления и вариабельности пульса</div>
+                </div>
+                <i class="ph-light ph-chart-line card-header-icon"></i>
+              </div>
+              
+              <div class="spark-container">
+                <div class="spark-label">
+                  <span>Recovery Trend (30 дней)</span>
+                  <span class="mono">Среднее: 62%</span>
+                </div>
+                <svg id="trendsRecChart" class="spark-svg" style="height: 120px;" viewBox="0 0 800 120" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="recTrendGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.15"/>
+                      <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.0"/>
+                    </linearGradient>
+                  </defs>
+                  <path id="trendsRecArea" fill="url(#recTrendGlow)"></path>
+                  <path id="trendsRecLine" fill="none" stroke="var(--accent)" stroke-width="2"></path>
+                </svg>
+              </div>
+
+              <div class="spark-container" style="margin-top:24px;">
+                <div class="spark-label">
+                  <span>HRV Trend (30 дней, мс)</span>
+                  <span class="mono">Среднее: 41 мс</span>
+                </div>
+                <svg id="trendsHrvChart" class="spark-svg" style="height: 120px;" viewBox="0 0 800 120" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="hrvTrendGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.15"/>
+                      <stop offset="100%" stop-color="#a855f7" stop-opacity="0.0"/>
+                    </linearGradient>
+                  </defs>
+                  <path id="trendsHrvArea" fill="url(#hrvTrendGlow)"></path>
+                  <path id="trendsHrvLine" fill="none" stroke="#a855f7" stroke-width="2"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+
+      <!-- SCREEN 8: SYNC -->
+      <section class="zone" id="z-sync">
+        <div class="sync-grid" id="syncGrid"></div>
+      </section>
+
+    </div>
   </div>
+
+  <footer>
+    <span>OpenHealth CLI Integration</span>
+    <span><a href="#" onclick="alert('openhealth show-summary --date today'); return false;">openhealth show-summary</a></span>
+  </footer>
 </main>
 
 <script>
-const DATA={date:"вторник, сегодня",recovery:64,hrv:39,rhr:56,sleep:7.2,strain:14.2,
-  trendRec:[58,61,55,49,63,67,60,64,58,62,70,66,61,64],trendHrv:[41,38,35,33,42,45,40,39,37,40,47,44,40,39],
-  correlations:[{label:"Алкоголь вечером",delta:-21,dir:"down",grade:"C3"},{label:"Свет утром 15 мин",delta:9,dir:"up",grade:"C3"},{label:"Экран после 23:00",delta:-12,dir:"down",grade:"C2"},{label:"Тренировка днём",delta:6,dir:"up",grade:"C2"}],
-  readiness:"Recovery 64% (жёлтая зона) + три встречи в календаре + цель «стабильная энергия» → умеренный день, тяжёлую тренировку перенеси на завтра.",
-  action:{title:"Лечь спать на 30 минут раньше",why:"Сон — самый сильный рычаг recovery; стабильное время отхода важнее длительности. Доказательный протокол (C5)."},
-  answer:{text:"По записям за 3 недели: в дни с кофе после 15:00 глубина сна ниже на ~12%, recovery наутро 58 против 67. Это личный паттерн, не общий факт.",grade:"C2",note:"Проверь как n-of-1: неделя с кофе только до полудня."}};
-const col=v=>v>=67?"var(--ok)":v>=34?"var(--warn)":"var(--bad)";
-const word=v=>v>=67?"Зелёная зона — можно грузиться":v>=34?"Жёлтая зона — умеренно":"Красная зона — восстанавливайся";
-const mood=v=>v>=67?"😎":v>=34?"🙂":"😴";
-const say=v=>v>=67?"Хорошо восстановился — используй день.":v>=34?"Серединка. Выбери одно полезное действие.":"Низко. Сегодня про сон и покой.";
-function today(){const v=DATA.recovery,C=2*Math.PI*80,a=document.getElementById('ringArc');
-  a.style.stroke=col(v);a.style.strokeDasharray=C;a.style.strokeDashoffset=C*(1-v/100);
-  recNum.textContent=v;recNum.style.color=col(v);recState.textContent=word(v);
-  recBlurb.textContent=`HRV ${DATA.hrv} мс · RHR ${DATA.rhr} уд/мин · сон ${DATA.sleep} ч · strain ${DATA.strain}`;
-  date.textContent=DATA.date;navRec.textContent=v;
-  pillDot.style.background=col(v);pillTxt.textContent="recovery "+v;
-  docFace.textContent=mood(v);docMini.textContent=say(v);
-  board.innerHTML=[["HRV",DATA.hrv,"мс"],["Пульс покоя",DATA.rhr,"уд/мин"],["Сон",DATA.sleep,"ч"],["Strain",DATA.strain,"/21"]]
-    .map(([k,val,u])=>`<div class="tile"><div class="k">${k}</div><div class="v">${val}</div><div class="u">${u}</div></div>`).join('');
-  readiness.textContent=DATA.readiness;actTitle.textContent=DATA.action.title;actWhy.textContent=DATA.action.why;}
-function explore(){corrs.innerHTML=DATA.correlations.map(c=>`<div class="corr"><span>${c.label}</span><span style="display:flex;gap:10px;align-items:center"><span class="delta ${c.dir}">${c.delta>0?'+':''}${c.delta}</span><span class="cgrade">${c.grade}</span></span></div>`).join('');
-  sp('sparkRec',DATA.trendRec);sp('sparkHrv',DATA.trendHrv);}
-function sp(id,arr){const w=300,h=52,mn=Math.min(...arr),mx=Math.max(...arr),p=5;
-  const pts=arr.map((y,i)=>[i/(arr.length-1)*w,h-p-(y-mn)/(mx-mn||1)*(h-2*p)]);
-  const d=pts.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' ');
-  document.getElementById(id).innerHTML=`<path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2"/><circle cx="${pts.at(-1)[0].toFixed(1)}" cy="${pts.at(-1)[1].toFixed(1)}" r="3" fill="var(--accent)"/>`;}
-ask.onclick=()=>{ans.hidden=false;ans.innerHTML=`${DATA.answer.text} <span class="cgrade">${DATA.answer.grade}</span><div class="src">${DATA.answer.note}</div>`;};
-const titles={today:"Today",explore:"Explore",ask:"Ask"};
-function go(z){['today','explore','ask'].forEach(x=>document.getElementById('z-'+x).classList.toggle('on',x===z));
-  document.querySelectorAll('#navTop a').forEach(a=>a.classList.toggle('active',a.dataset.z===z));zoneTitle.textContent=titles[z];}
-document.querySelectorAll('aside nav a').forEach(a=>a.onclick=()=>go(a.dataset.z));
-themes.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.theme=b.dataset.t;[...themes.children].forEach(x=>x.setAttribute('aria-pressed',x===b));today();explore();});
-today();explore();
+const DATA = {
+  date: "вторник, сегодня",
+  recovery: 64,
+  hrv: 39,
+  rhr: 56,
+  sleep: 7.2,
+  sleepNeeded: 8.5,
+  strain: 14.2,
+  strainTarget: 15.5,
+  
+  trendRec: [58, 61, 55, 49, 63, 67, 60, 64, 58, 62, 70, 66, 61, 64],
+  trendHrv: [41, 38, 35, 33, 42, 45, 40, 39, 37, 40, 47, 44, 40, 39],
+  trendSleep: [7.0, 7.5, 6.8, 6.2, 7.8, 8.1, 7.2, 7.4, 6.9, 7.1, 8.0, 7.8, 7.2, 7.2],
+  trendStrain: [12.1, 14.5, 11.2, 8.5, 13.0, 16.2, 12.8, 14.2, 10.5, 12.0, 15.8, 13.2, 11.0, 14.2],
+  
+  trend30Rec: [55, 57, 52, 50, 58, 60, 62, 59, 56, 61, 64, 67, 60, 62, 59, 64, 66, 61, 63, 68, 70, 65, 63, 60, 58, 61, 55, 49, 63, 64],
+  trend30Hrv: [38, 39, 36, 34, 40, 41, 43, 40, 37, 41, 42, 45, 41, 42, 39, 43, 44, 40, 41, 46, 48, 43, 41, 39, 38, 39, 37, 33, 42, 39],
+
+  habits: [
+    { id: "sleep", label: "Лечь до 23:30", done: true, delta: 8, icon: "ph-moon" },
+    { id: "light", label: "Свет утром 15 мин", done: true, delta: 9, icon: "ph-sun" },
+    { id: "walk", label: "Прогулка 10к шагов", done: false, delta: 5, icon: "ph-footprints" },
+    { id: "water", label: "Вода 2.5л", done: false, delta: 3, icon: "ph-drop" },
+    { id: "nocoffee", label: "Без кофе после 15:00", done: true, delta: 12, icon: "ph-coffee" }
+  ],
+  
+  biomarkers: [
+    { name: "Ферритин", value: 45, unit: "мкг/л", refMin: 15, refMax: 150, optMin: 60, optMax: 120, status: "low", grade: "C3", trend: [32, 35, 39, 45], discuss: "Низкий ферритин при нормальном гемоглобине указывает на латентный дефицит железа. Обсудить добавки железа (хелат) и кофакторы (вит C)." },
+    { name: "Витамин D (25-OH)", value: 28, unit: "нг/мл", refMin: 30, refMax: 100, optMin: 50, optMax: 80, status: "deficient", grade: "C4", trend: [20, 24, 25, 28], discuss: "Дефицит витамина D. Обсудить терапевтическую дозировку 5000 IU на 2 месяца с последующим контролем." },
+    { name: "ТТГ", value: 2.1, unit: "мкМЕ/мл", refMin: 0.4, refMax: 4.0, optMin: 1.0, optMax: 2.0, status: "optimal", grade: "C5", trend: [2.4, 2.3, 2.2, 2.1], discuss: "ТТГ в оптимальном диапазоне. Щитовидная железа компенсирована." },
+    { name: "Глюкоза", value: 5.2, unit: "ммоль/л", refMin: 4.1, refMax: 5.9, optMin: 4.2, optMax: 5.0, status: "normal", grade: "C3", trend: [5.4, 5.3, 5.1, 5.2], discuss: "Глюкоза в норме, но чуть выше оптимума. Обратить внимание на углеводный профиль ужина." },
+    { name: "ЛПНП (Холестерин)", value: 3.4, unit: "ммоль/л", refMin: 0.0, refMax: 3.0, optMin: 1.8, optMax: 2.6, status: "high", grade: "C2", trend: [3.6, 3.5, 3.3, 3.4], discuss: "ЛПНП повышен. Обсудить липидный профиль (АпоВ, ЛП(а)), омега-3 индекс и рацион (насыщенные жиры)." }
+  ],
+  biomarkersConnected: true,
+  
+  correlations: [
+    { label: "Алкоголь вечером", delta: -21, dir: "down", grade: "C3", icon: "ph-wine" },
+    { label: "Свет утром 15 мин", delta: 9, dir: "up", grade: "C3", icon: "ph-sun" },
+    { label: "Экран после 23:00", delta: -12, dir: "down", grade: "C2", icon: "ph-device-mobile" },
+    { label: "Тренировка днём", delta: 6, dir: "up", grade: "C2", icon: "ph-barbell" },
+    { label: "Медитация 10 мин", delta: 4, dir: "up", grade: "C2", icon: "ph-brain" }
+  ],
+  
+  readiness: "Recovery 64% (жёлтая зона) + три встречи в календаре + цель «стабильная энергия» — умеренный день, тяжёлую тренировку лучше перенести на завтра.",
+  action: {
+    title: "Лечь спать на 30 минут раньше",
+    why: "Сон — самый сильный рычаг recovery; стабильное время отхода важнее длительности. Доказательный протокол (C5)."
+  },
+  
+  connections: {
+    whoop: { label: "WHOOP Tracker", connected: true, lastSync: "5 мин назад", icon: "ph-activity" },
+    apple: { label: "Apple Health", connected: true, lastSync: "1 час назад", icon: "ph-heart" },
+    oura: { label: "Oura Ring", connected: false, lastSync: null, icon: "ph-shield" },
+    garmin: { label: "Garmin Connect", connected: false, lastSync: null, icon: "ph-barbell" },
+    labs: { label: "Helix / Лаборатории", connected: true, lastSync: "3 дня назад", icon: "ph-flask" },
+    dna: { label: "MyGenetics / ДНК", connected: false, lastSync: null, icon: "ph-fingerprint" }
+  },
+
+  allBehaviors: [
+    { id: "alcohol", label: "Алкоголь вечером", category: "toxic", icon: "ph-wine", selected: true },
+    { id: "caffeine_late", label: "Кофе после 15:00", category: "toxic", icon: "ph-coffee", selected: true },
+    { id: "screen_late", label: "Экран после 23:00", category: "toxic", icon: "ph-device-mobile", selected: true },
+    { id: "morning_light", label: "Свет утром 15 мин", category: "habit", icon: "ph-sun", selected: true },
+    { id: "meditation", label: "Медитация 10 мин", category: "habit", icon: "ph-brain", selected: true },
+    { id: "workout", label: "Тренировка днём", category: "activity", icon: "ph-barbell", selected: true },
+    { id: "magnesium", label: "Магний перед сном", category: "supps", icon: "ph-pill", selected: false },
+    { id: "cold_plunge", label: "Холодный душ/ванна", category: "habit", icon: "ph-snowflake", selected: false },
+    { id: "sugar_late", label: "Сладкое на ночь", category: "toxic", icon: "ph-cookie", selected: false },
+    { id: "read_book", label: "Чтение книги на ночь", category: "habit", icon: "ph-book-open", selected: false }
+  ]
+};
+
+const col = v => v >= 67 ? "var(--ok)" : v >= 34 ? "var(--warn)" : "var(--bad)";
+const word = v => v >= 67 ? "Зелёная зона — организм готов к нагрузкам" : v >= 34 ? "Жёлтая зона — умеренный режим" : "Красная зона — необходим глубокий покой";
+const mood = v => v >= 67 ? "😎" : v >= 34 ? "🙂" : "😴";
+const say = v => v >= 67 ? "Отличное восстановление. Хороший день для активности." : v >= 34 ? "Умеренно. Избегайте пиковых перегрузок." : "Низкие ресурсы. Фокус на цене сна.";
+
+function updateTodayScreen() {
+  const v = DATA.recovery;
+  
+  document.getElementById('pillDot').style.background = col(v);
+  document.getElementById('pillTxt').textContent = "recovery " + v + "%";
+  document.getElementById('navRec').textContent = v + "%";
+  document.getElementById('navRec').style.color = col(v);
+
+  document.getElementById('recNum').textContent = v;
+  document.getElementById('recNum').style.color = col(v);
+  document.getElementById('recState').textContent = word(v);
+  document.getElementById('recState').style.color = col(v);
+  document.getElementById('recBlurb').textContent = `HRV ${DATA.hrv} мс  ·  RHR ${DATA.rhr} уд/мин  ·  сон ${DATA.sleep} ч  ·  strain ${DATA.strain}`;
+
+  document.getElementById('board').innerHTML = [
+    ["HRV", DATA.hrv, "мс"],
+    ["Пульс покоя", DATA.rhr, "уд/мин"],
+    ["Сон", DATA.sleep, "ч"],
+    ["Strain", DATA.strain, "/21"]
+  ].map(([k, val, u]) => `
+    <div class="metric-tile">
+      <div class="k">${k}</div>
+      <div class="v mono">${val}</div>
+      <div class="u">${u}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('docFace').textContent = mood(v);
+  document.getElementById('docMini').textContent = say(v);
+
+  document.getElementById('readiness').textContent = DATA.readiness;
+  document.getElementById('actTitle').textContent = DATA.action.title;
+  document.getElementById('actWhy').textContent = DATA.action.why;
+
+  document.getElementById('date').textContent = DATA.date;
+
+  renderHabits();
+}
+
+function renderHabits() {
+  const list = document.getElementById('habitList');
+  list.innerHTML = DATA.habits.map(h => `
+    <div class="habit-item ${h.done ? 'done' : ''}" onclick="toggleHabit('${h.id}')">
+      <div class="habit-checkbox">
+        <i class="ph-light ph-check"></i>
+      </div>
+      <div class="habit-details">
+        <span class="habit-label">${h.label}</span>
+        <span class="habit-impact ${h.delta > 0 ? 'up' : 'down'}">
+          ${h.delta > 0 ? '+' : ''}${h.delta}% recovery
+        </span>
+      </div>
+      <div class="habit-icon">
+        <i class="ph-light ${h.icon}"></i>
+      </div>
+    </div>
+  `).join('');
+
+  const doneCount = DATA.habits.filter(h => h.done).length;
+  const totalCount = DATA.habits.length;
+  const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+  
+  document.getElementById('habitFill').style.width = pct + "%";
+  document.getElementById('habitProgText').textContent = `${doneCount}/${totalCount}`;
+}
+
+function toggleHabit(id) {
+  const h = DATA.habits.find(x => x.id === id);
+  if (h) {
+    h.done = !h.done;
+    renderHabits();
+    gsap.fromTo(`.habit-item`, 
+      { scale: 0.99 }, 
+      { scale: 1, duration: 0.3, ease: "power2.out" }
+    );
+  }
+}
+
+function animateRecoveryRing() {
+  const v = DATA.recovery;
+  const C = 2 * Math.PI * 70;
+  const arc = document.getElementById('ringArc');
+  
+  arc.style.stroke = col(v);
+  
+  gsap.fromTo(arc, 
+    { strokeDashoffset: C }, 
+    { strokeDashoffset: C * (1 - v / 100), duration: 1.2, ease: "power3.out" }
+  );
+}
+
+function initPulseScreen() {
+  const count = 48;
+  const points = [];
+  let currentHR = 65;
+  
+  for (let i = 0; i < count; i++) {
+    const hour = (i / count) * 24;
+    let base = 70;
+    if (hour > 1 && hour < 6) base = 52;
+    else if (hour > 14 && hour < 16) base = 150;
+    else if (hour > 19 && hour < 21) base = 95;
+    
+    currentHR = base + Math.sin(i) * 8 + (Math.random() - 0.5) * 10;
+    currentHR = Math.max(50, Math.min(170, Math.round(currentHR)));
+    points.push(currentHR);
+  }
+
+  renderAreaChart('pulseChart', 'pulseLine', 'pulseArea', points);
+
+  const zones = [
+    { num: 5, name: "Максимальная (Анаэробная)", range: "151-170 уд/мин", time: "18 мин", fill: "#f43f5e", pct: 15 },
+    { num: 4, name: "Пороговая (Кардиовыносливость)", range: "133-150 уд/мин", time: "42 мин", fill: "#f97316", pct: 30 },
+    { num: 3, name: "Аэробная (Аэробный фитнес)", range: "114-132 уд/мин", time: "1ч 15м", fill: "#eab308", pct: 55 },
+    { num: 2, name: "Жиросжигающая (Выносливость)", range: "95-113 уд/мин", time: "2ч 40м", fill: "#10b981", pct: 80 },
+    { num: 1, name: "Восстановительная (Активный покой)", range: "76-94", time: "4ч 10м", fill: "#3b82f6", pct: 90 }
+  ];
+
+  document.getElementById('zoneList').innerHTML = zones.map(z => `
+    <div class="zone-item">
+      <div class="zone-label-row">
+        <span><b>Зона ${z.num}</b> — ${z.name}</span>
+        <span class="mono">${z.time}</span>
+      </div>
+      <div class="zone-label-row">
+        <span class="zone-range">${z.range}</span>
+      </div>
+      <div class="zone-bar-bg">
+        <div class="zone-bar-fill" style="width: ${z.pct}%; background: ${z.fill};"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateBiomarkersScreen() {
+  const mainCard = document.getElementById('biomarkersMainCard');
+  const emptyCard = document.getElementById('biomarkersEmptyCard');
+  
+  if (!DATA.biomarkersConnected) {
+    mainCard.style.display = 'none';
+    emptyCard.style.display = 'block';
+    return;
+  }
+  
+  mainCard.style.display = 'block';
+  emptyCard.style.display = 'none';
+  
+  const tbody = document.getElementById('biomarkerTableBody');
+  tbody.innerHTML = DATA.biomarkers.map((b, idx) => {
+    let markerPos = 50;
+    const span = b.refMax - b.refMin;
+    
+    if (span > 0) {
+      const relativeVal = (b.value - b.refMin) / span;
+      markerPos = 25 + relativeVal * 50;
+      markerPos = Math.max(5, Math.min(95, markerPos));
+    }
+    
+    if (b.status === 'low' || b.status === 'deficient') {
+      markerPos = 15;
+    } else if (b.status === 'high') {
+      markerPos = 85;
+    } else if (b.status === 'optimal') {
+      markerPos = 50;
+    }
+    
+    const statusText = {
+      optimal: "Оптимально",
+      normal: "Норма",
+      low: "Снижен",
+      high: "Повышен",
+      deficient: "Дефицит"
+    }[b.status] || b.status;
+    
+    const statusClass = b.status;
+    
+    return `
+      <tr class="biomarker-row" onclick="toggleBiomarkerDetail(${idx})">
+        <td><div class="biomarker-name">${b.name}</div></td>
+        <td><span class="biomarker-value mono">${b.value}</span> <span class="muted" style="font-size:11px">${b.unit}</span></td>
+        <td class="mono muted" style="font-size:12px">${b.refMin} - ${b.refMax}</td>
+        <td>
+          <div class="biomarker-scale-wrapper">
+            <div class="scale-container">
+              <div class="scale-ref" style="left: 25%; width: 50%;"></div>
+              <div class="scale-opt" style="left: 40%; width: 20%;"></div>
+              <div class="scale-marker ${statusClass}" style="left: ${markerPos}%;"></div>
+            </div>
+          </div>
+        </td>
+        <td class="mono muted" style="font-size:12px">${b.optMin} - ${b.optMax}</td>
+        <td>
+          <span class="habit-impact ${b.status === 'optimal' ? 'up' : (b.status === 'normal' ? 'normal' : 'down')}" style="font-size:11px;">
+            ${statusText}
+          </span>
+        </td>
+        <td><span class="biomarker-grade">${b.grade}</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function toggleBiomarkerDetail(idx) {
+  const panel = document.getElementById('biomarkerDetailPanel');
+  const b = DATA.biomarkers[idx];
+  
+  if (panel.style.display === 'block' && panel.dataset.activeIdx == idx) {
+    gsap.to(panel, {
+      opacity: 0,
+      y: -10,
+      duration: 0.2,
+      onComplete: () => { panel.style.display = 'none'; }
+    });
+  } else {
+    panel.dataset.activeIdx = idx;
+    panel.innerHTML = `
+      <div class="discuss-box" style="display: block; opacity: 0; transform: translateY(-10px);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <b style="font-size: 13px; color: var(--ink);">Рекомендация по маркеру: ${b.name}</b>
+          <span class="mono muted">Доверие: ${b.grade}</span>
+        </div>
+        <div>${b.discuss}</div>
+        <div style="margin-top: 10px; display:flex; gap:10px;">
+          <button class="btn-secondary" style="font-size:10px; padding: 4px 8px;" onclick="alert('Добавлено в вопросы для врача')">Зафиксировать для врача</button>
+        </div>
+      </div>
+    `;
+    panel.style.display = 'block';
+    gsap.to(panel.querySelector('.discuss-box'), {
+      opacity: 1,
+      y: 0,
+      duration: 0.3,
+      ease: "power2.out"
+    });
+  }
+}
+
+function simulateBiomarkerUpload() {
+  DATA.biomarkersConnected = true;
+  updateBiomarkersScreen();
+  gsap.fromTo('#biomarkersMainCard', 
+    { opacity: 0, y: 30 }, 
+    { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }
+  );
+}
+
+function animateWhoopRings() {
+  const C = 2 * Math.PI * 55;
+  
+  const recArc = document.getElementById('whoopRingRec');
+  const sleepArc = document.getElementById('whoopRingSleep');
+  const strainArc = document.getElementById('whoopRingStrain');
+  
+  document.getElementById('whoopRecVal').textContent = DATA.recovery + "%";
+  document.getElementById('whoopRecSub').textContent = `HRV ${DATA.hrv} мс`;
+  recArc.style.stroke = col(DATA.recovery);
+  
+  document.getElementById('whoopSleepVal').textContent = "85%";
+  document.getElementById('whoopSleepSub').textContent = `${DATA.sleep} / ${DATA.sleepNeeded} ч`;
+  
+  const strainPct = Math.round((DATA.strain / 21) * 100);
+  document.getElementById('whoopStrainVal').textContent = DATA.strain;
+  document.getElementById('whoopStrainSub').textContent = `Цель: ${DATA.strainTarget}`;
+
+  gsap.fromTo(recArc, { strokeDashoffset: C }, { strokeDashoffset: C * (1 - DATA.recovery / 100), duration: 1, ease: "power2.out" });
+  gsap.fromTo(sleepArc, { strokeDashoffset: C }, { strokeDashoffset: C * (1 - 0.85), duration: 1, delay: 0.15, ease: "power2.out" });
+  gsap.fromTo(strainArc, { strokeDashoffset: C }, { strokeDashoffset: C * (1 - strainPct / 100), duration: 1, delay: 0.3, ease: "power2.out" });
+
+  renderAreaChart('chartSleep', 'sleepLine', 'sleepArea', DATA.trendSleep);
+  renderAreaChart('chartStrain', 'strainLine', 'strainArea', DATA.trendStrain);
+}
+
+function updateCorrelationsScreen() {
+  const list = document.getElementById('corrList');
+  list.innerHTML = DATA.correlations.map(c => `
+    <div class="corr-item">
+      <div class="corr-item-label">
+        <i class="ph-light ${c.icon}"></i>
+        <span>${c.label}</span>
+      </div>
+      <div class="corr-item-metrics">
+        <span class="corr-delta ${c.dir}">
+          ${c.delta > 0 ? '+' : ''}${c.delta}% Recovery
+        </span>
+        <span class="biomarker-grade">${c.grade}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function initJournalScreen() {
+  const grid = document.getElementById('behaviorGrid');
+  grid.innerHTML = DATA.allBehaviors.map(b => `
+    <div class="behavior-pill ${b.selected ? 'active' : ''}" onclick="toggleBehaviorSelection('${b.id}')">
+      <i class="ph-light ${b.icon}"></i>
+      <span style="font-size:12px; font-weight:500;">${b.label}</span>
+    </div>
+  `).join('');
+
+  renderJournalForm();
+}
+
+function toggleBehaviorSelection(id) {
+  const b = DATA.allBehaviors.find(x => x.id === id);
+  if (b) {
+    b.selected = !b.selected;
+    initJournalScreen();
+  }
+}
+
+function renderJournalForm() {
+  const container = document.getElementById('journalFormContainer');
+  const selectedBehaviors = DATA.allBehaviors.filter(b => b.selected);
+  
+  if (selectedBehaviors.length === 0) {
+    container.innerHTML = `<p class="muted" style="font-size:13px; text-align:center; padding: 20px;">Нет выбранных привычек для заполнения. Включите их выше.</p>`;
+    return;
+  }
+  
+  container.innerHTML = selectedBehaviors.map(b => `
+    <div class="habit-item" style="cursor: default; margin-bottom: 8px;">
+      <div class="habit-details">
+        <span class="habit-label">${b.label}</span>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="btn-secondary" style="font-size:11px; padding: 4px 10px;" id="btn-journal-${b.id}-no" onclick="setJournalValue('${b.id}', false)">Нет</button>
+        <button class="btn-secondary" style="font-size:11px; padding: 4px 10px;" id="btn-journal-${b.id}-yes" onclick="setJournalValue('${b.id}', true)">Да</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+const journalAnswers = {};
+
+function setJournalValue(id, val) {
+  journalAnswers[id] = val;
+  
+  const yesBtn = document.getElementById(`btn-journal-${id}-yes`);
+  const noBtn = document.getElementById(`btn-journal-${id}-no`);
+  
+  if (val) {
+    yesBtn.style.background = "var(--ok)";
+    yesBtn.style.color = "#04130b";
+    yesBtn.style.borderColor = "var(--ok)";
+    noBtn.style.background = "transparent";
+    noBtn.style.color = "var(--ink)";
+    noBtn.style.borderColor = "var(--line)";
+  } else {
+    noBtn.style.background = "var(--bad)";
+    noBtn.style.color = "#04130b";
+    noBtn.style.borderColor = "var(--bad)";
+    yesBtn.style.background = "transparent";
+    yesBtn.style.color = "var(--ink)";
+    yesBtn.style.borderColor = "var(--line)";
+  }
+}
+
+function saveJournalEntry() {
+  const notes = document.getElementById('journalNotes').value;
+  const status = document.getElementById('journalSaveStatus');
+  status.textContent = "Сохранение...";
+  
+  setTimeout(() => {
+    status.textContent = "Запись успешно сохранена локально";
+    gsap.fromTo('#journalSaveStatus', { opacity: 0 }, { opacity: 1, duration: 0.3 });
+    
+    DATA.allBehaviors.forEach(b => {
+      if (b.selected && journalAnswers[b.id] !== undefined) {
+        const existingHabit = DATA.habits.find(h => h.id === b.id);
+        if (existingHabit) {
+          existingHabit.done = journalAnswers[b.id];
+        } else {
+          DATA.habits.push({
+            id: b.id,
+            label: b.label,
+            done: journalAnswers[b.id],
+            delta: b.id === 'magnesium' ? 8 : (b.id === 'sugar_late' ? -10 : 4),
+            icon: b.icon
+          });
+        }
+      }
+    });
+    
+    updateTodayScreen();
+  }, 800);
+}
+
+function initTrendsScreen() {
+  renderAreaChart('trendsRecChart', 'trendsRecLine', 'trendsRecArea', DATA.trend30Rec);
+  renderAreaChart('trendsHrvChart', 'trendsHrvLine', 'trendsHrvArea', DATA.trend30Hrv);
+}
+
+function updateSyncScreen() {
+  const grid = document.getElementById('syncGrid');
+  grid.innerHTML = Object.entries(DATA.connections).map(([key, c]) => `
+    <div class="card-outer sync-card">
+      <div class="card-inner">
+        <div class="card-header" style="margin-bottom:8px;">
+          <div class="card-title-group">
+            <h3>${c.label}</h3>
+            <div class="sub">${c.connected ? 'Автоматический импорт активен' : 'Интеграция не настроена'}</div>
+          </div>
+          <i class="ph-light ${c.icon} card-header-icon"></i>
+        </div>
+        
+        <div class="sync-status-row">
+          <div class="sync-indicator ${c.connected ? 'connected' : 'disconnected'}">
+            <span class="dot"></span>
+            <span>${c.connected ? 'Подключено' : 'Отключено'}</span>
+          </div>
+          <span class="mono muted" style="font-size:11px;">
+            ${c.connected ? c.lastSync : 'Никогда'}
+          </span>
+        </div>
+        
+        <div style="margin-top:20px; display:flex; gap:8px;">
+          ${c.connected ? `
+            <button class="btn-secondary" style="flex:1;" onclick="triggerSync('${key}', this)">
+              <i class="ph-light ph-arrows-clockwise"></i> Обновить
+            </button>
+            <button class="btn-secondary" style="border-color:var(--bad-glow); color:var(--bad);" onclick="disconnectSync('${key}')">Отключить</button>
+          ` : `
+            <button class="btn-primary" style="flex:1;" onclick="connectSync('${key}')">
+              <i class="ph-light ph-plugs"></i> Подключить
+            </button>
+          `}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function triggerSync(key, btn) {
+  const icon = btn.querySelector('i');
+  icon.classList.add('ph-spin');
+  btn.disabled = true;
+  
+  setTimeout(() => {
+    icon.classList.remove('ph-spin');
+    btn.disabled = false;
+    DATA.connections[key].lastSync = "Только что";
+    updateSyncScreen();
+  }, 1500);
+}
+
+function disconnectSync(key) {
+  DATA.connections[key].connected = false;
+  DATA.connections[key].lastSync = null;
+  
+  if (key === 'labs') {
+    DATA.biomarkersConnected = false;
+    updateBiomarkersScreen();
+  }
+  
+  updateSyncScreen();
+}
+
+function connectSync(key) {
+  DATA.connections[key].connected = true;
+  DATA.connections[key].lastSync = "Только что";
+  
+  if (key === 'labs') {
+    DATA.biomarkersConnected = true;
+    updateBiomarkersScreen();
+  }
+  
+  updateSyncScreen();
+}
+
+function renderAreaChart(svgId, lineId, areaId, arr) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  
+  const w = svg.viewBox.baseVal.width || 600;
+  const h = svg.viewBox.baseVal.height || 220;
+  const mn = Math.min(...arr);
+  const mx = Math.max(...arr);
+  const padding = 15;
+  const range = mx - mn || 1;
+
+  const pts = arr.map((y, i) => {
+    const x = padding + (i / (arr.length - 1)) * (w - 2 * padding);
+    const yCoord = h - padding - ((y - mn) / range) * (h - 2 * padding);
+    return { x, y: yCoord };
+  });
+
+  let d = "";
+  if (pts.length > 0) {
+    d += `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i];
+      const p1 = pts[i + 1];
+      const cpX1 = p0.x + (p1.x - p0.x) / 2;
+      const cpY1 = p0.y;
+      const cpX2 = p0.x + (p1.x - p0.x) / 2;
+      const cpY2 = p1.y;
+      d += ` C ${cpX1.toFixed(1)} ${cpY1.toFixed(1)}, ${cpX2.toFixed(1)} ${cpY2.toFixed(1)}, ${p1.x.toFixed(1)} ${p1.y.toFixed(1)}`;
+    }
+  }
+
+  const linePath = document.getElementById(lineId);
+  if (linePath) linePath.setAttribute('d', d);
+
+  const areaPath = document.getElementById(areaId);
+  if (areaPath && pts.length > 0) {
+    const fillD = `${d} L ${pts[pts.length - 1].x.toFixed(1)} ${h} L ${pts[0].x.toFixed(1)} ${h} Z`;
+    areaPath.setAttribute('d', fillD);
+  }
+
+  const point = document.getElementById('pulsePoint');
+  if (point && pts.length > 0) {
+    point.setAttribute('cx', pts[pts.length - 1].x.toFixed(1));
+    point.setAttribute('cy', pts[pts.length - 1].y.toFixed(1));
+  }
+}
+
+const titles = {
+  today: "Overview / Сегодня",
+  pulse: "Пульс дня",
+  biomarkers: "Biomarkers (Анализы)",
+  'whoop-overview': "WHOOP Overview",
+  'whoop-correlations': "WHOOP Correlations",
+  journal: "Журнал",
+  trends: "Тренды",
+  sync: "Синхронизация"
+};
+
+function toggleDrawer(force) {
+  const aside = document.querySelector('aside');
+  const backdrop = document.getElementById('navBackdrop');
+  const open = (force === undefined) ? !aside.classList.contains('open') : force;
+  aside.classList.toggle('open', open);
+  if (backdrop) backdrop.classList.toggle('open', open);
+}
+
+function go(z) {
+  toggleDrawer(false);
+  const activeSection = document.querySelector('.zone.on');
+  const targetSection = document.getElementById('z-' + z);
+  
+  if (activeSection === targetSection) return;
+  
+  gsap.to(activeSection, {
+    opacity: 0,
+    y: 10,
+    duration: 0.25,
+    ease: "power2.in",
+    onComplete: () => {
+      activeSection.classList.remove('on');
+      targetSection.classList.add('on');
+      
+      gsap.set(targetSection.querySelectorAll('.card-outer'), {
+        opacity: 0,
+        y: 20
+      });
+      
+      gsap.to(targetSection, {
+        opacity: 1,
+        y: 0,
+        duration: 0.1
+      });
+      
+      gsap.to(targetSection.querySelectorAll('.card-outer'), {
+        opacity: 1,
+        y: 0,
+        duration: 0.5,
+        stagger: 0.06,
+        ease: "power2.out"
+      });
+      
+      if (z === 'today') {
+        animateRecoveryRing();
+      } else if (z === 'whoop-overview') {
+        animateWhoopRings();
+      } else if (z === 'pulse') {
+        initPulseScreen();
+      } else if (z === 'trends') {
+        initTrendsScreen();
+      }
+    }
+  });
+
+  document.querySelectorAll('aside nav a').forEach(a => {
+    a.classList.toggle('active', a.dataset.z === z);
+  });
+  
+  document.getElementById('zoneTitle').textContent = titles[z] || "OpenHealth";
+}
+
+const themes = document.getElementById('themes');
+themes.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  
+  document.documentElement.dataset.theme = b.dataset.t;
+  [...themes.children].forEach(x => x.setAttribute('aria-pressed', x === b));
+  
+  const activeTab = document.querySelector('aside nav a.active').dataset.z;
+  if (activeTab === 'pulse') initPulseScreen();
+  else if (activeTab === 'whoop-overview') animateWhoopRings();
+  else if (activeTab === 'trends') initTrendsScreen();
+});
+
+document.getElementById('toggleBiomarkerData').addEventListener('click', () => {
+  DATA.biomarkersConnected = !DATA.biomarkersConnected;
+  updateBiomarkersScreen();
+  
+  const btn = document.getElementById('toggleBiomarkerData');
+  btn.textContent = DATA.biomarkersConnected ? "Симулировать пустые анализы" : "Восстановить анализы";
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  // Жёстко фиксируем стартовый экран = Сегодня (детерминированно, без зависимости от залипшего состояния).
+  document.querySelectorAll('.zone').forEach(s => s.classList.toggle('on', s.id === 'z-today'));
+  document.querySelectorAll('aside nav a').forEach(a => a.classList.toggle('active', a.dataset.z === 'today'));
+  document.getElementById('zoneTitle').textContent = titles.today;
+
+  updateTodayScreen();
+  exploreCorrelations();
+  updateBiomarkersScreen();
+  updateSyncScreen();
+  initJournalScreen();
+  
+  gsap.fromTo('#z-today .card-outer', 
+    { opacity: 0, y: 25 }, 
+    { opacity: 1, y: 0, duration: 0.7, stagger: 0.08, ease: "power2.out", onComplete: animateRecoveryRing }
+  );
+});
+
+function exploreCorrelations() {
+  updateCorrelationsScreen();
+}
 </script>
 </body>
 </html>

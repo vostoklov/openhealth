@@ -1,22 +1,53 @@
 import SwiftUI
 
-/// Original minimalist design system (see docs/design/ui-spec.md).
-/// Calm, clinical-but-warm: neutral ground, one accent, red reserved for safety.
+/// Design system (see docs/design/style-bible.md). The app now ships the
+/// "Widget Board" dark surface as its default: near-black ground, soft-fill
+/// tiles, luminous numbers. Semantic colors stay fixed; recovery zones use the
+/// green/yellow/red language of the web dashboard. The earlier light tokens are
+/// kept (some lab views still reference them) but the app runs dark.
 enum Theme {
-    static let background = Color(hex: 0xF7F8FA)
-    static let surface = Color.white
-    static let ink = Color(hex: 0x1A1D21)
-    static let inkSoft = Color(hex: 0x6B7178)
-    static let hairline = Color(hex: 0xE6E8EB)
+    // Dark "Widget Board" surface (style-bible §1–2, web dashboard palette).
+    static let background = Color(hex: 0x0C0D10)   // near-black ground
+    static let surface = Color(hex: 0x14161B)      // tile / card fill
+    static let surfaceAlt = Color(hex: 0x101216)   // recessed tile
+    static let ink = Color(hex: 0xE6E9EF)          // primary text
+    static let inkSoft = Color(hex: 0x7D8694)      // secondary text
+    static let inkDim = Color(hex: 0x565D68)       // tertiary / units
+    static let hairline = Color(hex: 0x1F2228)     // 1px separators
+    static let hairlineStrong = Color(hex: 0x2A2E36)
 
-    static let accent = Color(hex: 0x2E7D74)   // teal: primary + "in range"
-    static let warn = Color(hex: 0xC77D2E)      // amber: out of range
-    static let danger = Color(hex: 0xC0392B)    // red: critical safety only
+    static let accent = Color(hex: 0x5B8DEF)   // blue: primary action / links
+    static let warn = Color(hex: 0xE8B339)     // amber: attention / yellow zone
+    static let danger = Color(hex: 0xE5484D)   // red: critical safety + low zone
 
-    // Warm neutral surfaces for the widget-board feel (decorative, non-semantic).
-    static let sand = Color(hex: 0xEDE7DC)
-    static let sage = Color(hex: 0xDCE5DD)
-    static let mist = Color(hex: 0xE3E6EC)
+    // Recovery zone colors (web dashboard): green ≥67, yellow 34–66, red <34.
+    // A wellness summary language, never a clinical judgment.
+    static let zoneGreen = Color(hex: 0x34C759)
+    static let zoneYellow = Color(hex: 0xE8B339)
+    static let zoneRed = Color(hex: 0xE5484D)
+
+    /// Recovery/score (0...100) → zone color.
+    static func recoveryColor(_ score: Double) -> Color {
+        if score >= 67 { return zoneGreen }
+        if score >= 34 { return zoneYellow }
+        return zoneRed
+    }
+    /// Recovery/score (0...100) → short zone headline.
+    static func recoveryHeadline(_ score: Double) -> String {
+        if score >= 67 { return "Green zone — ready to push" }
+        if score >= 34 { return "Yellow zone — go moderate" }
+        return "Red zone — prioritise recovery"
+    }
+    /// Recovery/score (0...100) → "Doctor Context" mood + one-liner.
+    static func recoveryMood(_ score: Double) -> (emoji: String, line: String) {
+        if score >= 67 { return ("😎", "Well recovered — use the day.") }
+        if score >= 34 { return ("🙂", "Middle ground. Pick one helpful action.") }
+        return ("😴", "Running low. Today is about sleep and rest.") }
+
+    // Warm neutral surfaces kept for backward-compatible decorative use.
+    static let sand = Color(hex: 0x1C1A16)
+    static let sage = Color(hex: 0x16201A)
+    static let mist = Color(hex: 0x161A22)
 
     /// Calm decorative gradient for a hero tile, varied per metric. These carry
     /// no clinical meaning — flags/safety always use the semantic colors above.
@@ -40,6 +71,7 @@ enum Theme {
     static let s6: CGFloat = 32
 
     static let radius: CGFloat = 18
+    static let radiusSmall: CGFloat = 12
 }
 
 extension Color {

@@ -475,6 +475,122 @@ def build_circadian_block(con: sqlite3.Connection) -> dict:
         return {}
 
 
+def _all_records(con: sqlite3.Connection) -> list[dict]:
+    """Every record payload as a light dict, for the lab/quality blocks.
+
+    Flattens the metadata.score sub-object of WHOOP daily records into top-level
+    metric rows (recovery / hrv / rhr) so the quality checks see one value per
+    metric per date — the same reshape the recovery block uses.
+    """
+    out: list[dict] = []
+    rows = con.execute("SELECT payload_json FROM records").fetchall()
+    for (payload,) in rows:
+        p = json.loads(payload)
+        mn = p.get("metric_name")
+        if mn is None:
+            continue
+        out.append({
+            "name": mn,
+            "metric_name": mn,
+            "value": p.get("value"),
+            "unit": p.get("unit"),
+            "date": p.get("date") or p.get("start_date"),
+        })
+        # Mirror rhr / hrv carried inside a recovery score sub-object.
+        score = (p.get("metadata") or {}).get("score") or {}
+        d = p.get("date") or p.get("start_date")
+        for sk, alias in (("resting_heart_rate", "rhr"), ("hrv_rmssd_milli", "hrv")):
+            if score.get(sk) is not None:
+                out.append({"name": alias, "metric_name": alias,
+                            "value": score[sk], "unit": None, "date": d})
+    return out
+
+
+def build_lab_block(con: sqlite3.Connection) -> dict:
+    """Blood-panel analysis from real records, via the openhealth lab engine.
+
+    Emits panels (lipids/glycemia/iron/thyroid/inflammation/vitamins/kidney),
+    derived indices, per-marker history for markers that have data, and re-test
+    cadence hints. Wrapped in try/except so the bridge still runs without the
+    openhealth package importable. Returns {} when no recognised lab markers are
+    present (this dataset is WHOOP + microbiota, not a blood panel).
+    """
+    try:
+        import sys
+        repo_root = str(Path(__file__).resolve().parents[2])
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
+        from openhealth import lab_panel as _lab
+        from openhealth import reference_ranges as _rr
+    except Exception:
+        return {}
+    try:
+        records = _all_records(con)
+        panels = _lab.panel_summary(records)
+        indices = _lab.derived_indices(records)
+        # Only markers that actually have data get a history block.
+        history = []
+        recheck_hints = []
+        today = datetime.now().date().isoformat()
+        for key, spec in _rr.MARKERS.items():
+            hist = _lab.marker_history(records, spec.display_name)
+            if not isinstance(hist["latest"], (int, float)):
+                continue
+            history.append({
+                "marker_key": key,
+                "display_name": spec.display_name,
+                "latest": hist["latest"],
+                "unit": hist["unit"],
+                "trend": hist["trend"],
+                "optimal_status": hist["optimal_status"],
+                "points": hist["points"],
+            })
+            last_date = hist["points"][-1]["date"] if hist["points"] else None
+            recheck_hints.append(_lab.next_checkup_hint(spec.display_name, last_date, today))
+        has_lab = bool(history) or bool(indices)
+        return {
+            "available": has_lab,
+            "panels": panels,
+            "indices": indices,
+            "history": history,
+            "recheckHints": recheck_hints,
+            "note": ("Нет лабораторных маркеров крови в индексе — только WHOOP и "
+                     "микробиота." if not has_lab else None),
+        }
+    except Exception:
+        return {}
+
+
+def build_quality_block(con: sqlite3.Connection) -> dict:
+    """Data-quality report (score + top issues) over all real records.
+
+    Wrapped in try/except: without the openhealth package the bridge still runs.
+    """
+    try:
+        import sys
+        repo_root = str(Path(__file__).resolve().parents[2])
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
+        from openhealth import data_quality as _dq
+    except Exception:
+        return {}
+    try:
+        records = _all_records(con)
+        today = datetime.now().date().isoformat()
+        report = _dq.validate_records(records, today=today)
+        score = _dq.quality_score(report)
+        return {
+            "score": score["score"],
+            "verdict": score["verdict_ru"],
+            "breakdown": score["breakdown"],
+            "checked": report["checked"],
+            "counts": report["counts"],
+            "issues": report["issues"][:10],
+        }
+    except Exception:
+        return {}
+
+
 def build_payload(db_path: Path) -> dict:
     con = sqlite3.connect(str(db_path))
     try:
@@ -484,6 +600,8 @@ def build_payload(db_path: Path) -> dict:
         readiness = build_readiness(rec_block.get("recovery"))
         insights_block = build_insights_block(con)
         circadian_block = build_circadian_block(con)
+        lab_block = build_lab_block(con)
+        quality_block = build_quality_block(con)
     finally:
         con.close()
 
@@ -502,6 +620,12 @@ def build_payload(db_path: Path) -> dict:
     if circadian_block:
         # Rise-уровень: фазы энергии дня + волна 24ч + окно мелатонина.
         payload["circadian"] = circadian_block
+    if lab_block:
+        # Кровь: панели, производные индексы, история маркеров, частота пересдач.
+        payload["lab"] = lab_block
+    if quality_block:
+        # Проверка данных: score 0-100 + топ-10 проблем (дубли/будущее/невозможные/gap).
+        payload["quality"] = quality_block
     # Correlations require labeled daily behaviors (journal), which this dataset
     # does not yet contain — so we intentionally omit them and let the dashboard
     # keep its demo correlations. Same for habits / allBehaviors.
@@ -555,6 +679,18 @@ def main() -> None:
               f"curve={len(circ.get('curve', []))}pts")
     else:
         print("  circadian: no sleep sessions in index (skipped)")
+    lab = payload.get("lab")
+    if lab:
+        print(f"  lab: available={lab.get('available')}  history_markers={len(lab.get('history', []))}  "
+              f"indices={len(lab.get('indices', []))}")
+    else:
+        print("  lab: no recognised blood markers in index (skipped)")
+    q = payload.get("quality")
+    if q:
+        print(f"  quality: score={q.get('score')}/100  checked={q.get('checked')}  "
+              f"issues={len(q.get('issues', []))}  counts={q.get('counts')}")
+    else:
+        print("  quality: skipped")
     print("  NOTE: data.local.json is real personal data — keep it local (git-ignored).")
 
 

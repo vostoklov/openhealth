@@ -203,6 +203,35 @@ OPTIMAL_RANGES: Dict[str, OptimalRange] = {
         source_url="https://www.ahajournals.org/doi/10.1161/01.CIR.0000052939.59093.45",
         rationale="hs-CRP <1.0 mg/L is the low-risk stratum (1-3 average, >3 higher). Acute illness invalidates it.",
     ),
+    "insulin": OptimalRange(
+        marker_key="insulin",
+        direction=DIRECTION_LOWER,
+        low=None, high=8.0, unit="uIU/mL",
+        confidence=Confidence.C3,
+        source="Fasting-insulin metabolic-health orientation",
+        source_url="https://www.ncbi.nlm.nih.gov/books/NBK278970/",
+        rationale="Lab 'normal' fasting insulin runs to ~25; many sources prefer <8 uIU/mL "
+                  "for metabolic health. Interpret with glucose (HOMA-IR).",
+    ),
+    "homocysteine": OptimalRange(
+        marker_key="homocysteine",
+        direction=DIRECTION_LOWER,
+        low=None, high=10.0, unit="umol/L",
+        confidence=Confidence.C3,
+        source="Homocysteine cardiovascular-risk orientation",
+        source_url="https://www.ncbi.nlm.nih.gov/books/NBK554408/",
+        rationale="Lab cut is ~15; lower targets (<10) are preferred preventively. "
+                  "Read with B12/folate.",
+    ),
+    "folate": OptimalRange(
+        marker_key="folate",
+        direction=DIRECTION_HIGHER,
+        low=6.0, high=None, unit="ng/mL",
+        confidence=Confidence.C3,
+        source="Functional folate sufficiency (orientation)",
+        source_url="https://www.ncbi.nlm.nih.gov/books/NBK535377/",
+        rationale="Lab low bound ~3 ng/mL; a softer sufficiency floor sits near 6 ng/mL.",
+    ),
 }
 
 

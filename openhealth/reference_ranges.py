@@ -138,6 +138,48 @@ MARKERS: Dict[str, MarkerSpec] = {
         unit="mg/L", fallback_high=3.0,
         aliases=["crp", "c-reactive", "c reactive"],
     ),
+    # --- additions for panel completeness (glycemia / iron / thyroid /
+    # inflammation / vitamins). Fallbacks are orientation-only adult ranges. ---
+    "insulin": MarkerSpec(
+        key="insulin", display_name="Insulin (fasting)", loinc="20448-7",
+        unit="uIU/mL", si_unit="pmol/L", to_si_factor=6.945,
+        fallback_low=2.6, fallback_high=24.9,
+        aliases=["insulin", "fasting insulin"],
+        note="Fasting insulin; pairs with glucose for HOMA-IR.",
+    ),
+    "iron": MarkerSpec(
+        key="iron", display_name="Serum iron", loinc="2498-4",
+        unit="ug/dL", si_unit="umol/L", to_si_factor=0.179,
+        fallback_low=60.0, fallback_high=170.0,
+        aliases=["serum iron", "iron total", "fe "],
+    ),
+    "transferrin": MarkerSpec(
+        key="transferrin", display_name="Transferrin", loinc="3034-6",
+        unit="mg/dL", fallback_low=200.0, fallback_high=360.0,
+        aliases=["transferrin"],
+    ),
+    "t3": MarkerSpec(
+        key="t3", display_name="Free T3", loinc="3051-0",
+        unit="pg/mL", fallback_low=2.3, fallback_high=4.2,
+        aliases=["free t3", "ft3", "triiodothyronine"],
+    ),
+    "t4": MarkerSpec(
+        key="t4", display_name="Free T4", loinc="3024-7",
+        unit="ng/dL", fallback_low=0.8, fallback_high=1.8,
+        aliases=["free t4", "ft4", "thyroxine"],
+    ),
+    "folate": MarkerSpec(
+        key="folate", display_name="Folate", loinc="2284-8",
+        unit="ng/mL", si_unit="nmol/L", to_si_factor=2.266,
+        fallback_low=3.0, fallback_high=20.0,
+        aliases=["folate", "folic acid", "folacin"],
+    ),
+    "homocysteine": MarkerSpec(
+        key="homocysteine", display_name="Homocysteine", loinc="13965-9",
+        unit="umol/L", fallback_high=15.0,
+        aliases=["homocysteine", "hcy"],
+        note="Elevated homocysteine read alongside B12/folate.",
+    ),
 }
 
 
@@ -149,11 +191,21 @@ def match_marker(name: str) -> Optional[MarkerSpec]:
     lowered = name.strip().lower()
     if lowered in MARKERS:
         return MARKERS[lowered]
+    # Exact display-name match wins before any alias substring, so e.g.
+    # "LDL cholesterol" is not mis-resolved to total_cholesterol via the "chol"
+    # substring alias.
+    for spec in MARKERS.values():
+        if spec.display_name.lower() == lowered:
+            return spec
+    # Prefer the most specific alias match (longest alias that is a substring),
+    # so "ldl" beats a generic "chol" when both appear in the name.
+    best: Optional[MarkerSpec] = None
+    best_len = -1
     for spec in MARKERS.values():
         for alias in spec.aliases:
-            if alias in lowered:
-                return spec
-    return None
+            if alias in lowered and len(alias) > best_len:
+                best, best_len = spec, len(alias)
+    return best
 
 
 def resolve_range(

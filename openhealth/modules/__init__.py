@@ -28,6 +28,7 @@ def load_builtin() -> None:
         skin,  # noqa: F401
         sleep,  # noqa: F401
         travel,  # noqa: F401  (import side-effect: registration)
+        vo2max,  # noqa: F401
     )
 
 

@@ -12,6 +12,14 @@ Endpoints:
     GET  /api/data    -> data.local.json from --dir (200), or {"demo": true}
     GET  /api/health  -> {"ok": true, "agents": {"claude": bool, "codex": bool,
                           "openhealth": bool}}
+    GET  /api/config  -> {"config": {...agent.json...}, "agents": [{"name",
+                          "binary", "available", "selectable"}, ...]}
+    POST /api/config  -> {"agent": "auto|claude|codex|antigravity",
+                          "model": "name-or-null"}; both keys optional,
+                          whitelist-validated, persisted to
+                          ~/.openhealth/agent.json (mode 0600).
+    GET  /api/memory  -> {"entries": [last 30, newest first], "count": N}
+    DELETE /api/memory -> wipe agent memory; {"status": "ok", "cleared": N}
     POST /api/agent   -> run a local agent CLI for a whitelisted task.
                          body: {"task": "insight" | "correlations" | "research"
                                         | "transcript",
@@ -27,17 +35,26 @@ Endpoints:
                          Request-level problems use HTTP 4xx with
                          {"status": "error", "message": "..."}.
 
+Agent prompts are assembled from: intro + safety rules + user context preamble
+(AGENTS.md/CLAUDE.md, goal*/about-me* docs, research/ folder — see
+build_user_context) + memory of past runs (openhealth.agent_memory) + the task
+instruction + a digest of data.local.json.
+
 Security model:
     - binds to 127.0.0.1 only;
     - task names come from a fixed whitelist; param is a plain string,
       whitespace-collapsed and capped at 200 chars;
+    - agent/model selection is whitelist+regex validated; config and memory
+      live under ~/.openhealth (outside any repo) with 0600/0700 modes;
     - the prompt is passed to the CLI as a single argv element, never through
       a shell (no shell=True anywhere);
     - POST must be application/json with body <= 64 KB;
     - same-origin usage only, no CORS headers on purpose.
 
 PRIVACY: data.local.json holds real personal health data and lives in the
-runtime directory (--dir), never in the repo. This file contains no data.
+runtime directory (--dir), never in the repo. Agent memory holds condensed
+personal conclusions and lives in ~/.openhealth/memory — never logged, never
+in the repo. This file contains no data.
 
 Usage:
     python3 server.py [--port 8770] [--dir .]
@@ -58,6 +75,13 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+try:
+    from openhealth import agent_memory
+except ImportError:  # running from a checkout without `pip install -e .`
+    sys.path.insert(0, str(_REPO_ROOT))
+    from openhealth import agent_memory
+
 HOST = "127.0.0.1"
 DEFAULT_PORT = 8770
 DATA_FILE = "data.local.json"
@@ -70,6 +94,41 @@ AGENT_TIMEOUT_S = 120
 
 ALLOWED_TASKS = frozenset({"insight", "correlations", "research", "transcript"})
 AGENT_BINARIES = ("claude", "codex", "openhealth")
+
+# --- agent selection config (~/.openhealth/agent.json) ----------------------
+
+CONFIG_FILE = "agent.json"
+# task config "agent" values the user may choose; "auto" keeps the cascade
+SELECTABLE_AGENTS = ("auto", "claude", "codex", "antigravity")
+# every agent CLI we know how to detect; antigravity ships the `agy` binary.
+# hermes/openclaw are detected and reported, but not runnable yet.
+AGENT_CLI = {
+    "claude": "claude",
+    "codex": "codex",
+    "antigravity": "agy",
+    "hermes": "hermes",
+    "openclaw": "openclaw",
+}
+DEFAULT_AGENT_CONFIG = {"agent": "auto", "model": None, "extra_args": []}
+MAX_MODEL_LEN = 100
+MAX_EXTRA_ARGS = 16
+_MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,%d}$" % (MAX_MODEL_LEN - 1))
+
+# --- user context preamble limits -------------------------------------------
+
+MAX_CONTEXT_CHARS = 4000  # whole preamble cap
+CONTEXT_AGENTS_CHARS = 2000  # AGENTS.md / CLAUDE.md excerpt
+CONTEXT_DOC_CHARS = 600  # goal* / about-me* excerpts, each
+CONTEXT_RESEARCH_FRESH = 3  # how many freshest research files to excerpt
+CONTEXT_RESEARCH_HEAD_CHARS = 260  # excerpt size per research file
+CONTEXT_RESEARCH_MAX_NAMES = 12
+MAX_MEMORY_BLOCK_CHARS = agent_memory.MAX_MEMORY_BLOCK_CHARS  # 1200
+
+CONTEXT_HEADER = (
+    "КОНТЕКСТ ПОЛЬЗОВАТЕЛЯ. Обязательно учитывай инструкции и личные "
+    "исследования пользователя ниже. Если они противоречат общим знаниям — "
+    "отдай приоритет личным данным и инструкциям, явно пометив это в ответе."
+)
 
 # --- prompts (Russian, short, with the repo safety rules baked in) ---------
 
@@ -125,6 +184,120 @@ def log(message: str) -> None:
     """Short single-line log to stderr."""
     sys.stderr.write("[bridge {}] {}\n".format(time.strftime("%H:%M:%S"), message))
     sys.stderr.flush()
+
+
+# --- agent config: ~/.openhealth/agent.json ----------------------------------
+
+
+def config_home() -> Path:
+    """~/.openhealth, overridable via OPENHEALTH_HOME (tests, portable setups)."""
+    return Path(os.environ.get("OPENHEALTH_HOME") or "~/.openhealth").expanduser()
+
+
+def agent_config_path() -> Path:
+    return config_home() / CONFIG_FILE
+
+
+def sanitize_model(raw) -> "str | None":
+    """None/empty -> None; otherwise a strict model-name pattern or ValueError."""
+    if raw is None:
+        return None
+    if not isinstance(raw, str):
+        raise ValueError("model must be a string or null")
+    raw = raw.strip()
+    if not raw:
+        return None
+    if not _MODEL_RE.match(raw):
+        raise ValueError("model: only letters, digits, . _ : / - (max {} chars)".format(MAX_MODEL_LEN))
+    return raw
+
+
+def load_agent_config() -> dict:
+    """Read and validate agent.json; silently fall back to safe defaults."""
+    cfg = {"agent": "auto", "model": None, "extra_args": []}
+    path = agent_config_path()
+    if not path.is_file():
+        return cfg
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        log("agent.json unreadable, using defaults: {}".format(exc))
+        return cfg
+    if not isinstance(raw, dict):
+        return cfg
+    if raw.get("agent") in SELECTABLE_AGENTS:
+        cfg["agent"] = raw["agent"]
+    try:
+        cfg["model"] = sanitize_model(raw.get("model"))
+    except ValueError:
+        cfg["model"] = None
+    extra = raw.get("extra_args")
+    if isinstance(extra, list):
+        cfg["extra_args"] = [str(a)[:MAX_PARAM_LEN] for a in extra[:MAX_EXTRA_ARGS] if isinstance(a, str)]
+    return cfg
+
+
+def save_agent_config(cfg: dict) -> Path:
+    """Persist agent.json privately (dir 0700, file 0600). Returns the path."""
+    home = config_home()
+    home.mkdir(parents=True, exist_ok=True)
+    try:
+        os.chmod(home, 0o700)
+    except OSError:
+        pass
+    path = agent_config_path()
+    tmp = path.with_name(path.name + ".tmp")
+    body = {
+        "agent": cfg.get("agent", "auto"),
+        "model": cfg.get("model"),
+        "extra_args": list(cfg.get("extra_args") or []),
+    }
+    tmp.write_text(json.dumps(body, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    os.chmod(tmp, 0o600)
+    os.replace(tmp, path)
+    return path
+
+
+def agents_status() -> list:
+    """Every known agent CLI with availability and selectability flags."""
+    return [
+        {
+            "name": name,
+            "binary": binary,
+            "available": shutil.which(binary) is not None,
+            "selectable": name in SELECTABLE_AGENTS,
+        }
+        for name, binary in AGENT_CLI.items()
+    ]
+
+
+def handle_config_request(payload) -> "tuple":
+    """Validate POST /api/config body and persist. -> (http_status, body)."""
+    if not isinstance(payload, dict):
+        return 400, {"status": "error", "message": "body must be a JSON object"}
+    cfg = load_agent_config()
+    changed = False
+    if "agent" in payload:
+        agent = payload["agent"]
+        if agent not in SELECTABLE_AGENTS:
+            return 400, {
+                "status": "error",
+                "message": "unknown agent; allowed: {}".format(", ".join(SELECTABLE_AGENTS)),
+            }
+        cfg["agent"] = agent
+        changed = True
+    if "model" in payload:
+        try:
+            cfg["model"] = sanitize_model(payload["model"])
+        except ValueError as exc:
+            return 400, {"status": "error", "message": str(exc)}
+        changed = True
+    if changed:
+        try:
+            save_agent_config(cfg)
+        except OSError as exc:
+            return 500, {"status": "error", "message": "cannot write config: {}".format(exc)}
+    return 200, {"status": "ok", "config": cfg, "agents": agents_status()}
 
 
 # --- context: data.local.json -> compact prompt block ----------------------
@@ -201,6 +374,135 @@ def summarize_data(data: "dict | None") -> str:
     return "\n".join("- " + p for p in parts)[:MAX_SUMMARY_CHARS]
 
 
+# --- user context preamble: AGENTS.md / goal / about-me / research ----------
+
+
+def _context_dirs(base_dir: Path) -> list:
+    """Where personal docs are looked up: the runtime dir, then its parent."""
+    dirs = [base_dir]
+    if base_dir.parent != base_dir:
+        dirs.append(base_dir.parent)
+    return dirs
+
+
+def _read_head(path: Path, limit: int) -> str:
+    """First ``limit`` characters of a text file; '' on any read problem."""
+    try:
+        with path.open("r", encoding="utf-8", errors="replace") as fh:
+            return fh.read(limit).strip()
+    except OSError:
+        return ""
+
+
+def _find_exact(base_dir: Path, names) -> "Path | None":
+    for directory in _context_dirs(base_dir):
+        for name in names:
+            candidate = directory / name
+            if candidate.is_file():
+                return candidate
+    return None
+
+
+def _find_doc_by_stem(base_dir: Path, stem: str) -> "Path | None":
+    """Case-insensitive `<stem>.md`, else the first `<stem>*.md` (e.g. GOAL-x.md)."""
+    for directory in _context_dirs(base_dir):
+        try:
+            files = sorted(
+                p for p in directory.iterdir() if p.is_file() and p.suffix.lower() == ".md"
+            )
+        except OSError:
+            continue
+        exact = [p for p in files if p.name.lower() == stem + ".md"]
+        if exact:
+            return exact[0]
+        prefixed = [p for p in files if p.name.lower().startswith(stem)]
+        if prefixed:
+            return prefixed[0]
+    return None
+
+
+def _find_research_dir(base_dir: Path) -> "Path | None":
+    for directory in _context_dirs(base_dir):
+        for name in ("research", "researches"):
+            candidate = directory / name
+            if candidate.is_dir():
+                return candidate
+    return None
+
+
+def _research_section(base_dir: Path) -> str:
+    research_dir = _find_research_dir(base_dir)
+    if research_dir is None:
+        return ""
+    try:
+        files = [
+            p
+            for p in research_dir.iterdir()
+            if p.is_file() and not p.name.startswith(".") and p.suffix.lower() in (".md", ".txt")
+        ]
+    except OSError:
+        return ""
+    if not files:
+        return ""
+    files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    lines = ["Личные ресёрчи пользователя ({}/) — опирайся на них:".format(research_dir.name)]
+    names = ", ".join(p.name for p in files[:CONTEXT_RESEARCH_MAX_NAMES])
+    if len(files) > CONTEXT_RESEARCH_MAX_NAMES:
+        names += ", … (+{})".format(len(files) - CONTEXT_RESEARCH_MAX_NAMES)
+    lines.append("Файлы: " + names)
+    for path in files[:CONTEXT_RESEARCH_FRESH]:
+        head = " ".join(_read_head(path, CONTEXT_RESEARCH_HEAD_CHARS).split())
+        if head:
+            lines.append("- {}: {}".format(path.name, head))
+    return "\n".join(lines)
+
+
+def build_user_context(base_dir: Path) -> str:
+    """Personal-context preamble for agent prompts.
+
+    Sources (looked up in --dir, then its parent):
+      1. AGENTS.md or CLAUDE.md  — user instructions, first ~2000 chars;
+      2. goal.md / goal*.md      — project goal, ~600 chars;
+      3. about-me.md / about-me* — personal background, ~600 chars;
+      4. research|researches/    — file names + heads of the 3 freshest.
+
+    Total capped at MAX_CONTEXT_CHARS; on overflow the tail sections
+    (research first) lose space, AGENTS.md keeps priority.
+    Returns '' when nothing personal is found.
+    """
+    sections = []
+
+    agents_file = _find_exact(base_dir, ("AGENTS.md", "CLAUDE.md"))
+    if agents_file is not None:
+        text = _read_head(agents_file, CONTEXT_AGENTS_CHARS)
+        if text:
+            sections.append("Инструкции пользователя ({}):\n{}".format(agents_file.name, text))
+
+    for stem, label in (("goal", "Цель пользователя"), ("about-me", "О пользователе")):
+        doc = _find_doc_by_stem(base_dir, stem)
+        if doc is not None:
+            text = _read_head(doc, CONTEXT_DOC_CHARS)
+            if text:
+                sections.append("{} ({}):\n{}".format(label, doc.name, text))
+
+    research = _research_section(base_dir)
+    if research:
+        sections.append(research)
+
+    if not sections:
+        return ""
+
+    budget = MAX_CONTEXT_CHARS - len(CONTEXT_HEADER)
+    kept = []
+    for section in sections:  # priority order: AGENTS > goal > about-me > research
+        if budget <= 2:
+            break
+        piece = section[: budget - 2]
+        kept.append(piece)
+        budget -= len(piece) + 2
+    return (CONTEXT_HEADER + "\n\n" + "\n\n".join(kept))[:MAX_CONTEXT_CHARS]
+
+
 # --- prompt assembly --------------------------------------------------------
 
 
@@ -213,15 +515,32 @@ def sanitize_param(raw) -> str:
     return " ".join(raw.split())[:MAX_PARAM_LEN]
 
 
-def build_prompt(task: str, param: str = "", data_summary: str = "", lang: str = "ru") -> str:
-    """Assemble the full agent prompt for a whitelisted task."""
+def build_prompt(
+    task: str,
+    param: str = "",
+    data_summary: str = "",
+    lang: str = "ru",
+    user_context: str = "",
+    memory_block: str = "",
+) -> str:
+    """Assemble the full agent prompt for a whitelisted task.
+
+    Order: intro, safety, user context preamble, memory of past runs,
+    the task itself, the data digest, language hint. The preamble goes
+    BEFORE the task so personal instructions take precedence.
+    """
     if task not in TASK_INSTRUCTIONS:
         raise ValueError("unknown task: {!r}".format(task))
     instruction = TASK_INSTRUCTIONS[task]
     if task == "research":
         instruction = instruction.format(topic=param or "HRV")
 
-    blocks = [PROMPT_INTRO, PROMPT_SAFETY, instruction]
+    blocks = [PROMPT_INTRO, PROMPT_SAFETY]
+    if user_context:
+        blocks.append(user_context)
+    if memory_block:
+        blocks.append(memory_block)
+    blocks.append(instruction)
     if data_summary:
         blocks.append("ДАННЫЕ (выжимка из data.local.json):\n" + data_summary)
     else:
@@ -250,48 +569,94 @@ def available_agents() -> list:
     return [name for name in ("claude", "codex") if shutil.which(name)]
 
 
-def build_agent_command(agent: str, prompt: str, last_message_path: "str | None" = None) -> list:
+def build_agent_command(
+    agent: str,
+    prompt: str,
+    last_message_path: "str | None" = None,
+    model: "str | None" = None,
+    extra_args: "tuple | list" = (),
+) -> list:
     """argv for the agent CLI. The prompt travels as a single argv element —
-    no shell is ever involved."""
+    no shell is ever involved. Model flags per CLI: claude `--model X`,
+    codex `-m X`, antigravity (agy) `--model X` (verified via `agy --help`)."""
+    extra = [str(a) for a in extra_args]
     if agent == "claude":
-        return ["claude", "-p", prompt, "--output-format", "text"]
+        cmd = ["claude", "-p", prompt, "--output-format", "text"]
+        if model:
+            cmd.extend(["--model", model])
+        cmd.extend(extra)
+        return cmd
     if agent == "codex":
         # --skip-git-repo-check: codex exec refuses to run outside a git repo
         # otherwise; --sandbox read-only: analysis only, no file writes;
         # --output-last-message: clean final answer without session logs.
         cmd = ["codex", "exec", "--skip-git-repo-check", "--sandbox", "read-only"]
+        if model:
+            cmd.extend(["-m", model])
+        cmd.extend(extra)
         if last_message_path:
             cmd.extend(["--output-last-message", last_message_path])
         cmd.append(prompt)
         return cmd
+    if agent == "antigravity":
+        # agy uses Go-style flags: all flags before the prompt value;
+        # --print <prompt> runs one prompt non-interactively.
+        cmd = ["agy"]
+        if model:
+            cmd.extend(["--model", model])
+        cmd.extend(extra)
+        cmd.extend(["--print", prompt])
+        return cmd
     raise ValueError("unknown agent: {!r}".format(agent))
 
 
-def run_agent(prompt: str, base_dir: Path) -> dict:
-    """Run agent CLIs in preference order; on failure fall through to the next.
+def run_agent(prompt: str, base_dir: Path, config: "dict | None" = None) -> dict:
+    """Run agent CLIs honoring ~/.openhealth/agent.json.
 
-    claude может быть установлен, но не авторизован для headless-вызова (401) —
-    тогда честно пробуем codex, и только если упали все, возвращаем последнюю ошибку.
+    agent=auto keeps the cascade (claude -> codex): claude может быть
+    установлен, но не авторизован для headless-вызова (401) — тогда честно
+    пробуем codex, и только если упали все, возвращаем последнюю ошибку.
+    A concrete agent in the config runs alone, no fallback.
     """
-    agents = available_agents()
-    if not agents:
-        return {"status": "no_agent", "message": "Установи Claude Code или Codex CLI"}
+    config = config if config is not None else load_agent_config()
+    choice = config.get("agent") or "auto"
+    if choice == "auto":
+        agents = available_agents()
+        if not agents:
+            return {"status": "no_agent", "message": "Установи Claude Code или Codex CLI"}
+    else:
+        binary = AGENT_CLI.get(choice)
+        if binary is None or shutil.which(binary) is None:
+            return {
+                "status": "no_agent",
+                "message": "Выбранный агент '{}' недоступен (CLI `{}` не найден). "
+                "Поменяй выбор в настройках или поставь CLI.".format(choice, binary or choice),
+            }
+        agents = [choice]
 
+    model = config.get("model")
+    extra_args = tuple(config.get("extra_args") or ())
     last = None
     for agent in agents:
-        last = _run_one_agent(agent, prompt, base_dir)
+        last = _run_one_agent(agent, prompt, base_dir, model=model, extra_args=extra_args)
         if last.get("status") in ("ok", "timeout"):
             return last
     return last
 
 
-def _run_one_agent(agent: str, prompt: str, base_dir: Path) -> dict:
+def _run_one_agent(
+    agent: str,
+    prompt: str,
+    base_dir: Path,
+    model: "str | None" = None,
+    extra_args: "tuple | list" = (),
+) -> dict:
     """One blocking CLI run with a timeout."""
     last_message_path = None
     if agent == "codex":
         fd, last_message_path = tempfile.mkstemp(prefix="oh-bridge-", suffix=".txt")
         os.close(fd)
-    cmd = build_agent_command(agent, prompt, last_message_path)
+    cmd = build_agent_command(agent, prompt, last_message_path, model=model, extra_args=extra_args)
 
     started = time.monotonic()
     try:
@@ -360,9 +725,31 @@ def handle_agent_request(payload: dict, base_dir: Path) -> "tuple":
         return 200, dict(TRANSCRIPT_STUB)
 
     summary = summarize_data(load_local_data(base_dir))
-    prompt = build_prompt(task, param=param, data_summary=summary, lang=lang)
-    result = run_agent(prompt, base_dir)
+    user_context = build_user_context(base_dir)
+    memory_block = ""
+    try:
+        past = agent_memory.recall(task, query=param, limit=5)
+        memory_block = agent_memory.format_memory_block(past, max_chars=MAX_MEMORY_BLOCK_CHARS)
+    except OSError:
+        pass  # memory unavailable -> run without it
+    # sizes only — never the contents (personal data)
+    log("prompt preamble: context {} chars, memory {} chars".format(len(user_context), len(memory_block)))
+
+    prompt = build_prompt(
+        task,
+        param=param,
+        data_summary=summary,
+        lang=lang,
+        user_context=user_context,
+        memory_block=memory_block,
+    )
+    result = run_agent(prompt, base_dir, config=load_agent_config())
     result["task"] = task
+    if result.get("status") == "ok" and result.get("result"):
+        try:
+            agent_memory.remember(task, result["result"], tags=[param] if param else [])
+        except OSError as exc:
+            log("memory write failed: {}".format(exc.__class__.__name__))
     return 200, result
 
 
@@ -391,38 +778,56 @@ class BridgeHandler(SimpleHTTPRequestHandler):
         if path == "/api/health":
             self._send_json({"ok": True, "agents": detect_agents()})
             return
+        if path == "/api/config":
+            self._send_json({"config": load_agent_config(), "agents": agents_status()})
+            return
+        if path == "/api/memory":
+            entries = agent_memory.load_entries()
+            self._send_json(
+                {"entries": list(reversed(entries[-agent_memory.DIGEST_ENTRIES:])), "count": len(entries)}
+            )
+            return
         if path == "/api/data":
             data = load_local_data(self.base_dir)
             self._send_json(data if data is not None else {"demo": True})
             return
         super().do_GET()  # static files; index.html for directories
 
-    def do_POST(self) -> None:  # noqa: N802 (http.server API)
-        path = self.path.split("?", 1)[0]
-        if path != "/api/agent":
-            self._send_json({"status": "error", "message": "not found"}, status=404)
-            return
-
+    def _read_json_body(self) -> "tuple":
+        """-> (payload, None) or (None, (http_status, error_body))."""
         ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
         if ctype != "application/json":
-            self._send_json(
-                {"status": "error", "message": "Content-Type must be application/json"}, status=415
-            )
-            return
+            return None, (415, {"status": "error", "message": "Content-Type must be application/json"})
         try:
             length = int(self.headers.get("Content-Length") or 0)
         except ValueError:
             length = 0
         if length <= 0:
-            self._send_json({"status": "error", "message": "missing body"}, status=400)
-            return
+            return None, (400, {"status": "error", "message": "missing body"})
         if length > MAX_BODY_BYTES:
-            self._send_json({"status": "error", "message": "body too large"}, status=413)
-            return
+            return None, (413, {"status": "error", "message": "body too large"})
         try:
-            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            return json.loads(self.rfile.read(length).decode("utf-8")), None
         except (ValueError, UnicodeDecodeError):
-            self._send_json({"status": "error", "message": "invalid JSON"}, status=400)
+            return None, (400, {"status": "error", "message": "invalid JSON"})
+
+    def do_POST(self) -> None:  # noqa: N802 (http.server API)
+        path = self.path.split("?", 1)[0]
+        if path not in ("/api/agent", "/api/config"):
+            self._send_json({"status": "error", "message": "not found"}, status=404)
+            return
+
+        payload, error = self._read_json_body()
+        if error is not None:
+            self._send_json(error[1], status=error[0])
+            return
+
+        if path == "/api/config":
+            status, body = handle_config_request(payload)
+            log("POST /api/config -> {} (agent={})".format(
+                body.get("status"), (body.get("config") or {}).get("agent", "-")
+            ))
+            self._send_json(body, status=status)
             return
 
         status, body = handle_agent_request(payload, self.base_dir)
@@ -434,6 +839,19 @@ class BridgeHandler(SimpleHTTPRequestHandler):
             )
         )
         self._send_json(body, status=status)
+
+    def do_DELETE(self) -> None:  # noqa: N802 (http.server API)
+        path = self.path.split("?", 1)[0]
+        if path != "/api/memory":
+            self._send_json({"status": "error", "message": "not found"}, status=404)
+            return
+        try:
+            cleared = agent_memory.clear()
+        except OSError:
+            self._send_json({"status": "error", "message": "cannot clear memory"}, status=500)
+            return
+        log("DELETE /api/memory -> cleared {} entries".format(cleared))
+        self._send_json({"status": "ok", "cleared": cleared})
 
     def log_message(self, fmt: str, *args) -> None:  # short stderr access log
         sys.stderr.write("[bridge] {} {}\n".format(self.address_string(), fmt % args))

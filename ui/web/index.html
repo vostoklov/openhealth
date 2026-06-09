@@ -2571,7 +2571,32 @@ document.getElementById('toggleBiomarkerData').addEventListener('click', () => {
   btn.textContent = DATA.biomarkersConnected ? "Симулировать пустые анализы" : "Восстановить анализы";
 });
 
-window.addEventListener('DOMContentLoaded', () => {
+// --- Real-data bridge ---------------------------------------------------
+// Try to load locally-generated real data (data.local.json, git-ignored).
+// If present, shallow-merge it over the demo DATA so only the keys the bridge
+// actually produced get overridden — demo stays the fallback for everything
+// the bridge omits (e.g. correlations/habits) and for users without the file.
+async function loadRealData() {
+  try {
+    const res = await fetch('data.local.json', { cache: 'no-store' });
+    if (!res.ok) return false;
+    const real = await res.json();
+    Object.keys(real).forEach(k => {
+      if (k.startsWith('_')) return;            // skip _meta
+      if (real[k] === null || real[k] === undefined) return;
+      if (Array.isArray(real[k]) && real[k].length === 0) return; // keep demo arrays
+      DATA[k] = real[k];
+    });
+    const fs = document.getElementById('footerSync');
+    if (fs) fs.textContent = 'реальные данные · ' + (DATA.date || 'локально');
+    return true;
+  } catch (e) {
+    // No file / fetch blocked (e.g. opened via file://) → demo fallback.
+    return false;
+  }
+}
+
+function renderDashboard() {
   // Жёстко фиксируем стартовый экран = Сегодня (детерминированно, без зависимости от залипшего состояния).
   document.querySelectorAll('.zone').forEach(s => s.classList.toggle('on', s.id === 'z-today'));
   document.querySelectorAll('aside nav a').forEach(a => a.classList.toggle('active', a.dataset.z === 'today'));
@@ -2582,11 +2607,18 @@ window.addEventListener('DOMContentLoaded', () => {
   updateBiomarkersScreen();
   updateSyncScreen();
   initJournalScreen();
-  
-  gsap.fromTo('#z-today .card-outer', 
-    { opacity: 0, y: 25 }, 
+
+  gsap.fromTo('#z-today .card-outer',
+    { opacity: 0, y: 25 },
     { opacity: 1, y: 0, duration: 0.7, stagger: 0.08, ease: "power2.out", onComplete: animateRecoveryRing }
   );
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  // Render immediately with whatever DATA we have, then re-render if real
+  // local data loads (keeps demo instant and avoids a blank first paint).
+  loadRealData().then(loaded => { if (loaded) renderDashboard(); });
+  renderDashboard();
 });
 
 function exploreCorrelations() {

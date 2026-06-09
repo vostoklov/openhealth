@@ -1,230 +1,203 @@
 # OpenHealth
 
-**A personal health operating system. Open-source. Local-first. Built by a community.**
+**A local-first, agent-native personal health operating system. Open-source.**
 
-`v0.1.0-alpha` | MIT License
+`v0.1.0` · MIT License
 
 ---
 
 ## What is this?
 
-OpenHealth is an open-source framework for managing your health through data, experiments, and collective knowledge.
+OpenHealth turns your scattered health data into one local knowledge base you can
+actually reason over — and you reason over it by **talking to an AI agent**, not
+by clicking through an app.
 
-It is **not an app**. It is an operating system — a set of connectors, schemas, and tools you compose into YOUR health system. For your body, your conditions, your hypotheses.
+Your sleep is in one wearable, your workouts in another, your bloodwork in a PDF,
+your schedule in a calendar. Nothing connects them, and nothing lets you ask the
+question that matters: *"What actually moves my recovery?"* OpenHealth is the
+layer that connects them — locally — and answers that question as a careful,
+testable prompt instead of a dashboard you have to interpret alone.
 
-**The problem:** health data is scattered across dozens of services. Sleep in Oura, workouts in Garmin, bloodwork in a PDF, DNA in 23andMe, schedule in Google Calendar. Nothing connects them. No one lets you ask: *"How does my sleep correlate with my meeting load?"* or test: *"If I stop caffeine after 2pm, does my deep sleep improve?"*
+**It is not an app.** It is a Python package plus a set of agent skills. There is
+no GUI: a person (often non-technical) talks to Claude Code or Codex, and the
+agent logs data, runs local domain modules, and reads the results back gently.
 
-OpenHealth solves this.
+## The core loop
 
----
+Everything serves one loop:
 
-## Architecture
+> **journal → recovery → correlations → action**
 
+1. **Journal** — low-friction daily check-ins (a WHOOP-style catalog of **200+
+   behaviors**) plus passive imports become dated observations.
+2. **Recovery** — HRV, resting heart rate, sleep and strain become transparent,
+   **versioned** scores (change the formula, bump the version, old records stay
+   reproducible).
+3. **Correlations** — for each behavior you log, your average recovery on *yes*
+   days is compared against *no* days over a personal baseline window. This is
+   "what affects me", computed locally.
+4. **Action** — every finding comes back as a confidence-graded prompt to test
+   next (an n-of-1 experiment), never as a verdict.
+
+## What's new in this release
+
+Two months of quiet work turned OpenHealth from a manifest into a working system:
+
+- **Modular domain system** — each health domain is a self-registering plugin
+  (`pulse`, `sleep`, `cycle`, `body`, `metabolic`, `skin`, `journal`, `recovery`,
+  `correlations`). Adding a domain = adding a module. No core changes.
+- **Journal behavior library** — 200+ behaviors transcribed from the WHOOP
+  Journal screens, as a static catalog you log against in seconds.
+- **Versioned recovery scoring** — recovery (0–100, HRV-led), strain (0–21) and
+  sleep debt, each stamped with an `algo_version` so hypotheses stay reproducible.
+- **Personal correlations** — behavior → recovery impact with a 5-yes / 5-no
+  threshold and confidence caps (a raw association is a weak signal until an
+  on/off switch repeats).
+- **Connectors** — **Apple Health** export, **WHOOP** (OAuth + API + webhook
+  verification), and **Google Calendar** (meeting-load and life-context, writing
+  only to a *derived* calendar), with more (Oura, Garmin, …) arriving via the
+  connector template.
+- **Evidence grading (C1–C5)** and red-flag safety checks baked into every module.
+- **Optional `ask` layer** — answer questions over your local records with an LLM
+  (Anthropic API), with every claim cited back to the record it came from.
+- **Agent-native interface** — the `health-agent` skill plus slash commands
+  (`/checkin`, `/log`, `/pulse`, `/insights`, `/trends`, `/protocol`, …) so a
+  non-technical person can use the whole thing by chatting.
+
+## Install
+
+Requires Python 3.10+.
+
+```bash
+git clone https://github.com/igindin/openhealth.git
+cd openhealth
+pip install -e .          # or: make setup  (installs + inits a workspace)
 ```
-┌──────────────────────────────────────────────────┐
-│                  Your Machine                    │
-│                                                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────┐   │
-│  │  Apple   │  │  Garmin  │  │   Manual     │   │
-│  │  Health  │  │ Connect  │  │   Input      │   │
-│  └────┬─────┘  └────┬─────┘  └──────┬───────┘   │
-│       │              │               │           │
-│       ▼              ▼               ▼           │
-│  ┌──────────────────────────────────────────┐    │
-│  │        Unified Health Schema             │    │
-│  │   (events, metrics, observations)        │    │
-│  └──────────────┬───────────────────────────┘    │
-│                 │                                │
-│        ┌────────┴────────┐                       │
-│        ▼                 ▼                       │
-│  ┌──────────┐    ┌──────────────┐                │
-│  │ Personal │    │  Hypothesis  │                │
-│  │ Dashboard│    │  Engine      │                │
-│  └──────────┘    └──────┬───────┘                │
-│                         │                        │
-└─────────────────────────┼────────────────────────┘
-                          │ (opt-in, anonymized)
-                          ▼
-                 ┌──────────────────┐
-                 │  Community       │
-                 │  Hypothesis Pool │
-                 └──────────────────┘
+
+## Run
+
+```bash
+# Initialize a local workspace (folders + SQLite index)
+python -m openhealth init
+
+# See the health domain modules you can run
+python -m openhealth modules
+
+# Run a domain module on a JSON payload (also saves results locally)
+python -m openhealth module --id recovery --payload-json '{ ... }'
+
+# Import an Apple Health export into daily observations
+python -m openhealth import-apple-health --path ~/apple_health_export/export.xml
+
+# Connect WHOOP (OAuth), then sync
+python -m openhealth whoop-auth-url
+python -m openhealth whoop-sync --days-back 30
+
+# Look at recent records / insights
+python -m openhealth recent --type InsightHypothesis
+python -m openhealth recent --metric rmssd_ms --limit 30
 ```
 
-### Three layers
-
-| Layer | What it does | Who maintains it |
-|-------|-------------|-----------------|
-| **Core** (`core/`) | Data schema, storage, plugin loader, privacy, hypothesis engine | Project maintainer |
-| **Connectors** (`connectors/`) | Integrations with data sources (Oura, Garmin, Apple Health, DNA, calendar...) | Each contributor owns their connector |
-| **Hypotheses** (`hypotheses/`) | Community health experiments with anonymized data | Anyone can propose |
-
----
-
-## Principles
-
-1. **Your data stays with you.** Everything is stored locally. No cloud accounts, no tracking, no ads. Data only leaves your machine if you explicitly choose to share it.
-
-2. **Modular by design.** Each connector is a plugin. Install only what you need.
-
-3. **Hypotheses as a social layer.** The unique power of OpenHealth is the hypothesis engine — a shared space where people propose health experiments, define protocols, and optionally contribute anonymized results. The more people participate, the more we all learn.
-
-4. **Quality over speed.** 5 working connectors beat 50 broken ones. Security and privacy are non-negotiable.
-
-5. **Diversity of health domains.** Chronic conditions, athletic performance, aging biomarkers, injury recovery — the architecture supports all of it.
-
-6. **AI-native development.** Built by people using AI coding tools (Claude Code, Cursor, Copilot) with strong guardrails, clear interfaces, and automated quality checks.
-
----
+In practice you rarely type these by hand — you ask the agent ("log that I had
+two coffees and slept badly", "how's my recovery this week?") and it runs them
+for you. The CLI is the substrate; the agent is the interface.
 
 ## Project structure
 
 ```
 openhealth/
-├── MANIFEST.md             # Vision and values
-├── ARCHITECTURE.md         # Technical architecture (RFC-001)
-├── CONTRIBUTING.md         # Contribution rules
-├── CLAUDE.md               # Rules for AI coding tools
+├── AGENTS.md               # Canonical operating contract for AI agents
+├── CLAUDE.md               # Thin Claude Code adapter (imports AGENTS.md)
+├── ARCHITECTURE.md         # Technical architecture
 │
-├── core/                   # Protected core (Python)
-│   ├── schema/             # Dataclasses, JSON Schema
-│   ├── storage/            # SQLite local storage
-│   ├── plugin_loader/      # Dynamic connector loading
-│   ├── hypothesis_engine/  # Experiment management
-│   └── privacy/            # Data anonymization
+├── openhealth/             # The Python package (stdlib-only core)
+│   ├── modules/            # Domain plugins: pulse, sleep, cycle, body,
+│   │                       #   metabolic, skin, journal, recovery, correlations
+│   ├── connectors/         # Apple Health export, Google Calendar
+│   ├── whoop.py            # WHOOP OAuth + API + webhook verification
+│   ├── evidence.py         # C1–C5 confidence scale + red-flag checks
+│   ├── journal_behaviors.py# Loader for the behavior catalog
+│   ├── ask.py              # Optional LLM Q&A over local records (cited)
+│   ├── storage.py / index.py / ingest.py   # Local workspace + SQLite index
+│   └── data/               # Static resources (journal behavior library)
 │
-├── connectors/             # One per data source
-│   └── _template/          # Starter template for new connectors
-│
-├── hypotheses/             # Community experiments
-│   ├── _template/          # Hypothesis proposal template
-│   └── caffeine-cutoff-sleep/  # Example hypothesis
-│
-├── ui/
-│   ├── cli/                # Command-line interface (Python)
-│   └── web/                # Web dashboard (Next.js, future)
-│
-└── rfcs/                   # Architecture proposals
+├── connectors/             # Connector template for new data sources
+├── hypotheses/             # Community experiment templates + examples
+├── schemas/                # JSON Schemas (canonical record, manifests, intake)
+├── rfcs/                   # Architecture proposals
+├── kit/                    # Participant onboarding kit
+└── tests/                  # pytest suite (synthetic data only)
 ```
 
----
+## Principles
+
+1. **Your data stays with you.** Local storage, local processing. No cloud
+   accounts, no telemetry, no ads. Data leaves your machine only if you choose,
+   and only ever as anonymized artifacts.
+2. **A helper, never a doctor.** Nothing here diagnoses or prescribes. Findings
+   are cautious prompts to test, graded C1–C5; anything at C3 or below is phrased
+   as a question. Red flags route you straight to a clinician.
+3. **Modular by design.** Each module and connector is a plugin. Install and run
+   only what you need.
+4. **Raw evidence is immutable.** Once archived, sources are never edited;
+   provenance and confidence travel with every record.
+5. **Quality over speed.** A few working connectors beat fifty broken ones.
+   Security and privacy are non-negotiable.
+6. **AI-native development.** Built with AI coding tools behind strong guardrails,
+   clear interfaces, and automated checks.
 
 ## How to contribute
 
-### Quick start
-
-```bash
-git clone https://github.com/igindin/openhealth.git
-cd openhealth
-pip install -e .
-python -m unittest discover
-```
-
-### What you can do
-
 | Action | How to start | Difficulty |
 |--------|-------------|-----------|
-| **Build a connector** | Copy `connectors/_template/`, implement `HealthConnector` interface | Medium |
-| **Propose a hypothesis** | Copy `hypotheses/_template/`, fill in the template, submit a PR | Easy |
-| **Contribute a reference norm** | Add a marker + source to `reference_ranges.py` | Easy |
-| **Contribute an insight template** | Anonymized hypothesis pattern (see [RFC-002](./rfcs/002-community-contribution-model.md)) | Easy |
+| **Build a connector** | Copy `connectors/_template/`, return canonical observations | Medium |
+| **Add a domain module** | Copy a module in `openhealth/modules/`, implement `schema()` + `compute()` | Medium |
+| **Propose a hypothesis** | Copy `hypotheses/_template/`, fill it in, open a PR | Easy |
+| **Add a reference norm** | Add a marker + source to `reference_ranges.py` | Easy |
 | **Improve architecture** | Write an RFC in `rfcs/`, discuss on the PR | Advanced |
-| **Review PRs** | Look for `needs-review` label | Any |
-| **Report bugs** | Open an Issue using the template | Easy |
+| **Report bugs** | Open an Issue from the template | Easy |
 
-**How we handle data and trust:** personal health data never leaves your
-machine; the community shares only anonymized artifacts (code, reference norms,
-insight templates). Every claim carries a confidence label (C1–C5). See
-[docs/methodology/evidence-and-trust.md](./docs/methodology/evidence-and-trust.md)
-and [RFC-002](./rfcs/002-community-contribution-model.md).
+**Ground rules** (see [CONTRIBUTING.md](./CONTRIBUTING.md) and
+[AGENTS.md](./AGENTS.md)):
 
-### Rules
+- Telegram = discussion. GitHub = decisions and code. Nothing is official without
+  an Issue or PR.
+- All changes via Pull Request; direct push to `main` is blocked.
+- Conventional Commits, scoped by area: `feat(connector):`, `fix(core):`, `docs:`.
+- **Never commit secrets or real health data.** Synthetic test data only;
+  pre-commit hooks and CI scan every PR. Run `make check` (lint + tests) first.
 
-- **Telegram** = discussion. **GitHub** = decisions and code.
-- Nothing from chat is official until there's an Issue or PR.
-- All changes via Pull Request. Direct push to `main` is blocked.
-- Conventional Commits: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`
-- Details: [CONTRIBUTING.md](./CONTRIBUTING.md)
+## Disclaimer
 
----
-
-## The Hypothesis Engine
-
-This is what makes OpenHealth more than a tracker — it's a **collective knowledge platform**.
-
-### How it works
-
-1. Someone proposes a hypothesis: *"Stopping caffeine after 2pm improves deep sleep by 15+ minutes"*
-2. A protocol is defined: 14-day baseline + 14-day experiment
-3. Participants connect their data sources and follow the protocol
-4. After completion, they contribute **anonymized** averages
-5. The community sees aggregated results
-
-### The flywheel
-
-More connectors → more data sources → more hypotheses can be tested → more value for everyone.
-
----
-
-## Security
-
-**Non-negotiable:**
-
-- No API keys, tokens, or passwords in code. Only `.env` (gitignored)
-- No real health data in the repository. Synthetic test data only
-- Pre-commit hooks block commits containing secrets
-- CI scans every PR for leaks
-- Hypothesis data is anonymized before sharing
-
----
-
-## Tech stack
-
-| Component | Technology |
-|-----------|-----------|
-| Language | Python 3.10+ (core, connectors) / TypeScript (UI, future) |
-| Runtime | Python / Node.js (UI) |
-| Storage | SQLite (local, stdlib sqlite3) |
-| Validation | JSON Schema + dataclasses |
-| Testing | unittest |
-| CI | GitHub Actions |
-
----
-
-## Governance
-
-**BDFL + RFC model:**
-
-- One maintainer makes final calls on architecture and merges
-- All decisions published as RFCs (Request for Comments)
-- Anyone can submit an RFC to change any part of the system
-- Discussion happens publicly on GitHub
-- Principle: *"Strong opinions, loosely held"*
-
-Governance will evolve as the project matures. Trusted contributors earn expanded rights.
-
----
-
-## What's open for change (everything)
-
-This is `v0.1.0-alpha`. **Everything is up for discussion:**
-
-- [x] ~~TypeScript vs Python vs multi-language support?~~ **Decided:** Python for core + connectors, TypeScript/Next.js for UI
-- [ ] Web dashboard — separate repo or monorepo?
-- [ ] Real-time data (CGM, pulse oximeters)?
-- [ ] Mobile app — PWA, React Native, or CLI + web only?
-- [ ] How to incentivize hypothesis participation?
-- [ ] Connector "marketplace"?
-- [ ] Data versioning and schema migration strategy?
-
-To propose a change: copy `rfcs/_template.md`, fill it in, submit a PR.
-
----
+OpenHealth is a self-tracking and personal-experimentation tool. It is **not a
+medical device and does not provide medical advice, diagnosis, or treatment.**
+Outputs are observational signals and hypotheses to discuss with a qualified
+professional — not conclusions. If you have a medical concern, or if a red-flag
+symptom appears (chest pain, fainting, suicidal thoughts, a critical lab value),
+seek professional care. Use at your own discretion.
 
 ## License
 
-[MIT](./LICENSE) — do what you want, just keep the copyright notice.
+[MIT](./LICENSE) — do what you want, keep the copyright notice.
 
 ---
 
-*OpenHealth is built by a community. Join us.*
+## Для участников AI Mindset Health Sprint
+
+OpenHealth — это local-first система: все данные остаются на вашей машине, а
+интерфейс — это разговор с агентом (Claude Code / Codex), а не приложение.
+
+Как начать:
+
+1. `pip install -e .`, затем `python -m openhealth init` (или `make setup`).
+2. Скопируйте `templates/about-me.md` в приватное место и заполните: кто вы,
+   ваша цель по здоровью, где лежат данные. Это контекст, который агент читает
+   первым — без него каждый раз начинаете с нуля.
+3. Дальше просто говорите с агентом: «залогируй, что плохо спал», «как моё
+   восстановление за неделю?». Он сам запускает нужный модуль. Под капотом —
+   тот же цикл: журнал → recovery → корреляции → действие.
+
+Важно: это инструмент самонаблюдения, **не медицинский совет и не диагностика.**
+Любой вывод — гипотеза с оценкой уверенности (C1–C5), а не заключение. Красные
+флаги (боль в груди, обмороки и т.п.) — сразу к врачу. Самый низкий порог входа —
+экспорт Apple Health: нужен только iPhone.

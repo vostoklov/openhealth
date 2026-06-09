@@ -10,8 +10,9 @@
 <link rel="apple-touch-icon" href="assets/icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<!-- Подключение Phosphor Icons Light -->
+<!-- Подключение Phosphor Icons: Light (базовый вес) + Duotone (акценты: active-nav, позитивные статусы) -->
 <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+<link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/duotone/style.css">
 <!-- Подключение GSAP -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <style>
@@ -520,7 +521,8 @@
     .col-6, .col-3 { grid-column: span 6; }
   }
 
-  @media (max-width: 768px) {
+  /* Drawer-порог 860: на 800px полному сайдбару тесно — контент задыхается. */
+  @media (max-width: 860px) {
     aside {
       position: fixed;
       top: 0;
@@ -874,55 +876,145 @@
     font-size: 14px;
   }
 
-  /* Biomarker Scale Visualization */
-  .biomarker-scale-wrapper {
-    width: 180px;
-    min-width: 120px;
+  /* Biomarker segment-bar (паттерн Apple Health: пилюля-статус на позиции значения) */
+  .segbar {
+    width: 216px;
+    min-width: 170px;
   }
 
-  .scale-container {
+  .segbar-pillrow {
     position: relative;
-    height: 5px;
-    background: var(--line);
-    border-radius: 3px;
-    width: 100%;
+    height: 21px;
+    margin-bottom: 5px;
   }
 
-  .scale-ref {
+  .segbar-pill {
     position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    font: 600 10.5px var(--mono);
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    z-index: 1;
+  }
+
+  .segbar-pill::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -2.5px;
+    width: 7px;
+    height: 7px;
+    transform: translateX(-50%) rotate(45deg);
+    background: inherit;
+    border-radius: 1px;
+    z-index: -1;
+  }
+
+  .segbar-pill.st-optimal { background: var(--ok); color: #03130c; }
+  .segbar-pill.st-normal { background: var(--warn); color: #181403; }
+  .segbar-pill.st-low, .segbar-pill.st-high, .segbar-pill.st-deficient { background: var(--bad); color: #fff; }
+
+  .segbar-track {
+    display: flex;
+    gap: 2px;
+    height: 7px;
+  }
+
+  .segbar-seg {
     height: 100%;
+    border-radius: 2px;
     background: var(--line2);
-    border-radius: 2px;
   }
 
-  .scale-opt {
-    position: absolute;
-    height: 100%;
-    background: rgba(16, 185, 129, 0.25);
-    border-radius: 2px;
+  .segbar-seg:first-child { border-radius: 4px 2px 2px 4px; }
+  .segbar-seg:last-child { border-radius: 2px 4px 4px 2px; }
+  .segbar-seg.out { background: var(--line); }
+  .segbar-seg.opt { background: rgba(16, 185, 129, 0.42); }
+
+  .segbar-ends {
+    display: flex;
+    justify-content: space-between;
+    font: 500 9px var(--mono);
+    color: var(--dim);
+    margin-top: 4px;
   }
 
-  .scale-marker {
-    position: absolute;
-    top: 50%;
-    width: 11px;
-    height: 11px;
+  .biomarker-row.active {
+    background: var(--accent-glow);
+  }
+
+  /* Biomarker detail panel (паттерн Ultrahuman: крупное значение + цветная статус-строка) */
+  .bio-detail-grid {
+    display: grid;
+    grid-template-columns: minmax(220px, 0.9fr) 1.1fr;
+    gap: 28px;
+    align-items: start;
+  }
+
+  @media (max-width: 800px) {
+    .bio-detail-grid { grid-template-columns: 1fr; }
+  }
+
+  .bio-detail-value {
+    font: 300 54px var(--mono);
+    letter-spacing: -0.05em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bio-detail-value small {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--mut);
+    letter-spacing: 0;
+    margin-left: 4px;
+  }
+
+  .bio-status-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font: 600 11px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .bio-status-line .dot {
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    transform: translate(-50%, -50%);
-    border: 2.5px solid var(--card-inner);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+    flex-shrink: 0;
   }
 
-  .scale-marker.low, .scale-marker.high, .scale-marker.deficient {
-    background: var(--bad);
+  .bio-range-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
   }
 
-  .scale-marker.normal {
-    background: var(--warn);
-  }
+  .bio-range-row:last-child { border-bottom: none; }
+  .bio-range-row .k { color: var(--mut); }
+  .bio-range-row .v { font-family: var(--mono); color: var(--ink); text-align: right; }
+  .bio-range-row .v .muted { font-size: 11px; }
 
-  .scale-marker.optimal {
-    background: var(--ok);
+  .bio-discuss {
+    margin: 18px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--mut);
   }
 
   .biomarker-grade {
@@ -1804,6 +1896,224 @@
     max-width: 340px;
   }
 
+  /* ---- Nav active icon: duotone-акцент ---- */
+  nav a.active i { color: var(--accent); opacity: 1; }
+
+  /* ---- Reports (стиль WHOOP Monthly Performance Assessment) ---- */
+  .rep-cover-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
+  .rep-cover h2 {
+    margin: 0;
+    font: 600 24px var(--font);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .rep-cover .period {
+    font: 500 12px var(--mono);
+    color: var(--mut);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-top: 7px;
+  }
+
+  .rep-sec-head {
+    margin: 0 0 5px;
+    font: 600 11px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink);
+  }
+
+  .rep-sec-lead {
+    margin: 0 0 18px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--mut);
+    max-width: 640px;
+  }
+
+  .rep-note {
+    font: 500 10px var(--mono);
+    color: var(--dim);
+    margin: 14px 0 0;
+    letter-spacing: 0.02em;
+  }
+
+  .rep-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 980px) {
+    .rep-compare { grid-template-columns: 1fr; }
+  }
+
+  .rep-cmp-block {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 18px 20px;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+
+  .rep-delta-num {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    font: 300 44px var(--mono);
+    letter-spacing: -0.04em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rep-delta-num .arr { font-size: 20px; }
+
+  .rep-delta-cap {
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink);
+    margin-top: 9px;
+  }
+
+  .rep-delta-sub {
+    font: 500 10px var(--mono);
+    color: var(--dim);
+    margin-top: 4px;
+  }
+
+  .rep-cmp-bars { margin-left: auto; flex-shrink: 0; }
+  .rep-bar { transform-box: fill-box; transform-origin: 50% 100%; }
+  .rep-svg-val { font: 600 11px var(--mono); fill: var(--ink); }
+  .rep-svg-cap { font: 500 8.5px var(--mono); fill: var(--dim); letter-spacing: 0.04em; }
+  .rep-svg-axis { font: 500 9px var(--mono); fill: var(--dim); }
+  .rep-svg-zone-label { font: 600 8.5px var(--mono); letter-spacing: 0.08em; }
+  .rep-adapt-label { font: 600 14px var(--mono); letter-spacing: -0.01em; }
+  .rep-chart-svg { display: block; width: 100%; height: auto; }
+
+  .rep-heat {
+    display: grid;
+    grid-template-columns: repeat(7, 30px);
+    gap: 6px;
+  }
+
+  .rep-heat-cell {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    background: var(--line);
+  }
+
+  .rep-heat-cell.empty {
+    background: transparent;
+    border: 1px dashed var(--line);
+  }
+
+  .rep-heat-legend {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 16px;
+    font: 500 10px var(--mono);
+    color: var(--mut);
+    flex-wrap: wrap;
+  }
+
+  .rep-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-right: 6px;
+    vertical-align: -1px;
+  }
+
+  .rep-adapt-empty {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 16px;
+    border: 1px dashed var(--line2);
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--mut);
+  }
+
+  .rep-adapt-empty i { font-size: 16px; color: var(--dim); margin-top: 1px; flex-shrink: 0; }
+
+  /* ---- Print: светлая PDF-схема (эталон WHOOP Monthly PA) ---- */
+  @media print {
+    @page { margin: 13mm; }
+
+    html[data-theme] {
+      --bg: #ffffff;
+      --side: #ffffff;
+      --card-outer: #ffffff;
+      --card-inner: #ffffff;
+      --line: #d9dde4;
+      --line2: #bac1cc;
+      --ink: #101317;
+      --mut: #4d5662;
+      --dim: #79828f;
+      --accent: #0d8f63;
+      --accent-glow: transparent;
+      --shadow-diffuse: transparent;
+      --radius-outer: 0px;
+      --radius-inner: 0px;
+    }
+
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    body { display: block; overflow: visible; background: #fff; }
+    aside, .topbar, footer, .nav-backdrop, .modal-overlay, .nav-toggle { display: none !important; }
+    main { height: auto; display: block; }
+    .content-wrapper { overflow: visible; padding: 0; }
+    .content { max-width: 100%; padding-bottom: 0; }
+
+    .zone { display: none !important; }
+    #z-reports { display: block !important; opacity: 1 !important; transform: none !important; }
+
+    /* Карточки -> плоские печатные секции; gsap-стили принудительно довершены */
+    #z-reports .bento-grid { display: block; }
+    #z-reports .bento-grid > * { margin-bottom: 12px; break-inside: avoid; }
+    #z-reports .card-outer {
+      opacity: 1 !important;
+      transform: none !important;
+      box-shadow: none;
+      border: none;
+      padding: 0;
+      background: #fff;
+    }
+    #z-reports .card-inner {
+      border: none;
+      border-top: 2px solid #101317;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 16px 2px 10px;
+      background: #fff;
+    }
+    #z-reports .rep-cmp-block { border-color: #d9dde4; }
+    #z-reports path, #z-reports polyline, #z-reports rect, #z-reports circle, #z-reports text, #z-reports line {
+      stroke-dasharray: none !important;
+      stroke-dashoffset: 0 !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    #z-reports .rep-heat-cell { opacity: 1 !important; transform: none !important; }
+    .rep-print-hide { display: none !important; }
+  }
+
   /* ---- Reduced motion ---- */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -1864,50 +2174,50 @@
   <div class="nav-scroll">
     <div class="navsec">Сегодня</div>
     <nav>
-      <a data-z="today" class="active" onclick="go('today')">
-        <i class="ph-light ph-activity"></i>
+      <a data-z="today" data-icon="ph-pulse" class="active" onclick="go('today')">
+        <i class="ph-duotone ph-pulse"></i>
         <span>Overview / Сегодня</span>
         <span class="tag mono" id="navRec">—</span>
       </a>
-      <a data-z="pulse" onclick="go('pulse')">
+      <a data-z="pulse" data-icon="ph-heart" onclick="go('pulse')">
         <i class="ph-light ph-heart"></i>
         <span>Пульс дня</span>
       </a>
     </nav>
-    
+
     <div class="navsec">Данные</div>
     <nav>
-      <a data-z="biomarkers" onclick="go('biomarkers')">
+      <a data-z="biomarkers" data-icon="ph-flask" onclick="go('biomarkers')">
         <i class="ph-light ph-flask"></i>
         <span>Biomarkers (Анализы)</span>
       </a>
-      <a data-z="whoop-overview" onclick="go('whoop-overview')">
+      <a data-z="whoop-overview" data-icon="ph-chart-line-up" onclick="go('whoop-overview')">
         <i class="ph-light ph-chart-line-up"></i>
         <span>Обзор показателей</span>
       </a>
-      <a data-z="whoop-correlations" onclick="go('whoop-correlations')">
+      <a data-z="whoop-correlations" data-icon="ph-scales" onclick="go('whoop-correlations')">
         <i class="ph-light ph-scales"></i>
         <span>Корреляции</span>
       </a>
-      <a data-z="journal" onclick="go('journal')">
+      <a data-z="journal" data-icon="ph-notebook" onclick="go('journal')">
         <i class="ph-light ph-notebook"></i>
         <span>Журнал</span>
       </a>
-      <a data-z="trends" onclick="go('trends')">
+      <a data-z="trends" data-icon="ph-calendar" onclick="go('trends')">
         <i class="ph-light ph-calendar"></i>
         <span>Тренды</span>
       </a>
-      <a data-z="timeline" onclick="go('timeline')">
+      <a data-z="timeline" data-icon="ph-footprints" onclick="go('timeline')">
         <i class="ph-light ph-footprints"></i>
         <span>Timeline</span>
         <span class="navdot" aria-hidden="true"></span>
       </a>
-      <a data-z="body" onclick="go('body')">
+      <a data-z="body" data-icon="ph-chart-pie" onclick="go('body')">
         <i class="ph-light ph-chart-pie"></i>
         <span>Состав тела</span>
         <span class="navdot" aria-hidden="true"></span>
       </a>
-      <a data-z="workouts" onclick="go('workouts')">
+      <a data-z="workouts" data-icon="ph-barbell" onclick="go('workouts')">
         <i class="ph-light ph-barbell"></i>
         <span>Тренировки</span>
         <span class="navdot" aria-hidden="true"></span>
@@ -1916,12 +2226,12 @@
 
     <div class="navsec">Знание</div>
     <nav>
-      <a data-z="protocols" onclick="go('protocols')">
+      <a data-z="protocols" data-icon="ph-book-open" onclick="go('protocols')">
         <i class="ph-light ph-book-open"></i>
         <span>Protocols</span>
         <span class="navdot" aria-hidden="true"></span>
       </a>
-      <a data-z="research" onclick="go('research')">
+      <a data-z="research" data-icon="ph-microscope" onclick="go('research')">
         <i class="ph-light ph-microscope"></i>
         <span>Research</span>
         <span class="navdot" aria-hidden="true"></span>
@@ -1930,17 +2240,16 @@
 
     <div class="navsec">Система</div>
     <nav>
-      <a data-z="reports" onclick="go('reports')">
+      <a data-z="reports" data-icon="ph-file-text" onclick="go('reports')">
         <i class="ph-light ph-file-text"></i>
         <span>Отчёты</span>
-        <span class="navdot" aria-hidden="true"></span>
       </a>
-      <a data-z="digests" onclick="go('digests')">
+      <a data-z="digests" data-icon="ph-bell" onclick="go('digests')">
         <i class="ph-light ph-bell"></i>
         <span>Дайджесты</span>
         <span class="navdot" aria-hidden="true"></span>
       </a>
-      <a data-z="sync" onclick="go('sync')">
+      <a data-z="sync" data-icon="ph-arrows-clockwise" onclick="go('sync')">
         <i class="ph-light ph-arrows-clockwise"></i>
         <span>Синхронизация</span>
       </a>
@@ -2182,7 +2491,7 @@
                       <th>Название</th>
                       <th>Результат</th>
                       <th>Референс</th>
-                      <th style="width: 200px;">Шкала нормы / оптимума</th>
+                      <th style="width: 232px;">Шкала нормы / оптимума</th>
                       <th>Оптимум</th>
                       <th>Статус</th>
                       <th>Доверие</th>
@@ -2749,22 +3058,79 @@
         </div>
       </section>
 
-      <!-- SCREEN 14: REPORTS (empty-state) -->
+      <!-- SCREEN 14: REPORTS — месячный отчёт (эталон: WHOOP Monthly Performance Assessment) -->
       <section class="zone" id="z-reports">
         <div class="bento-grid">
+
+          <!-- Обложка отчёта -->
           <div class="card-outer col-12">
-            <div class="card-inner" style="min-height: 420px;">
-              <div class="empty-state">
-                <div class="empty-icon-ring"><i class="ph-light ph-file-text"></i></div>
-                <h4>Отчёты</h4>
-                <p class="what">Сводный PDF для врача: ключевые маркеры, динамика, вопросы на приём.</p>
-                <p class="need">Появится с модулем отчётов. Данные для него уже копятся — фиксируй вопросы для врача в карточках биомаркеров.</p>
-                <button class="btn-secondary" onclick="go('biomarkers')">
-                  <i class="ph-light ph-clipboard-text"></i> Вопросы для врача
-                </button>
+            <div class="card-inner rep-cover">
+              <div class="rep-cover-inner">
+                <div>
+                  <h2>Месячный отчёт</h2>
+                  <div class="period" id="repPeriod">—</div>
+                </div>
+                <div class="rep-print-hide">
+                  <button class="btn-secondary" id="repPrintBtn" onclick="printReport()">
+                    <i class="ph-light ph-printer"></i> Версия для печати
+                  </button>
+                </div>
+              </div>
+              <p class="rep-note" id="repWindowNote">—</p>
+            </div>
+          </div>
+
+          <!-- Сравнение периодов -->
+          <div class="card-outer col-12">
+            <div class="card-inner">
+              <h3 class="rep-sec-head">Сравнение периодов</h3>
+              <p class="rep-sec-lead">Вторая половина окна против первой: средний recovery и средняя длительность сна. Стрелка показывает направление сдвига, серый бар — предыдущий период.</p>
+              <div class="rep-compare" id="repCompare"></div>
+            </div>
+          </div>
+
+          <!-- Recovery по дням с зонами -->
+          <div class="card-outer col-12">
+            <div class="card-inner">
+              <h3 class="rep-sec-head">Recovery по дням</h3>
+              <p class="rep-sec-lead">Каждая точка — утренний recovery. Цветные полосы — зоны: зелёная ≥ 67, жёлтая 34-66, красная &lt; 34.</p>
+              <div id="repZoneWrap"></div>
+            </div>
+          </div>
+
+          <!-- HRV adaptation -->
+          <div class="card-outer col-6">
+            <div class="card-inner">
+              <h3 class="rep-sec-head">HRV adaptation</h3>
+              <p class="rep-sec-lead">Дневная HRV (rMSSD) тонкой линией; горизонтальные отрезки — среднее за первую и вторую половину окна.</p>
+              <div id="repHrvWrap"></div>
+            </div>
+          </div>
+
+          <!-- RHR adaptation -->
+          <div class="card-outer col-6">
+            <div class="card-inner">
+              <h3 class="rep-sec-head">RHR adaptation</h3>
+              <p class="rep-sec-lead">Пульс покоя по дням — ниже значит лучше; отрезки — средние за половины окна.</p>
+              <div id="repRhrWrap"></div>
+            </div>
+          </div>
+
+          <!-- Recovery календарь -->
+          <div class="card-outer col-12">
+            <div class="card-inner">
+              <h3 class="rep-sec-head">Recovery календарь</h3>
+              <p class="rep-sec-lead">Окно одной сеткой: цвет ячейки — зона recovery дня, насыщенность — само значение. Слева направо, от старых к новым.</p>
+              <div class="rep-heat" id="repHeat"></div>
+              <div class="rep-heat-legend">
+                <span><span class="rep-legend-dot" style="background:var(--ok)"></span>≥ 67</span>
+                <span><span class="rep-legend-dot" style="background:var(--warn)"></span>34-66</span>
+                <span><span class="rep-legend-dot" style="background:var(--bad)"></span>&lt; 34</span>
+                <span style="margin-left:auto;" id="repHeatRange"></span>
               </div>
             </div>
           </div>
+
         </div>
       </section>
 
@@ -2835,6 +3201,9 @@ const DATA = {
   
   trend30Rec: [55, 57, 52, 50, 58, 60, 62, 59, 56, 61, 64, 67, 60, 62, 59, 64, 66, 61, 63, 68, 70, 65, 63, 60, 58, 61, 55, 49, 63, 64],
   trend30Hrv: [38, 39, 36, 34, 40, 41, 43, 40, 37, 41, 42, 45, 41, 42, 39, 43, 44, 40, 41, 46, 48, 43, 41, 39, 38, 39, 37, 33, 42, 39],
+  // Демо-ряд RHR: реальная выгрузка пока не отдаёт trend30Rhr — loadRealData() обнуляет
+  // этот ключ, чтобы отчёт не смешивал реальный HRV с демо-пульсом.
+  trend30Rhr: [58, 57, 59, 60, 56, 55, 57, 58, 56, 54, 55, 57, 56, 55, 53, 54, 56, 55, 54, 53, 52, 54, 55, 53, 52, 53, 54, 52, 53, 56],
 
   habits: [
     { id: "sleep", label: "Лечь до 23:30", done: true, delta: 8, icon: "ph-moon" },
@@ -2868,7 +3237,7 @@ const DATA = {
   },
   
   connections: {
-    whoop: { label: "WHOOP Tracker", connected: true, lastSync: "5 мин назад", icon: "ph-activity" },
+    whoop: { label: "WHOOP Tracker", connected: true, lastSync: "5 мин назад", icon: "ph-pulse" },
     apple: { label: "Apple Health", connected: true, lastSync: "1 час назад", icon: "ph-heart" },
     oura: { label: "Oura Ring", connected: false, lastSync: null, icon: "ph-shield" },
     garmin: { label: "Garmin Connect", connected: false, lastSync: null, icon: "ph-barbell" },
@@ -2907,6 +3276,72 @@ const word = v => v >= 67 ? "Зелёная зона — организм гот
 const mood = v => v >= 67 ? "😎" : v >= 34 ? "🙂" : "😴";
 const say = v => v >= 67 ? "Отличное восстановление. Хороший день для активности." : v >= 34 ? "Умеренно. Избегайте пиковых перегрузок." : "Низкие ресурсы. Фокус на цене сна.";
 
+// ph-activity не существует в duotone-весе Phosphor 2.1.1 — подменяем на ph-pulse.
+const safeIcon = name => name === 'ph-activity' ? 'ph-pulse' : (name || 'ph-circle');
+
+// Статус биомаркера: текст, статус-строка детали (паттерн Ultrahuman), css-цвет.
+const BIO_STATUS = {
+  optimal:   { text: 'Оптимально', line: 'В оптимальном диапазоне', color: 'var(--ok)' },
+  normal:    { text: 'Норма', line: 'В норме · вне оптимума', color: 'var(--warn)' },
+  low:       { text: 'Снижен', line: 'Ниже референса', color: 'var(--bad)' },
+  high:      { text: 'Повышен', line: 'Выше референса', color: 'var(--bad)' },
+  deficient: { text: 'Дефицит', line: 'Ниже референса и оптимума', color: 'var(--bad)' }
+};
+
+// Уровни доверия C1-C5 (та же шкала, что в Корреляциях).
+const GRADE_NOTES = {
+  C1: 'единичное наблюдение, проверка не проводилась',
+  C2: 'слабый сигнал — мало точек сравнения',
+  C3: 'рабочая гипотеза — связь устойчива на 30+ днях',
+  C4: 'сильная связь — подтверждена повторными замерами',
+  C5: 'доказанная связь — повторяющиеся фазы тестирования'
+};
+
+// === Motion-утилиты (контракт: ui/web/FRAMES.md) ===========================
+
+// Count-up числа: 0.8s power2.out, snap по шагу значения.
+function countUp(el, to, opts) {
+  if (!el) return;
+  opts = opts || {};
+  const dec = opts.decimals || 0;
+  const fmt = opts.format || (v => v.toFixed(dec) + (opts.suffix || ''));
+  const obj = { v: opts.from != null ? opts.from : 0 };
+  gsap.killTweensOf(obj);
+  gsap.to(obj, {
+    v: to,
+    duration: opts.duration != null ? opts.duration : 0.8,
+    ease: opts.ease || 'power2.out',
+    delay: opts.delay || 0,
+    onUpdate: () => { el.textContent = fmt(obj.v); },
+    onComplete: () => { el.textContent = fmt(to); }
+  });
+}
+
+// Line-draw: 1.2s power1.inOut через stroke-dasharray/dashoffset; после — очистка.
+function drawPath(el, opts) {
+  if (!el || !el.getTotalLength) return;
+  opts = opts || {};
+  let len = 0;
+  try { len = el.getTotalLength(); } catch (e) { return; }
+  if (!len || !isFinite(len)) return;
+  gsap.fromTo(el,
+    { strokeDasharray: len, strokeDashoffset: len },
+    {
+      strokeDashoffset: 0,
+      duration: opts.duration != null ? opts.duration : 1.2,
+      delay: opts.delay || 0,
+      ease: 'power1.inOut',
+      onComplete: () => { el.style.strokeDasharray = ''; el.style.strokeDashoffset = ''; }
+    });
+}
+
+// Спарклайн-набор: линия draw + area fade (0.6s, delay 0.4).
+function animateSparkline(lineId, areaId) {
+  drawPath(document.getElementById(lineId));
+  const area = document.getElementById(areaId);
+  if (area) gsap.fromTo(area, { opacity: 0 }, { opacity: 1, duration: 0.6, delay: 0.4, ease: 'power1.out' });
+}
+
 function updateTodayScreen() {
   const v = DATA.recovery;
   
@@ -2926,13 +3361,15 @@ function updateTodayScreen() {
     ["Пульс покоя", DATA.rhr, "уд/мин"],
     ["Сон", DATA.sleep, "ч"],
     ["Strain", DATA.strain, "/21"]
-  ].map(([k, val, u]) => `
+  ].map(([k, val, u]) => {
+    const dec = Number.isInteger(val) ? 0 : 1;
+    return `
     <div class="metric-tile">
       <div class="k">${k}</div>
-      <div class="v mono">${val}</div>
+      <div class="v mono" data-count="${val}" data-dec="${dec}">${val}</div>
       <div class="u">${u}</div>
     </div>
-  `).join('');
+  `; }).join('');
 
   // Пульс: состояние персонажа = зона recovery (свечение/тонус через CSS-классы).
   const face = document.getElementById('docFace');
@@ -3054,13 +3491,27 @@ function animateRecoveryRing() {
   const v = DATA.recovery;
   const C = 2 * Math.PI * 70;
   const arc = document.getElementById('ringArc');
-  
+
   arc.style.stroke = col(v);
-  
-  gsap.fromTo(arc, 
-    { strokeDashoffset: C }, 
-    { strokeDashoffset: C * (1 - v / 100), duration: 1.2, ease: "power3.out" }
+
+  // Overshoot back.out(1.2) — но не при v > 90, чтобы дуга не перелетала за 100%.
+  gsap.fromTo(arc,
+    { strokeDashoffset: C },
+    { strokeDashoffset: C * (1 - v / 100), duration: 1.2, ease: v > 90 ? "power3.out" : "back.out(1.2)" }
   );
+  // Счётчик recovery синхронно с дугой (FRAMES: ring 1.2).
+  countUp(document.getElementById('recNum'), v, { duration: 1.2, ease: "power2.out" });
+}
+
+// Вход в «Сегодня»: count-up метрик 0.8 + стаггер чеклиста (FRAMES: 0.4/0.05).
+function animateTodayEnter() {
+  animateRecoveryRing();
+  document.querySelectorAll('#board .metric-tile .v[data-count]').forEach((el, i) => {
+    countUp(el, parseFloat(el.dataset.count), { decimals: +el.dataset.dec || 0, delay: i * 0.06 });
+  });
+  gsap.fromTo('#habitList .habit-item',
+    { opacity: 0, x: -8 },
+    { opacity: 1, x: 0, duration: 0.4, stagger: 0.05, ease: 'power2.out', clearProps: 'opacity,transform' });
 }
 
 function initPulseScreen() {
@@ -3104,6 +3555,12 @@ function initPulseScreen() {
       </div>
     </div>
   `).join('');
+
+  // FRAMES: line-draw ЧСС 1.2 + бары зон растут 0.6/stagger 0.06.
+  animateSparkline('pulseLine', 'pulseArea');
+  const pt = document.getElementById('pulsePoint');
+  if (pt) gsap.fromTo(pt, { opacity: 0 }, { opacity: 1, duration: 0.3, delay: 1.1, ease: 'power1.out' });
+  gsap.from('#zoneList .zone-bar-fill', { width: 0, duration: 0.6, stagger: 0.06, ease: 'power3.out' });
 }
 
 function updateBiomarkersScreen() {
@@ -3121,51 +3578,17 @@ function updateBiomarkersScreen() {
   
   const tbody = document.getElementById('biomarkerTableBody');
   tbody.innerHTML = DATA.biomarkers.map((b, idx) => {
-    let markerPos = 50;
-    const span = b.refMax - b.refMin;
-    
-    if (span > 0) {
-      const relativeVal = (b.value - b.refMin) / span;
-      markerPos = 25 + relativeVal * 50;
-      markerPos = Math.max(5, Math.min(95, markerPos));
-    }
-    
-    if (b.status === 'low' || b.status === 'deficient') {
-      markerPos = 15;
-    } else if (b.status === 'high') {
-      markerPos = 85;
-    } else if (b.status === 'optimal') {
-      markerPos = 50;
-    }
-    
-    const statusText = {
-      optimal: "Оптимально",
-      normal: "Норма",
-      low: "Снижен",
-      high: "Повышен",
-      deficient: "Дефицит"
-    }[b.status] || b.status;
-    
-    const statusClass = b.status;
-    
+    const st = BIO_STATUS[b.status] || { text: b.status, color: 'var(--mut)' };
     return `
-      <tr class="biomarker-row" onclick="toggleBiomarkerDetail(${idx})">
-        <td><div class="biomarker-name">${b.name}</div></td>
-        <td><span class="biomarker-value mono">${b.value}</span> <span class="muted" style="font-size:11px">${b.unit}</span></td>
+      <tr class="biomarker-row" data-bio-idx="${idx}" onclick="toggleBiomarkerDetail(${idx})">
+        <td><div class="biomarker-name">${escapeHtml(b.name)}</div></td>
+        <td><span class="biomarker-value mono">${b.value}</span> <span class="muted" style="font-size:11px">${escapeHtml(b.unit)}</span></td>
         <td class="mono muted" style="font-size:12px">${b.refMin} - ${b.refMax}</td>
-        <td>
-          <div class="biomarker-scale-wrapper">
-            <div class="scale-container">
-              <div class="scale-ref" style="left: 25%; width: 50%;"></div>
-              <div class="scale-opt" style="left: 40%; width: 20%;"></div>
-              <div class="scale-marker ${statusClass}" style="left: ${markerPos}%;"></div>
-            </div>
-          </div>
-        </td>
-        <td class="mono muted" style="font-size:12px">${b.optMin} - ${b.optMax}</td>
+        <td>${segbarHTML(b)}</td>
+        <td class="mono muted" style="font-size:12px">${b.optMin != null ? b.optMin + ' - ' + b.optMax : '—'}</td>
         <td>
           <span class="habit-impact ${b.status === 'optimal' ? 'up' : (b.status === 'normal' ? 'normal' : 'down')}" style="font-size:11px;">
-            ${statusText}
+            ${st.text}
           </span>
         </td>
         <td><span class="biomarker-grade">${b.grade}</span></td>
@@ -3174,43 +3597,123 @@ function updateBiomarkersScreen() {
   }).join('');
 }
 
+// Сегмент-бар Apple Health-стиля: трек из сегментов (ниже | норма | оптимум | норма | выше),
+// пилюля со значением сидит на честной позиции по шкале, подписи краёв референса.
+function segbarHTML(b) {
+  const span = (b.refMax - b.refMin) || 1;
+  let lo = b.refMin - span * 0.18;
+  let hi = b.refMax + span * 0.18;
+  lo = Math.min(lo, b.value);
+  hi = Math.max(hi, b.value);
+  const P = x => ((x - lo) / (hi - lo)) * 100;
+
+  const hasOpt = b.optMin != null && b.optMax != null && b.optMax > b.optMin;
+  const stops = hasOpt
+    ? [[lo, b.refMin, 'out'], [b.refMin, b.optMin, 'norm'], [b.optMin, b.optMax, 'opt'], [b.optMax, b.refMax, 'norm'], [b.refMax, hi, 'out']]
+    : [[lo, b.refMin, 'out'], [b.refMin, b.refMax, 'norm'], [b.refMax, hi, 'out']];
+
+  const segs = stops
+    .filter(([a, z]) => z - a > 0)
+    .map(([a, z, cls]) => `<span class="segbar-seg ${cls}" style="width:${(P(z) - P(a)).toFixed(2)}%"></span>`)
+    .join('');
+
+  const pos = Math.max(7, Math.min(93, P(b.value)));
+  return `
+    <div class="segbar">
+      <div class="segbar-pillrow">
+        <span class="segbar-pill st-${escapeHtml(b.status)}" style="left:${pos.toFixed(2)}%">${b.value}</span>
+      </div>
+      <div class="segbar-track">${segs}</div>
+      <div class="segbar-ends"><span>${b.refMin}</span><span>${b.refMax}</span></div>
+    </div>`;
+}
+
+// Вход в Biomarkers: пилюли мягко "падают" на позицию (FRAMES: 0.45/0.05).
+function animateBiomarkersEnter() {
+  gsap.fromTo('#biomarkerTableBody .segbar-pill',
+    { opacity: 0, y: -6 },
+    { opacity: 1, y: 0, duration: 0.45, stagger: 0.05, ease: 'power2.out', clearProps: 'opacity,transform' });
+}
+
 function toggleBiomarkerDetail(idx) {
   const panel = document.getElementById('biomarkerDetailPanel');
   const b = DATA.biomarkers[idx];
-  
+  if (!b) return;
+
+  const setRowActive = i => {
+    document.querySelectorAll('#biomarkerTableBody .biomarker-row').forEach(r => {
+      r.classList.toggle('active', i != null && +r.dataset.bioIdx === i);
+    });
+  };
+
   if (panel.style.display === 'block' && panel.dataset.activeIdx == idx) {
+    setRowActive(null);
     gsap.to(panel, {
       opacity: 0,
       y: -10,
       duration: 0.2,
-      onComplete: () => { panel.style.display = 'none'; }
+      onComplete: () => { panel.style.display = 'none'; gsap.set(panel, { clearProps: 'all' }); }
     });
-  } else {
-    panel.dataset.activeIdx = idx;
-    panel.innerHTML = `
-      <div class="discuss-box" style="display: block; opacity: 0; transform: translateY(-10px);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <b style="font-size: 13px; color: var(--ink);">Рекомендация по маркеру: ${escapeHtml(b.name)}</b>
-          <span class="mono muted">Доверие: ${b.grade}</span>
+    return;
+  }
+
+  const st = BIO_STATUS[b.status] || { line: b.status, color: 'var(--mut)' };
+  panel.dataset.activeIdx = idx;
+  setRowActive(idx);
+  panel.innerHTML = `
+    <div class="card-outer" style="opacity:0; transform: translateY(-10px);">
+      <div class="card-inner">
+        <div class="card-header" style="margin-bottom:18px;">
+          <div class="card-title-group">
+            <h3>${escapeHtml(b.name)}</h3>
+            <div class="sub">деталь маркера · клик по строке закрывает панель</div>
+          </div>
+          <i class="ph-duotone ph-test-tube card-header-icon" style="color: ${st.color};"></i>
         </div>
-        <div>${b.discuss}</div>
-        <div style="margin-top: 12px; display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn-secondary" style="font-size:10px; padding: 4px 8px;" onclick="alert('Добавлено в вопросы для врача')">Зафиксировать для врача</button>
-          <button class="btn-secondary agent-btn" style="font-size:10px; padding: 4px 8px;" id="bioAgentBtn" onclick="runBioResearch(${idx})">
-            <i class="ph-light ph-microscope"></i> Дип-ресёрч по маркеру
+
+        <div class="bio-detail-grid">
+          <div>
+            <div class="bio-detail-value" style="color: ${st.color};"><span id="bioDetailNum">${b.value}</span><small>${escapeHtml(b.unit)}</small></div>
+            <div class="bio-status-line" style="color: ${st.color};">
+              <span class="dot"></span>
+              <span>${escapeHtml(st.line)}</span>
+            </div>
+          </div>
+          <div>
+            <div class="bio-range-row">
+              <span class="k">Референс лаборатории</span>
+              <span class="v">${b.refMin}&nbsp;–&nbsp;${b.refMax}&nbsp;<span class="muted">${escapeHtml(b.unit)}</span></span>
+            </div>
+            <div class="bio-range-row">
+              <span class="k">Оптимальный диапазон</span>
+              <span class="v">${b.optMin != null ? b.optMin + '&nbsp;–&nbsp;' + b.optMax + '&nbsp;<span class="muted">' + escapeHtml(b.unit) + '</span>' : '—'}</span>
+            </div>
+            <div class="bio-range-row">
+              <span class="k">Доверие</span>
+              <span class="v"><span class="biomarker-grade">${escapeHtml(b.grade)}</span> <span class="muted">${escapeHtml(GRADE_NOTES[b.grade] || '')}</span></span>
+            </div>
+          </div>
+        </div>
+
+        <p class="bio-discuss">${b.discuss}</p>
+
+        <div style="margin-top: 16px; display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn-secondary" onclick="alert('Добавлено в вопросы для врача')">
+            <i class="ph-light ph-clipboard-text"></i> Зафиксировать для врача
+          </button>
+          <button class="btn-secondary agent-btn" id="bioAgentBtn" onclick="runBioResearch(${idx})">
+            <i class="ph-light ph-microscope"></i> Дип-ресёрч агентом
           </button>
         </div>
         <div class="agent-box" id="bioAgentBox" style="margin-top: 12px; display: none;"></div>
       </div>
-    `;
-    panel.style.display = 'block';
-    gsap.to(panel.querySelector('.discuss-box'), {
-      opacity: 1,
-      y: 0,
-      duration: 0.3,
-      ease: "power2.out"
-    });
-  }
+    </div>
+  `;
+  panel.style.display = 'block';
+  gsap.to(panel.querySelector('.card-outer'), { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" });
+  // Значение в панели — count-up 0.8 (FRAMES); суффикс единиц — отдельный элемент.
+  const dec = Number.isInteger(b.value) ? 0 : 1;
+  countUp(document.getElementById('bioDetailNum'), b.value, { decimals: dec });
 }
 
 function simulateBiomarkerUpload() {
@@ -3224,28 +3727,34 @@ function simulateBiomarkerUpload() {
 
 function animateWhoopRings() {
   const C = 2 * Math.PI * 55;
-  
+
   const recArc = document.getElementById('whoopRingRec');
   const sleepArc = document.getElementById('whoopRingSleep');
   const strainArc = document.getElementById('whoopRingStrain');
-  
-  document.getElementById('whoopRecVal').textContent = DATA.recovery + "%";
-  document.getElementById('whoopRecSub').textContent = `HRV ${DATA.hrv} мс`;
-  recArc.style.stroke = col(DATA.recovery);
-  
-  document.getElementById('whoopSleepVal').textContent = "85%";
-  document.getElementById('whoopSleepSub').textContent = `${DATA.sleep} / ${DATA.sleepNeeded} ч`;
-  
-  const strainPct = Math.round((DATA.strain / 21) * 100);
-  document.getElementById('whoopStrainVal').textContent = DATA.strain;
-  document.getElementById('whoopStrainSub').textContent = `Цель: ${DATA.strainTarget}`;
 
-  gsap.fromTo(recArc, { strokeDashoffset: C }, { strokeDashoffset: C * (1 - DATA.recovery / 100), duration: 1, ease: "power2.out" });
-  gsap.fromTo(sleepArc, { strokeDashoffset: C }, { strokeDashoffset: C * (1 - 0.85), duration: 1, delay: 0.15, ease: "power2.out" });
-  gsap.fromTo(strainArc, { strokeDashoffset: C }, { strokeDashoffset: C * (1 - strainPct / 100), duration: 1, delay: 0.3, ease: "power2.out" });
+  // Sleep performance из данных (часы / потребность), не хардкод.
+  const sleepPct = Math.max(0, Math.min(100, Math.round((DATA.sleep / (DATA.sleepNeeded || 8)) * 100)));
+  const strainPct = Math.max(0, Math.min(100, Math.round((DATA.strain / 21) * 100)));
+
+  document.getElementById('whoopRecSub').textContent = `HRV ${DATA.hrv} мс`;
+  document.getElementById('whoopSleepSub').textContent = `${DATA.sleep} / ${DATA.sleepNeeded} ч`;
+  document.getElementById('whoopStrainSub').textContent = `Цель: ${DATA.strainTarget}`;
+  recArc.style.stroke = col(DATA.recovery);
+
+  // FRAMES: ринги 1.0 back.out(1.2) с каскадом 0/0.15/0.3, числа синхронно.
+  const ringEase = v => v > 90 ? "power3.out" : "back.out(1.2)";
+  gsap.fromTo(recArc, { strokeDashoffset: C }, { strokeDashoffset: C * (1 - DATA.recovery / 100), duration: 1, ease: ringEase(DATA.recovery) });
+  gsap.fromTo(sleepArc, { strokeDashoffset: C }, { strokeDashoffset: C * (1 - sleepPct / 100), duration: 1, delay: 0.15, ease: ringEase(sleepPct) });
+  gsap.fromTo(strainArc, { strokeDashoffset: C }, { strokeDashoffset: C * (1 - strainPct / 100), duration: 1, delay: 0.3, ease: ringEase(strainPct) });
+
+  countUp(document.getElementById('whoopRecVal'), DATA.recovery, { duration: 1, suffix: '%' });
+  countUp(document.getElementById('whoopSleepVal'), sleepPct, { duration: 1, delay: 0.15, suffix: '%' });
+  countUp(document.getElementById('whoopStrainVal'), DATA.strain, { duration: 1, delay: 0.3, decimals: Number.isInteger(DATA.strain) ? 0 : 1 });
 
   renderAreaChart('chartSleep', 'sleepLine', 'sleepArea', DATA.trendSleep);
   renderAreaChart('chartStrain', 'strainLine', 'strainArea', DATA.trendStrain);
+  animateSparkline('sleepLine', 'sleepArea');
+  animateSparkline('strainLine', 'strainArea');
 }
 
 function updateCorrelationsScreen() {
@@ -3253,7 +3762,7 @@ function updateCorrelationsScreen() {
   list.innerHTML = DATA.correlations.map(c => `
     <div class="corr-item">
       <div class="corr-item-label">
-        <i class="ph-light ${c.icon}"></i>
+        <i class="${c.dir === 'up' ? 'ph-duotone' : 'ph-light'} ${safeIcon(c.icon)}"${c.dir === 'up' ? ' style="color: var(--ok);"' : ''}></i>
         <span>${c.label}</span>
       </div>
       <div class="corr-item-metrics">
@@ -3330,14 +3839,252 @@ function saveJournalEntry() {
 function initTrendsScreen() {
   renderAreaChart('trendsRecChart', 'trendsRecLine', 'trendsRecArea', DATA.trend30Rec);
   renderAreaChart('trendsHrvChart', 'trendsHrvLine', 'trendsHrvArea', DATA.trend30Hrv);
+  // FRAMES: line-draw 1.2 + area fade 0.6/delay 0.4.
+  animateSparkline('trendsRecLine', 'trendsRecArea');
+  animateSparkline('trendsHrvLine', 'trendsHrvArea');
 }
+
+// === REPORTS: месячный отчёт (эталон WHOOP Monthly PA, спека REPORT-SPEC) ===
+
+const avgArr = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
+const splitHalves = a => {
+  const m = Math.floor(a.length / 2);
+  return [a.slice(0, m), a.slice(m)];
+};
+// Светофор зон фиксированный (данные, не тема): rgba с регулируемой насыщенностью.
+const zoneRgba = (v, a) => v >= 67 ? `rgba(16,185,129,${a})` : v >= 34 ? `rgba(234,179,8,${a})` : `rgba(244,63,94,${a})`;
+
+// Большая дельта + grouped-бары двух периодов («-16% SLEEP PERFORMANCE»-паттерн).
+function repCmpBlockHTML(o) {
+  return `
+    <div class="rep-cmp-block">
+      <div>
+        <div class="rep-delta-num" style="color:${o.color}">
+          <span class="arr">${o.arrow}</span>
+          <span id="${o.numId}" data-delta="${o.delta}">${o.finalText}</span>
+        </div>
+        <div class="rep-delta-cap">${o.cap}</div>
+        <div class="rep-delta-sub">${o.sub}</div>
+      </div>
+      <div class="rep-cmp-bars">${o.bars}</div>
+    </div>`;
+}
+
+function repBarsSVG(v1, v2, color, fmt, cap1, cap2) {
+  const max = Math.max(v1, v2) || 1;
+  const h1 = Math.max(3, Math.round((v1 / max) * 64));
+  const h2 = Math.max(3, Math.round((v2 / max) * 64));
+  return `
+    <svg width="150" height="110" viewBox="0 0 150 110" aria-hidden="true">
+      <line x1="10" y1="92.5" x2="140" y2="92.5" stroke="var(--line)" stroke-width="1"></line>
+      <rect class="rep-bar" x="24" y="${92 - h1}" width="38" height="${h1}" rx="5" fill="var(--line2)"></rect>
+      <rect class="rep-bar" x="88" y="${92 - h2}" width="38" height="${h2}" rx="5" fill="${color}"></rect>
+      <text x="43" y="${92 - h1 - 7}" text-anchor="middle" class="rep-svg-val">${fmt(v1)}</text>
+      <text x="107" y="${92 - h2 - 7}" text-anchor="middle" class="rep-svg-val">${fmt(v2)}</text>
+      <text x="43" y="106" text-anchor="middle" class="rep-svg-cap">${cap1}</text>
+      <text x="107" y="106" text-anchor="middle" class="rep-svg-cap">${cap2}</text>
+    </svg>`;
+}
+
+// Line-chart recovery с горизонтальными полосами-зонами (WHOOP Training Behavior).
+function repZoneSVG(arr) {
+  const W = 820, H = 250, L = 46, R = 18, T = 14, B = 30;
+  const iw = W - L - R, ih = H - T - B;
+  const y = v => T + (1 - v / 100) * ih;
+  const x = i => L + (arr.length > 1 ? (i / (arr.length - 1)) * iw : iw / 2);
+
+  const bands = [
+    { from: 67, to: 100, fill: 'rgba(16,185,129,0.08)', label: '≥ 67', lab: 'rgba(16,185,129,0.75)' },
+    { from: 34, to: 67, fill: 'rgba(234,179,8,0.07)', label: '34-66', lab: 'rgba(234,179,8,0.75)' },
+    { from: 0, to: 34, fill: 'rgba(244,63,94,0.07)', label: '< 34', lab: 'rgba(244,63,94,0.8)' }
+  ].map(b => `
+    <rect x="${L}" y="${y(b.to)}" width="${iw}" height="${y(b.from) - y(b.to)}" fill="${b.fill}"></rect>
+    <text x="${W - R - 6}" y="${y((b.from + b.to) / 2) + 3}" text-anchor="end" class="rep-svg-zone-label" fill="${b.lab}">${b.label}</text>`
+  ).join('');
+
+  const axis = [0, 34, 67, 100].map(v =>
+    `<text x="${L - 8}" y="${y(v) + 3}" text-anchor="end" class="rep-svg-axis">${v}</text>
+     <line x1="${L}" y1="${y(v)}" x2="${W - R}" y2="${y(v)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 4"></line>`
+  ).join('');
+
+  const pts = arr.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const dots = arr.map((v, i) =>
+    `<circle class="rep-dot" cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3" fill="${col(v)}" stroke="var(--card-inner)" stroke-width="1"><title>день −${arr.length - 1 - i}: recovery ${v}%</title></circle>`
+  ).join('');
+
+  const n = arr.length;
+  const xcaps = `
+    <text x="${x(0)}" y="${H - 8}" text-anchor="start" class="rep-svg-cap">день −${n - 1}</text>
+    <text x="${x(Math.floor((n - 1) / 2))}" y="${H - 8}" text-anchor="middle" class="rep-svg-cap">−${n - 1 - Math.floor((n - 1) / 2)}</text>
+    <text x="${x(n - 1)}" y="${H - 8}" text-anchor="end" class="rep-svg-cap">сегодня</text>`;
+
+  return `
+    <svg class="rep-chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Recovery по дням с зонами">
+      ${bands}${axis}
+      <polyline id="repZoneLine" points="${pts}" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      ${dots}${xcaps}
+    </svg>`;
+}
+
+// HRV/RHR adaptation: тонкая линия + два отрезка-средних (WHOOP Physiological Response).
+// betterDir: 'up' — рост это хорошо (HRV); 'down' — снижение это хорошо (RHR).
+function repAdaptSVG(arr, unit, betterDir, lineId) {
+  const W = 430, H = 180, L = 18, R = 18, T = 36, B = 18;
+  const iw = W - L - R, ih = H - T - B;
+  let mn = Math.min(...arr), mx = Math.max(...arr);
+  const pad = (mx - mn || 1) * 0.1;
+  mn -= pad; mx += pad;
+  const y = v => T + (1 - (v - mn) / (mx - mn)) * ih;
+  const x = i => L + (arr.length > 1 ? (i / (arr.length - 1)) * iw : iw / 2);
+
+  const [h1, h2] = splitHalves(arr);
+  const a1 = avgArr(h1), a2 = avgArr(h2);
+  const pct = a1 ? Math.round(((a2 - a1) / a1) * 100) : 0;
+  const better = betterDir === 'up' ? pct > 2 : pct < -2;
+  const worse = betterDir === 'up' ? pct < -2 : pct > 2;
+  const c2 = better ? 'var(--ok)' : worse ? 'var(--bad)' : 'var(--ink)';
+  const mid = x(h1.length - 1 < 0 ? 0 : h1.length - 1);
+
+  const pts = arr.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const labY = v => Math.max(T - 22, y(v) - 10) + 0; // подпись над отрезком, не выше рамки
+
+  return `
+    <svg class="rep-chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Adaptation: средние за половины окна">
+      <polyline id="${lineId}" points="${pts}" fill="none" stroke="var(--dim)" stroke-width="1.2" opacity="0.75" stroke-linejoin="round"></polyline>
+      <line class="rep-adapt-avg" x1="${L}" y1="${y(a1).toFixed(1)}" x2="${mid.toFixed(1)}" y2="${y(a1).toFixed(1)}" stroke="var(--ink)" stroke-width="2.4"></line>
+      <line class="rep-adapt-avg" x1="${mid.toFixed(1)}" y1="${y(a2).toFixed(1)}" x2="${W - R}" y2="${y(a2).toFixed(1)}" stroke="${c2}" stroke-width="2.4"></line>
+      <text class="rep-adapt-label rep-adapt-avg" x="${L}" y="${labY(a1).toFixed(1)}" text-anchor="start" fill="var(--ink)">${Math.round(a1)} ${unit}</text>
+      <text class="rep-adapt-label rep-adapt-avg" x="${W - R}" y="${labY(a2).toFixed(1)}" text-anchor="end" fill="${c2}">${Math.round(a2)} ${unit} ${pct > 0 ? '+' : ''}${pct}%</text>
+    </svg>`;
+}
+
+function repAdaptEmptyHTML(text) {
+  return `
+    <div class="rep-adapt-empty">
+      <i class="ph-light ph-chart-line"></i>
+      <span>${text}</span>
+    </div>`;
+}
+
+function repHeatHTML(arr) {
+  const cells = arr.map((v, i) =>
+    `<div class="rep-heat-cell" style="background:${zoneRgba(v, (0.3 + 0.55 * (v / 100)).toFixed(2))}" title="день −${arr.length - 1 - i}: recovery ${v}%"></div>`
+  );
+  const tail = (7 * Math.ceil(arr.length / 7)) - arr.length;
+  for (let i = 0; i < tail; i++) cells.push('<div class="rep-heat-cell empty" aria-hidden="true"></div>');
+  return cells.join('');
+}
+
+function renderReport(animate) {
+  const rec = Array.isArray(DATA.trend30Rec) ? DATA.trend30Rec : [];
+  const hrv = Array.isArray(DATA.trend30Hrv) ? DATA.trend30Hrv : [];
+  const sleep = Array.isArray(DATA.trendSleep) ? DATA.trendSleep : [];
+  const rhr = Array.isArray(DATA.trend30Rhr) ? DATA.trend30Rhr : [];
+
+  // Шапка: период из данных, честная пометка окна.
+  document.getElementById('repPeriod').textContent = 'данные по: ' + (DATA.date || 'нет даты');
+  const noteParts = [`окно: последние ${rec.length} дн recovery/HRV из выгрузки`];
+  if (sleep.length && sleep.length !== rec.length) noteParts.push(`сон — ${sleep.length} дн`);
+  if (!rhr.length) noteParts.push('дневного ряда RHR в выгрузке нет');
+  document.getElementById('repWindowNote').textContent = noteParts.join(' · ');
+
+  // --- Сравнение периодов ---------------------------------------------
+  const cmpEl = document.getElementById('repCompare');
+  if (rec.length >= 6) {
+    const [r1, r2] = splitHalves(rec);
+    const ra1 = avgArr(r1), ra2 = avgArr(r2);
+    const rPct = ra1 ? Math.round(((ra2 - ra1) / ra1) * 100) : 0;
+    const recBlock = repCmpBlockHTML({
+      numId: 'repDeltaRec',
+      delta: rPct,
+      arrow: rPct > 0 ? '▲' : rPct < 0 ? '▼' : '—',
+      color: rPct > 0 ? 'var(--ok)' : rPct < 0 ? 'var(--bad)' : 'var(--mut)',
+      finalText: (rPct > 0 ? '+' : '') + rPct + '%',
+      cap: 'Recovery · средний',
+      sub: `${Math.round(ra1)}% → ${Math.round(ra2)}% · vs предыдущие ${r1.length} дней`,
+      bars: repBarsSVG(ra1, ra2, 'var(--accent)', v => Math.round(v) + '%', `дни 1-${r1.length}`, `дни ${r1.length + 1}-${rec.length}`)
+    });
+
+    let sleepBlock = '';
+    if (sleep.length >= 6) {
+      const [s1, s2] = splitHalves(sleep);
+      const sa1 = avgArr(s1), sa2 = avgArr(s2);
+      const sd = sa2 - sa1;
+      sleepBlock = repCmpBlockHTML({
+        numId: 'repDeltaSleep',
+        delta: +sd.toFixed(1),
+        arrow: sd > 0.05 ? '▲' : sd < -0.05 ? '▼' : '—',
+        color: sd > 0.05 ? 'var(--ok)' : sd < -0.05 ? 'var(--bad)' : 'var(--mut)',
+        finalText: (sd > 0 ? '+' : '') + sd.toFixed(1) + ' ч',
+        cap: 'Сон · средние часы',
+        sub: `${sa1.toFixed(1)} ч → ${sa2.toFixed(1)} ч · vs предыдущие ${s1.length} дней · окно ${sleep.length} дн`,
+        bars: repBarsSVG(sa1, sa2, '#60a5fa', v => v.toFixed(1), `дни 1-${s1.length}`, `дни ${s1.length + 1}-${sleep.length}`)
+      });
+    } else {
+      sleepBlock = repAdaptEmptyHTML('Ряда сна в выгрузке недостаточно для сравнения половин окна (нужно ≥ 6 дней).');
+    }
+    cmpEl.innerHTML = recBlock + sleepBlock;
+  } else {
+    cmpEl.innerHTML = repAdaptEmptyHTML('Недостаточно дней recovery для сравнения периодов — нужно минимум 6.');
+  }
+
+  // --- Recovery по дням + heatmap --------------------------------------
+  document.getElementById('repZoneWrap').innerHTML = rec.length >= 2
+    ? repZoneSVG(rec)
+    : repAdaptEmptyHTML('Нет дневного ряда recovery в выгрузке.');
+  document.getElementById('repHeat').innerHTML = rec.length ? repHeatHTML(rec) : '';
+  document.getElementById('repHeatRange').textContent = rec.length ? `день −${rec.length - 1} → сегодня` : '';
+
+  // --- HRV / RHR adaptation --------------------------------------------
+  document.getElementById('repHrvWrap').innerHTML = hrv.length >= 6
+    ? repAdaptSVG(hrv, 'ms', 'up', 'repHrvLine')
+    : repAdaptEmptyHTML('Нет дневного ряда HRV в выгрузке.');
+  document.getElementById('repRhrWrap').innerHTML = rhr.length >= 6
+    ? repAdaptSVG(rhr, 'уд/мин', 'down', 'repRhrLine')
+    : repAdaptEmptyHTML(`В текущей выгрузке нет дневного ряда RHR — есть только сегодняшнее значение (${DATA.rhr} уд/мин). Блок включится, когда build_dashboard_data.py начнёт отдавать trend30Rhr.`);
+
+  if (animate) animateReportEnter();
+}
+
+// FRAMES, экран «Отчёты»: count-up дельт, bar-grow, line-draw, стаггер точек и ячеек.
+function animateReportEnter() {
+  const dRec = document.getElementById('repDeltaRec');
+  if (dRec) {
+    const v = +dRec.dataset.delta || 0;
+    countUp(dRec, v, { format: x => (x > 0 ? '+' : '') + Math.round(x) + '%' });
+  }
+  const dSleep = document.getElementById('repDeltaSleep');
+  if (dSleep) {
+    const v = +dSleep.dataset.delta || 0;
+    countUp(dSleep, v, { format: x => (x > 0 ? '+' : '') + x.toFixed(1) + ' ч' });
+  }
+  gsap.fromTo('#repCompare .rep-bar', { scaleY: 0 }, { scaleY: 1, duration: 0.6, stagger: 0.08, ease: 'power3.out', clearProps: 'transform' });
+  drawPath(document.getElementById('repZoneLine'));
+  gsap.fromTo('#repZoneWrap .rep-dot', { opacity: 0 }, { opacity: 1, duration: 0.3, stagger: 0.012, delay: 0.3, ease: 'power1.out', clearProps: 'opacity' });
+  drawPath(document.getElementById('repHrvLine'));
+  drawPath(document.getElementById('repRhrLine'));
+  gsap.fromTo('.rep-adapt-avg', { opacity: 0 }, { opacity: 1, duration: 0.4, delay: 0.9, ease: 'power1.out', clearProps: 'opacity' });
+  gsap.fromTo('#repHeat .rep-heat-cell:not(.empty)',
+    { opacity: 0, scale: 0.6 },
+    { opacity: 1, scale: 1, duration: 0.4, stagger: 0.012, ease: 'power2.out', clearProps: 'opacity,transform' });
+}
+
+// Печать: дорендерить отчёт, довершить твины, отдать браузеру (Сохранить как PDF).
+function printReport() {
+  renderReport(false);
+  try { gsap.globalTimeline.getChildren(true, true, true).forEach(t => t.progress(1)); } catch (e) { /* ignore */ }
+  window.print();
+}
+
+// Страховка: печать через Cmd+P без кнопки — отчёт всё равно должен быть готов.
+window.addEventListener('beforeprint', () => { renderReport(false); });
 
 // --- SYNC: живые потоки (WHOOP / Apple Health / Oura / Garmin) -------------
 // Каждая карточка ведёт в реальный флоу импорта: модал с шагами и командами.
 
 const STREAM_KEYS = ['whoop', 'apple', 'oura', 'garmin'];
 const STREAM_FALLBACK = {
-  whoop: { label: 'WHOOP Tracker', icon: 'ph-activity' },
+  whoop: { label: 'WHOOP Tracker', icon: 'ph-pulse' },
   apple: { label: 'Apple Health', icon: 'ph-heart' },
   oura: { label: 'Oura Ring', icon: 'ph-shield' },
   garmin: { label: 'Garmin Connect', icon: 'ph-barbell' }
@@ -3433,7 +4180,7 @@ function updateSyncScreen() {
     const fb = STREAM_FALLBACK[key];
     const c = conns[key] || {};
     const label = c.label || fb.label;
-    const icon = c.icon || fb.icon;
+    const icon = safeIcon(c.icon || fb.icon);
     const connected = !!c.connected;
     return `
     <div class="card-outer sync-card">
@@ -3443,7 +4190,7 @@ function updateSyncScreen() {
             <h3>${escapeHtml(label)}</h3>
             <div class="sub">${connected ? 'данные уже в дашборде' : 'источник не подключён'}</div>
           </div>
-          <i class="ph-light ${icon} card-header-icon"></i>
+          <i class="${connected ? 'ph-duotone' : 'ph-light'} ${icon} card-header-icon"${connected ? ' style="color: var(--ok);"' : ''}></i>
         </div>
 
         <div class="sync-status-row">
@@ -4037,16 +4784,22 @@ function go(z) {
   toggleDrawer(false);
   const activeSection = document.querySelector('.zone.on');
   const targetSection = document.getElementById('z-' + z);
-  
-  if (activeSection === targetSection) return;
-  
-  gsap.to(activeSection, {
+
+  if (!targetSection || activeSection === targetSection) return;
+
+  // Быстрая навигация: прерываем переход в полёте, иначе две зоны остаются .on.
+  gsap.killTweensOf('.zone');
+
+  gsap.to(activeSection || targetSection, {
     opacity: 0,
     y: 10,
-    duration: 0.25,
+    duration: activeSection ? 0.25 : 0,
     ease: "power2.in",
     onComplete: () => {
-      activeSection.classList.remove('on');
+      document.querySelectorAll('.zone.on').forEach(s => {
+        s.classList.remove('on');
+        gsap.set(s, { clearProps: 'opacity,transform' });
+      });
       targetSection.classList.add('on');
       
       gsap.set(targetSection.querySelectorAll('.card-outer'), {
@@ -4069,13 +4822,17 @@ function go(z) {
       });
       
       if (z === 'today') {
-        animateRecoveryRing();
+        animateTodayEnter();
       } else if (z === 'whoop-overview') {
         animateWhoopRings();
       } else if (z === 'pulse') {
         initPulseScreen();
       } else if (z === 'trends') {
         initTrendsScreen();
+      } else if (z === 'reports') {
+        renderReport(true);
+      } else if (z === 'biomarkers') {
+        animateBiomarkersEnter();
       }
     }
   });
@@ -4083,8 +4840,19 @@ function go(z) {
   document.querySelectorAll('aside nav a').forEach(a => {
     a.classList.toggle('active', a.dataset.z === z);
   });
-  
+  syncNavIcons();
+
   document.getElementById('zoneTitle').textContent = titles[z] || "OpenHealth";
+}
+
+// Активный пункт меню — duotone-вес иконки, остальные — light (data-icon на <a>).
+function syncNavIcons() {
+  document.querySelectorAll('aside nav a[data-z]').forEach(a => {
+    const icon = a.querySelector('i');
+    const name = a.dataset.icon;
+    if (!icon || !name) return;
+    icon.className = (a.classList.contains('active') ? 'ph-duotone ' : 'ph-light ') + safeIcon(name);
+  });
 }
 
 const themes = document.getElementById('themes');
@@ -4125,6 +4893,9 @@ async function loadRealData() {
       if (Array.isArray(real[k]) && real[k].length === 0) return; // keep demo arrays
       DATA[k] = real[k];
     });
+    // Ряды, которых нет в реальной выгрузке, обнуляем: отчёт не должен
+    // смешивать реальные метрики с демо-рядами (честная пометка вместо графика).
+    if (!('trend30Rhr' in real)) DATA.trend30Rhr = null;
     const fs = document.getElementById('footerSync');
     if (fs) fs.textContent = 'реальные данные · ' + (DATA.date || 'локально');
     return true;
@@ -4146,12 +4917,14 @@ function renderDashboard() {
   updateBiomarkersScreen();
   updateSyncScreen();
   initJournalScreen();
+  renderReport(false); // отчёт всегда дорендерен: печать (Cmd+P) работает из любой зоны
   updateSourceBadges();
   applyBridgeState();
+  syncNavIcons();
 
   gsap.fromTo('#z-today .card-outer',
     { opacity: 0, y: 25 },
-    { opacity: 1, y: 0, duration: 0.7, stagger: 0.08, ease: "power2.out", onComplete: animateRecoveryRing }
+    { opacity: 1, y: 0, duration: 0.7, stagger: 0.08, ease: "power2.out", onComplete: animateTodayEnter }
   );
 }
 

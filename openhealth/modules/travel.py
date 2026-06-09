@@ -334,16 +334,9 @@ class TravelModule:
         return ModuleResult(metrics=metrics, insights=insights, notes=notes)
 
 
-# NOTE: intentionally NOT calling register(TravelModule()) here.
-# The "travel" id maps to domain "journal" (no dedicated travel/context domain
-# exists in base.KNOWN_DOMAINS yet). Registration is wired up by the maintainer
-# in modules/__init__.py. To register:
-#
-#     from .travel import TravelModule
-#     register(TravelModule())
-#
-# `TravelModule` and the pure helpers (detect_shifts, adaptation_days,
-# is_jetlag_day, location_on, jetlag_days, normalize_periods) are the exports.
+# travel maps to the "journal" domain (no dedicated travel/context domain in
+# base.KNOWN_DOMAINS yet). Self-registers on import, like the other modules.
+register(TravelModule())
 __all__ = [
     "TravelModule",
     "normalize_periods",

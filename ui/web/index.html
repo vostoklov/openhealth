@@ -3,7 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OpenHealth Premium Dashboard</title>
+<title>OpenHealth</title>
+<meta name="theme-color" content="#060709">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+<link rel="apple-touch-icon" href="assets/icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <!-- Подключение Phosphor Icons Light -->
@@ -223,15 +227,38 @@
   }
   
   .docmini .face {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: grid;
     place-items: center;
-    font-size: 18px;
     background: var(--bg);
     border: 1px solid var(--line);
     flex-shrink: 0;
+    overflow: hidden;
+    transition: box-shadow 0.6s ease, filter 0.6s ease;
+  }
+
+  .docmini .face img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Пульс: свечение и тонус по зоне recovery */
+  .docmini .face.zone-green  { box-shadow: 0 0 18px rgba(16,185,129,0.45); }
+  .docmini .face.zone-yellow { box-shadow: 0 0 14px rgba(234,179,8,0.30); filter: saturate(0.92); }
+  .docmini .face.zone-red    { box-shadow: 0 0 10px rgba(229,72,77,0.30); filter: saturate(0.6) brightness(0.85); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .docmini .face img { animation: pulse-breath 4.5s ease-in-out infinite; }
+    .docmini .face.zone-red img { animation-duration: 7s; }
+  }
+
+  @keyframes pulse-breath {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
   }
   
   .docmini .t {
@@ -987,6 +1014,21 @@
     padding: 6px 12px;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .btn-primary:disabled, .btn-secondary:disabled {
+    opacity: 0.55;
+    cursor: progress;
+    transform: none;
+  }
+
+  button:focus-visible, a:focus-visible, .file-drop:focus-within {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 
   .btn-secondary:hover {
@@ -1254,6 +1296,523 @@
     background: var(--dim);
   }
 
+  /* ---- Sync sections (потоки + загрузки) ---- */
+  .sync-section { margin-bottom: 30px; }
+
+  .sync-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 14px;
+    padding: 0 2px;
+  }
+
+  .sync-section-head h2 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .sync-section-head .hint {
+    font: 500 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--dim);
+  }
+
+  .file-drop {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 14px;
+    border: 1px dashed var(--line2);
+    border-radius: 12px;
+    color: var(--mut);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .file-drop:hover {
+    border-color: var(--accent);
+    color: var(--ink);
+    background: var(--accent-glow);
+  }
+
+  .file-drop i { font-size: 19px; }
+
+  .picked-file {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    min-width: 0;
+  }
+
+  .picked-file i { font-size: 16px; color: var(--accent); flex-shrink: 0; }
+  .picked-file .fname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .picked-file .fsize { font: 500 10px var(--mono); color: var(--dim); flex-shrink: 0; }
+
+  .privacy-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    margin: 14px 0 0;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--dim);
+  }
+
+  .privacy-note i { font-size: 13px; margin-top: 1px; flex-shrink: 0; }
+
+  /* ---- Командные блоки с копированием ---- */
+  .cmd-row {
+    display: flex;
+    align-items: stretch;
+    margin-top: 10px;
+    border: 1px solid var(--line2);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .cmd-row code {
+    flex: 1;
+    min-width: 0;
+    font: 500 11.5px var(--mono);
+    padding: 10px 12px;
+    color: var(--ink);
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+
+  .cmd-row code::-webkit-scrollbar { display: none; }
+
+  .cmd-copy {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: none;
+    border-left: 1px solid var(--line2);
+    background: var(--card-outer);
+    color: var(--mut);
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .cmd-copy:hover { color: var(--ink); background: var(--line); }
+  .cmd-copy.copied { color: var(--ok); }
+  .cmd-copy i { font-size: 13px; }
+
+  .cmd-hint {
+    margin: 8px 0 0;
+    font-size: 11px;
+    color: var(--dim);
+    line-height: 1.45;
+  }
+
+  /* ---- Нумерованные шаги в модалах ---- */
+  .steps {
+    list-style: none;
+    counter-reset: step;
+    margin: 6px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .step {
+    counter-increment: step;
+    position: relative;
+    padding-left: 40px;
+  }
+
+  .step::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: -2px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px solid var(--line2);
+    background: var(--card-outer);
+    color: var(--mut);
+    font: 600 12px var(--mono);
+    display: grid;
+    place-items: center;
+  }
+
+  .step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 13px;
+    top: 28px;
+    bottom: -18px;
+    width: 1px;
+    background: var(--line);
+  }
+
+  .step-text { font-size: 13px; line-height: 1.55; color: var(--ink); }
+  .step-text .muted { font-size: 12px; }
+
+  .step-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    color: var(--accent);
+    font: 500 12px var(--mono);
+    text-decoration: none;
+  }
+
+  .step-link:hover { text-decoration: underline; }
+  .step-link i { font-size: 12px; }
+
+  .step-action { margin-top: 10px; }
+
+  /* ---- Модал (переиспользуемый) ---- */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(3, 4, 6, 0.62);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+
+  .modal-overlay.on { display: flex; }
+
+  [data-theme="light"] .modal-overlay,
+  [data-theme="bauhaus"] .modal-overlay { background: rgba(17, 24, 39, 0.4); }
+  [data-theme="brutalist"] .modal-overlay { background: rgba(0, 0, 0, 0.5); backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+  .modal-card {
+    width: min(620px, 100%);
+    max-height: min(82vh, 760px);
+    display: flex;
+    flex-direction: column;
+    background: var(--card-outer);
+    border: 1px solid var(--line2);
+    border-radius: var(--radius-outer);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    padding: 6px;
+  }
+
+  .modal-card-inner {
+    background: var(--card-inner);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-inner);
+    padding: 24px;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  .modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .modal-head h3 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .modal-head .sub { font-size: 11px; color: var(--mut); margin-top: 3px; line-height: 1.4; }
+
+  .modal-close {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    color: var(--mut);
+    cursor: pointer;
+    font-size: 15px;
+    transition: all 0.2s ease;
+  }
+
+  .modal-close:hover { color: var(--ink); border-color: var(--line2); }
+
+  /* ---- Агент-блоки (bridge) ---- */
+  .agent-box {
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+    min-height: 88px;
+  }
+
+  .agent-idle {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--mut);
+  }
+
+  .agent-idle i { font-size: 17px; color: var(--dim); margin-top: 1px; flex-shrink: 0; }
+
+  .agent-result-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .agent-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    background: var(--accent-glow);
+    border-radius: 5px;
+    padding: 3px 8px;
+  }
+
+  .agent-chip i { font-size: 12px; }
+
+  .agent-text {
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+
+  .agent-error { display: flex; flex-direction: column; gap: 12px; }
+
+  .agent-error-msg {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--mut);
+  }
+
+  .agent-error-msg i { color: var(--warn); font-size: 17px; margin-top: 1px; flex-shrink: 0; }
+  .agent-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  body.bridge-offline .agent-btn { opacity: 0.55; }
+
+  .agent-wait {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font: 500 11px var(--mono);
+    color: var(--dim);
+  }
+
+  .spinner {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    border: 2px solid var(--line2);
+    border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .skeleton { display: flex; flex-direction: column; gap: 9px; }
+
+  .skeleton-line {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--line) 25%, var(--line2) 45%, var(--line) 65%);
+    background-size: 220% 100%;
+    animation: skeletonShimmer 1.3s ease-in-out infinite;
+  }
+
+  @keyframes skeletonShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -20% 0; }
+  }
+
+  /* ---- Бейдж источника данных ---- */
+  .src-badge {
+    display: inline-block;
+    font: 600 9px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--mut);
+    border: 1px solid var(--line);
+    background: var(--card-outer);
+    border-radius: 999px;
+    padding: 2px 8px;
+    margin-left: 8px;
+    vertical-align: 2px;
+    white-space: nowrap;
+  }
+
+  /* ---- Навигация: пустые разделы и настройка меню ---- */
+  .navdot {
+    margin-left: auto;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--line2);
+    flex-shrink: 0;
+  }
+
+  .nav-config-btn {
+    width: 100%;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font: 500 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--dim);
+    background: none;
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    padding: 7px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .nav-config-btn:hover { color: var(--ink); border-color: var(--line2); }
+  .nav-config-btn i { font-size: 13px; }
+
+  .nav-config-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .nav-config-row:hover { background: var(--card-outer); }
+  .nav-config-row .row-icon { font-size: 16px; color: var(--mut); }
+
+  .nav-config-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1px solid var(--line2);
+    display: grid;
+    place-items: center;
+    background: var(--card-inner);
+    color: transparent;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .nav-config-check i { font-size: 12px; }
+
+  .nav-config-row.on .nav-config-check {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .nav-config-note {
+    margin: 14px 0 0;
+    font-size: 11px;
+    color: var(--dim);
+    line-height: 1.5;
+  }
+
+  .nav-config-row input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .nav-config-row:focus-within {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .sr-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  /* ---- Empty-state для будущих разделов ---- */
+  .empty-icon-ring {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 1px solid var(--line2);
+    background: var(--card-outer);
+    display: grid;
+    place-items: center;
+    font-size: 26px;
+    color: var(--mut);
+    margin-bottom: 22px;
+    position: relative;
+  }
+
+  .empty-icon-ring::after {
+    content: '';
+    position: absolute;
+    inset: -9px;
+    border-radius: 50%;
+    border: 1px dashed var(--line);
+  }
+
+  .empty-state p.what { margin-bottom: 10px; max-width: 360px; }
+
+  .empty-state p.need {
+    font-size: 11px;
+    color: var(--dim);
+    max-width: 340px;
+  }
+
+  /* ---- Reduced motion ---- */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+
   /* ---- Footer hints ---- */
   footer {
     border-top: 1px solid var(--line);
@@ -1275,6 +1834,23 @@
   footer a:hover {
     color: var(--ink);
   }
+
+  .footer-bridge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    padding: 0;
+    font: 500 11px var(--mono);
+    color: var(--dim);
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+
+  .footer-bridge:hover { color: var(--ink); }
+  .footer-bridge.online { color: var(--ok); }
+  .footer-bridge.online:hover { color: var(--ok); }
 </style>
 </head>
 <body>
@@ -1307,11 +1883,11 @@
       </a>
       <a data-z="whoop-overview" onclick="go('whoop-overview')">
         <i class="ph-light ph-chart-line-up"></i>
-        <span>WHOOP Overview</span>
+        <span>Обзор показателей</span>
       </a>
       <a data-z="whoop-correlations" onclick="go('whoop-correlations')">
         <i class="ph-light ph-scales"></i>
-        <span>WHOOP Correlations</span>
+        <span>Корреляции</span>
       </a>
       <a data-z="journal" onclick="go('journal')">
         <i class="ph-light ph-notebook"></i>
@@ -1321,41 +1897,48 @@
         <i class="ph-light ph-calendar"></i>
         <span>Тренды</span>
       </a>
-      <a class="dim" style="opacity: 0.5; cursor: not-allowed;">
+      <a data-z="timeline" onclick="go('timeline')">
         <i class="ph-light ph-footprints"></i>
         <span>Timeline</span>
+        <span class="navdot" aria-hidden="true"></span>
       </a>
-      <a class="dim" style="opacity: 0.5; cursor: not-allowed;">
+      <a data-z="body" onclick="go('body')">
         <i class="ph-light ph-chart-pie"></i>
         <span>Состав тела</span>
+        <span class="navdot" aria-hidden="true"></span>
       </a>
-      <a class="dim" style="opacity: 0.5; cursor: not-allowed;">
+      <a data-z="workouts" onclick="go('workouts')">
         <i class="ph-light ph-barbell"></i>
         <span>Тренировки</span>
+        <span class="navdot" aria-hidden="true"></span>
       </a>
     </nav>
 
     <div class="navsec">Знание</div>
     <nav>
-      <a class="dim" style="opacity: 0.5; cursor: not-allowed;">
+      <a data-z="protocols" onclick="go('protocols')">
         <i class="ph-light ph-book-open"></i>
         <span>Protocols</span>
+        <span class="navdot" aria-hidden="true"></span>
       </a>
-      <a class="dim" style="opacity: 0.5; cursor: not-allowed;">
+      <a data-z="research" onclick="go('research')">
         <i class="ph-light ph-microscope"></i>
         <span>Research</span>
+        <span class="navdot" aria-hidden="true"></span>
       </a>
     </nav>
 
     <div class="navsec">Система</div>
     <nav>
-      <a class="dim" style="opacity: 0.5; cursor: not-allowed;">
+      <a data-z="reports" onclick="go('reports')">
         <i class="ph-light ph-file-text"></i>
         <span>Отчёты</span>
+        <span class="navdot" aria-hidden="true"></span>
       </a>
-      <a class="dim" style="opacity: 0.5; cursor: not-allowed;">
+      <a data-z="digests" onclick="go('digests')">
         <i class="ph-light ph-bell"></i>
         <span>Дайджесты</span>
+        <span class="navdot" aria-hidden="true"></span>
       </a>
       <a data-z="sync" onclick="go('sync')">
         <i class="ph-light ph-arrows-clockwise"></i>
@@ -1363,22 +1946,27 @@
       </a>
     </nav>
   </div>
-  
+
   <div class="sidefoot">
-    <div class="docmini">
-      <div class="face" id="docFace">🩺</div>
+    <div class="docmini" id="pulseHome">
+      <div class="face zone-yellow" id="docFace"><img src="assets/pulse-mascot.png" alt="Пульс" id="pulseImg"></div>
       <div class="t">
-        <b>Доктор Контекст</b>
+        <b>Пульс</b>
         <div class="muted" id="docMini">Загрузка...</div>
       </div>
     </div>
-    
+
     <div class="themes" id="themes" role="group" aria-label="Тема оформления">
       <button data-t="dark" aria-pressed="true">Тёмная</button>
-      <button data-t="light">Светлая</button>
-      <button data-t="brutalist">Брутал</button>
-      <button data-t="bauhaus">Баухауз</button>
+      <button data-t="light" aria-pressed="false">Светлая</button>
+      <button data-t="brutalist" aria-pressed="false">Брутал</button>
+      <button data-t="bauhaus" aria-pressed="false">Баухауз</button>
     </div>
+
+    <button class="nav-config-btn" id="navConfigBtn" onclick="openNavConfig()">
+      <i class="ph-light ph-sliders"></i>
+      <span>Настроить меню</span>
+    </button>
   </div>
 </aside>
 
@@ -1387,7 +1975,7 @@
 <main>
   <div class="topbar">
     <div class="topbar-left">
-      <button class="nav-toggle" id="navToggle" aria-label="Открыть меню" onclick="toggleDrawer()">☰</button>
+      <button class="nav-toggle" id="navToggle" aria-label="Открыть меню" onclick="toggleDrawer()"><i class="ph-light ph-list"></i></button>
       <div>
         <h1 id="zoneTitle">Overview / Сегодня</h1>
       </div>
@@ -1485,7 +2073,33 @@
               </div>
             </div>
           </div>
-          
+
+          <!-- Пульс: разбор дня (локальный агент через bridge) -->
+          <div class="card-outer col-12" id="insightCard">
+            <div class="card-inner">
+              <div class="card-header" style="margin-bottom:14px;">
+                <div class="card-title-group">
+                  <h3>Пульс: разбор дня</h3>
+                  <div class="sub">локальный агент анализирует recovery, сон и журнал — данные не покидают устройство</div>
+                </div>
+                <i class="ph-light ph-sparkle card-header-icon"></i>
+              </div>
+
+              <div class="agent-box" id="insightBox">
+                <div class="agent-idle">
+                  <i class="ph-light ph-chat-circle-text"></i>
+                  <span>Агент прочитает сегодняшние показатели и журнал, даст 2-3 наблюдения и конкретные шаги на день — каждый с уровнем доверия C1-C5.</span>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+                <button class="btn-primary agent-btn" id="insightBtn" onclick="generateInsight()">
+                  <i class="ph-light ph-sparkle"></i> Сгенерировать инсайт
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -1607,7 +2221,7 @@
             <div class="card-inner">
               <div class="card-header">
                 <div class="card-title-group">
-                  <h3>Показатели жизнедеятельности WHOOP</h3>
+                  <h3>Показатели жизнедеятельности<span class="src-badge">демо-данные</span></h3>
                   <div class="sub">суточный баланс по ключевым осям</div>
                 </div>
                 <i class="ph-light ph-arrows-out-cardinal card-header-icon"></i>
@@ -1719,13 +2333,21 @@
             <div class="card-inner">
               <div class="card-header">
                 <div class="card-title-group">
-                  <h3>Влияние привычек на Восстановление</h3>
+                  <h3>Влияние привычек на Восстановление<span class="src-badge">демо-данные</span></h3>
                   <div class="sub">разница baseline в дни «да» против «нет»</div>
                 </div>
                 <i class="ph-light ph-scales card-header-icon"></i>
               </div>
-              
+
               <div class="habit-list" id="corrList" style="margin-top: 10px;"></div>
+
+              <div class="agent-box" id="corrAgentBox" style="margin-top: 18px; display: none;"></div>
+
+              <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+                <button class="btn-secondary agent-btn" id="corrAgentBtn" onclick="runCorrAgent()">
+                  <i class="ph-light ph-arrows-clockwise"></i> Пересчитать корреляции агентом
+                </button>
+              </div>
             </div>
           </div>
           
@@ -1763,33 +2385,43 @@
             <div class="card-inner">
               <div class="card-header">
                 <div class="card-title-group">
-                  <h3>Настройка отслеживания</h3>
-                  <div class="sub">выберите привычки из каталога поведения (200+) для ежедневного журнала</div>
+                  <h3>Настройка</h3>
+                  <div class="sub">выбери привычки из каталога — список действует и здесь, и на экране «Сегодня»</div>
                 </div>
                 <i class="ph-light ph-sliders-horizontal card-header-icon"></i>
               </div>
-              
+
               <div class="journal-grid" id="behaviorGrid"></div>
             </div>
           </div>
-          
+
           <div class="card-outer col-8">
             <div class="card-inner">
               <div class="card-header">
                 <div class="card-title-group">
-                  <h3>Журнал за сегодня</h3>
-                  <div class="sub">быстрый ежедневный чек-ин по выбранным метрикам</div>
+                  <h3>Чек-ин за сегодня</h3>
+                  <div class="sub">тот же список, что на «Сегодня» — отметка синхронизируется между экранами</div>
                 </div>
                 <i class="ph-light ph-pencil-line card-header-icon"></i>
               </div>
-              
-              <div id="journalFormContainer"></div>
-              
-              <div class="form-group" style="margin-top: 14px;">
-                <label>Заметки о самочувствии / Контекст</label>
+
+              <div class="habit-header">
+                <span class="muted" style="font-size:12px;">Прогресс</span>
+                <div class="habit-progress-wrap">
+                  <div class="habit-progress-bar">
+                    <div class="habit-progress-fill" id="journalHabitFill"></div>
+                  </div>
+                  <span class="habit-progress-text" id="journalHabitProgText">0/0</span>
+                </div>
+              </div>
+
+              <div class="habit-list" id="journalHabitList"></div>
+
+              <div class="form-group" style="margin-top: 18px;">
+                <label for="journalNotes">Заметки о самочувствии / Контекст</label>
                 <textarea id="journalNotes" rows="3" placeholder="Стрессовые звонки во второй половине дня, умеренная головная боль..."></textarea>
               </div>
-              
+
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
                 <span class="muted" id="journalSaveStatus" style="font-size:12px;"></span>
                 <button class="btn-primary" id="saveJournalBtn" onclick="saveJournalEntry()">
@@ -1868,13 +2500,291 @@
               </div>
             </div>
           </div>
-          
+
+          <!-- Анализ трендов локальным агентом -->
+          <div class="card-outer col-12">
+            <div class="card-inner">
+              <div class="card-header" style="margin-bottom:14px;">
+                <div class="card-title-group">
+                  <h3>Анализ трендов агентом</h3>
+                  <div class="sub">локальный агент смотрит на динамику recovery/HRV и формулирует наблюдения C1-C5</div>
+                </div>
+                <i class="ph-light ph-magic-wand card-header-icon"></i>
+              </div>
+
+              <div class="agent-box" id="trendsAgentBox">
+                <div class="agent-idle">
+                  <i class="ph-light ph-chart-line"></i>
+                  <span>Запусти анализ — агент сравнит последние 14-30 дней с твоим baseline и подсветит, что изменилось.</span>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+                <button class="btn-secondary agent-btn" id="trendsAgentBtn" onclick="runTrendsAgent()">
+                  <i class="ph-light ph-magic-wand"></i> Анализ трендов агентом
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
       <!-- SCREEN 8: SYNC -->
       <section class="zone" id="z-sync">
-        <div class="sync-grid" id="syncGrid"></div>
+
+        <div class="sync-section">
+          <div class="sync-section-head">
+            <h2>Синхронизации</h2>
+            <span class="hint">живой поток · регулярный импорт</span>
+          </div>
+          <div class="sync-grid" id="syncStreams"></div>
+        </div>
+
+        <div class="sync-section">
+          <div class="sync-section-head">
+            <h2>Загрузки</h2>
+            <span class="hint">разовый импорт файлов</span>
+          </div>
+          <div class="sync-grid" id="syncUploads">
+
+            <!-- Лаборатории: PDF -->
+            <div class="card-outer sync-card">
+              <div class="card-inner">
+                <div class="card-header" style="margin-bottom:8px;">
+                  <div class="card-title-group">
+                    <h3>Лаборатории · PDF</h3>
+                    <div class="sub">результаты анализов из клиник</div>
+                  </div>
+                  <i class="ph-light ph-flask card-header-icon"></i>
+                </div>
+
+                <div class="sync-status-row">
+                  <div class="sync-indicator disconnected" id="uploadLabsIndicator">
+                    <span class="dot"></span>
+                    <span>Разовый импорт</span>
+                  </div>
+                  <span class="mono muted" style="font-size:11px;" id="uploadLabsStatus">—</span>
+                </div>
+
+                <label class="file-drop" for="labsFileInput">
+                  <i class="ph-light ph-file-arrow-up"></i>
+                  <span>Выбрать PDF с результатами</span>
+                </label>
+                <input type="file" id="labsFileInput" class="sr-input" accept=".pdf">
+
+                <div id="labsUploadResult"></div>
+
+                <p class="privacy-note">
+                  <i class="ph-light ph-lock-simple"></i>
+                  <span>Файл не покидает устройство: страница только подставляет его имя в команду импорта, которую ты запускаешь сам.</span>
+                </p>
+              </div>
+            </div>
+
+            <!-- ДНК raw -->
+            <div class="card-outer sync-card">
+              <div class="card-inner">
+                <div class="card-header" style="margin-bottom:8px;">
+                  <div class="card-title-group">
+                    <h3>ДНК · raw-данные</h3>
+                    <div class="sub">MyGenetics, 23andMe, Atlas (txt/csv/vcf)</div>
+                  </div>
+                  <i class="ph-light ph-fingerprint card-header-icon"></i>
+                </div>
+
+                <div class="sync-status-row">
+                  <div class="sync-indicator disconnected" id="uploadDnaIndicator">
+                    <span class="dot"></span>
+                    <span>Разовый импорт</span>
+                  </div>
+                  <span class="mono muted" style="font-size:11px;" id="uploadDnaStatus">—</span>
+                </div>
+
+                <label class="file-drop" for="dnaFileInput">
+                  <i class="ph-light ph-file-arrow-up"></i>
+                  <span>Выбрать raw-файл ДНК</span>
+                </label>
+                <input type="file" id="dnaFileInput" class="sr-input" accept=".txt,.csv,.vcf">
+
+                <div id="dnaUploadResult"></div>
+
+                <p class="privacy-note">
+                  <i class="ph-light ph-lock-simple"></i>
+                  <span>Генетические данные остаются локально. Страница не читает содержимое файла — только имя для команды.</span>
+                </p>
+              </div>
+            </div>
+
+            <!-- Скриншоты -->
+            <div class="card-outer sync-card">
+              <div class="card-inner">
+                <div class="card-header" style="margin-bottom:8px;">
+                  <div class="card-title-group">
+                    <h3>Скриншоты</h3>
+                    <div class="sub">выписки, экраны приложений, фото справок</div>
+                  </div>
+                  <i class="ph-light ph-image card-header-icon"></i>
+                </div>
+
+                <div class="sync-status-row">
+                  <div class="sync-indicator disconnected">
+                    <span class="dot"></span>
+                    <span>Разбор агентом</span>
+                  </div>
+                  <span class="mono muted" style="font-size:11px;">локально</span>
+                </div>
+
+                <label class="file-drop" for="shotFileInput">
+                  <i class="ph-light ph-image-square"></i>
+                  <span>Выбрать изображение</span>
+                </label>
+                <input type="file" id="shotFileInput" class="sr-input" accept="image/png,image/jpeg,image/webp,image/heic">
+
+                <div id="shotUploadResult"></div>
+
+                <p class="privacy-note">
+                  <i class="ph-light ph-robot"></i>
+                  <span>Разбор скриншота делает локальный агент через bridge — без облачной загрузки изображения.</span>
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 9: TIMELINE (empty-state) -->
+      <section class="zone" id="z-timeline">
+        <div class="bento-grid">
+          <div class="card-outer col-12">
+            <div class="card-inner" style="min-height: 420px;">
+              <div class="empty-state">
+                <div class="empty-icon-ring"><i class="ph-light ph-footprints"></i></div>
+                <h4>Хронология здоровья</h4>
+                <p class="what">Анализы, события жизни, болезни и вмешательства — на одной оси времени.</p>
+                <p class="need">Появится, когда в базе будут датированные записи: импортируй анализы или веди журнал — таймлайн соберётся сам.</p>
+                <button class="btn-primary" onclick="go('sync')">
+                  <i class="ph-light ph-arrows-clockwise"></i> К синхронизации
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 10: BODY COMPOSITION (empty-state) -->
+      <section class="zone" id="z-body">
+        <div class="bento-grid">
+          <div class="card-outer col-12">
+            <div class="card-inner" style="min-height: 420px;">
+              <div class="empty-state">
+                <div class="empty-icon-ring"><i class="ph-light ph-chart-pie"></i></div>
+                <h4>Состав тела</h4>
+                <p class="what">Вес, процент жира и мышечная масса с динамикой по неделям.</p>
+                <p class="need">Нужны данные умных весов (Withings, Garmin Index) или ручные замеры — подключи источник в Синхронизации.</p>
+                <button class="btn-primary" onclick="go('sync')">
+                  <i class="ph-light ph-plugs"></i> Подключить источник
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 11: WORKOUTS (empty-state) -->
+      <section class="zone" id="z-workouts">
+        <div class="bento-grid">
+          <div class="card-outer col-12">
+            <div class="card-inner" style="min-height: 420px;">
+              <div class="empty-state">
+                <div class="empty-icon-ring"><i class="ph-light ph-barbell"></i></div>
+                <h4>Тренировки</h4>
+                <p class="what">Журнал тренировок: нагрузка, зоны пульса, прогресс по дисциплинам.</p>
+                <p class="need">Подключи Garmin или Strava в Синхронизации — тренировки подтянутся автоматически.</p>
+                <button class="btn-primary" onclick="go('sync')">
+                  <i class="ph-light ph-plugs"></i> Подключить Garmin / Strava
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 12: PROTOCOLS (empty-state) -->
+      <section class="zone" id="z-protocols">
+        <div class="bento-grid">
+          <div class="card-outer col-12">
+            <div class="card-inner" style="min-height: 420px;">
+              <div class="empty-state">
+                <div class="empty-icon-ring"><i class="ph-light ph-book-open"></i></div>
+                <h4>Протоколы</h4>
+                <p class="what">Личные протоколы — сон, свет, добавки — с n-of-1 проверкой эффекта.</p>
+                <p class="need">Модуль в разработке: строится поверх журнала привычек, который уже копит данные для будущих протоколов.</p>
+                <button class="btn-secondary" onclick="go('journal')">
+                  <i class="ph-light ph-notebook"></i> Вести журнал привычек
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 13: RESEARCH (empty-state) -->
+      <section class="zone" id="z-research">
+        <div class="bento-grid">
+          <div class="card-outer col-12">
+            <div class="card-inner" style="min-height: 420px;">
+              <div class="empty-state">
+                <div class="empty-icon-ring"><i class="ph-light ph-microscope"></i></div>
+                <h4>Research</h4>
+                <p class="what">Дип-ресёрч по маркерам и темам: доказательная база с уровнями доверия C1-C5.</p>
+                <p class="need">Нужен запущенный bridge с локальным агентом. Кнопка «Дип-ресёрч по маркеру» уже работает на экране Биомаркеры.</p>
+                <button class="btn-primary" onclick="go('biomarkers')">
+                  <i class="ph-light ph-flask"></i> К биомаркерам
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 14: REPORTS (empty-state) -->
+      <section class="zone" id="z-reports">
+        <div class="bento-grid">
+          <div class="card-outer col-12">
+            <div class="card-inner" style="min-height: 420px;">
+              <div class="empty-state">
+                <div class="empty-icon-ring"><i class="ph-light ph-file-text"></i></div>
+                <h4>Отчёты</h4>
+                <p class="what">Сводный PDF для врача: ключевые маркеры, динамика, вопросы на приём.</p>
+                <p class="need">Появится с модулем отчётов. Данные для него уже копятся — фиксируй вопросы для врача в карточках биомаркеров.</p>
+                <button class="btn-secondary" onclick="go('biomarkers')">
+                  <i class="ph-light ph-clipboard-text"></i> Вопросы для врача
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 15: DIGESTS (empty-state) -->
+      <section class="zone" id="z-digests">
+        <div class="bento-grid">
+          <div class="card-outer col-12">
+            <div class="card-inner" style="min-height: 420px;">
+              <div class="empty-state">
+                <div class="empty-icon-ring"><i class="ph-light ph-bell"></i></div>
+                <h4>Дайджесты</h4>
+                <p class="what">Еженедельная сводка: что изменилось, что проверить, на что обратить внимание.</p>
+                <p class="need">Появится с модулем дайджестов — нужно минимум две недели данных в системе, чтобы было что сравнивать.</p>
+                <button class="btn-secondary" onclick="go('trends')">
+                  <i class="ph-light ph-chart-line"></i> Смотреть тренды
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
     </div>
@@ -1882,9 +2792,30 @@
 
   <footer>
     <span>Локально · твои данные не уходят с устройства</span>
-    <span id="footerSync" class="mono">обновлено сегодня</span>
+    <span style="display:flex; align-items:center; gap:16px;">
+      <button class="footer-bridge mono" id="bridgeStatus" onclick="onBridgeStatusClick()" title="Состояние локального bridge">bridge: проверка…</button>
+      <span id="footerSync" class="mono">обновлено сегодня</span>
+    </span>
   </footer>
 </main>
+
+<!-- Переиспользуемый модал -->
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-card" id="modalCard">
+    <div class="modal-card-inner">
+      <div class="modal-head">
+        <div>
+          <h3 id="modalTitle"></h3>
+          <div class="sub" id="modalSub"></div>
+        </div>
+        <button class="modal-close" id="modalClose" aria-label="Закрыть" onclick="closeModal()">
+          <i class="ph-light ph-x"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+</div>
 
 <script>
 const DATA = {
@@ -1959,6 +2890,18 @@ const DATA = {
   ]
 };
 
+// --- Доступность: prefers-reduced-motion — GSAP-анимации становятся мгновенными
+const REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (REDUCED_MOTION && window.gsap) gsap.globalTimeline.timeScale(1000);
+
+// --- Утилиты
+const escapeHtml = s => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+const fmtSize = b => b < 1024 ? b + ' Б' : b < 1048576 ? Math.round(b / 1024) + ' КБ' : (b / 1048576).toFixed(1) + ' МБ';
+const todayKey = () => {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+};
+
 const col = v => v >= 67 ? "var(--ok)" : v >= 34 ? "var(--warn)" : "var(--bad)";
 const word = v => v >= 67 ? "Зелёная зона — организм готов к нагрузкам" : v >= 34 ? "Жёлтая зона — умеренный режим" : "Красная зона — необходим глубокий покой";
 const mood = v => v >= 67 ? "😎" : v >= 34 ? "🙂" : "😴";
@@ -1991,7 +2934,10 @@ function updateTodayScreen() {
     </div>
   `).join('');
 
-  document.getElementById('docFace').textContent = mood(v);
+  // Пульс: состояние персонажа = зона recovery (свечение/тонус через CSS-классы).
+  const face = document.getElementById('docFace');
+  face.classList.remove('zone-green', 'zone-yellow', 'zone-red');
+  face.classList.add(v >= 67 ? 'zone-green' : v >= 34 ? 'zone-yellow' : 'zone-red');
   document.getElementById('docMini').textContent = say(v);
 
   document.getElementById('readiness').textContent = DATA.readiness;
@@ -2001,15 +2947,63 @@ function updateTodayScreen() {
   renderHabits();
 }
 
-function renderHabits() {
-  const list = document.getElementById('habitList');
-  list.innerHTML = DATA.habits.map(h => `
-    <div class="habit-item ${h.done ? 'done' : ''}" onclick="toggleHabit('${h.id}')">
+// --- Единый чек-ин: DATA.habits — один источник состояния для «Сегодня» и Журнала.
+// Состояние на сегодня переживает перезагрузку: openhealth.habits.YYYY-MM-DD.
+const HABITS_DONE_KEY = () => 'openhealth.habits.' + todayKey();
+const HABITS_LIST_KEY = 'openhealth.habits.list';
+
+function deltaForBehavior(b) {
+  const corr = (DATA.correlations || []).find(c => c.label === b.label);
+  if (corr) return corr.delta;
+  return b.category === 'toxic' ? -6 : 4;
+}
+
+function initHabitsState() {
+  // 1. Состав списка: сохранённый пользователем набор важнее демо/реальных данных.
+  try {
+    const saved = JSON.parse(localStorage.getItem(HABITS_LIST_KEY) || 'null');
+    if (Array.isArray(saved) && saved.length && saved.every(h => h && h.id && h.label)) {
+      DATA.habits = saved.map(h => ({ id: h.id, label: h.label, done: false, delta: h.delta || 0, icon: h.icon || 'ph-check' }));
+    }
+  } catch (e) { /* повреждённый localStorage — остаёмся на DATA.habits */ }
+
+  // 2. Каталог «Настройки» синхронизируется со списком: selected = привычка активна.
+  DATA.habits.forEach(h => {
+    if (!DATA.allBehaviors.some(b => b.id === h.id)) {
+      DATA.allBehaviors.push({ id: h.id, label: h.label, category: 'habit', icon: h.icon, selected: true });
+    }
+  });
+  DATA.allBehaviors.forEach(b => { b.selected = DATA.habits.some(h => h.id === b.id); });
+
+  // 3. Отметки за сегодня — из localStorage.
+  try {
+    const done = JSON.parse(localStorage.getItem(HABITS_DONE_KEY()) || 'null');
+    if (done && typeof done === 'object') {
+      DATA.habits.forEach(h => { if (h.id in done) h.done = !!done[h.id]; });
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function persistHabits() {
+  try {
+    const done = {};
+    DATA.habits.forEach(h => { done[h.id] = !!h.done; });
+    localStorage.setItem(HABITS_DONE_KEY(), JSON.stringify(done));
+    localStorage.setItem(HABITS_LIST_KEY, JSON.stringify(
+      DATA.habits.map(h => ({ id: h.id, label: h.label, delta: h.delta, icon: h.icon }))
+    ));
+  } catch (e) { /* private mode / квота — чек-ин просто не переживёт перезагрузку */ }
+}
+
+function habitItemHTML(h) {
+  return `
+    <div class="habit-item ${h.done ? 'done' : ''}" data-habit="${h.id}" role="checkbox" aria-checked="${h.done}" tabindex="0"
+         onclick="toggleHabit('${h.id}')" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();toggleHabit('${h.id}');}">
       <div class="habit-checkbox">
         <i class="ph-light ph-check"></i>
       </div>
       <div class="habit-details">
-        <span class="habit-label">${h.label}</span>
+        <span class="habit-label">${escapeHtml(h.label)}</span>
         <span class="habit-impact ${h.delta > 0 ? 'up' : 'down'}">
           ${h.delta > 0 ? '+' : ''}${h.delta}% recovery
         </span>
@@ -2018,26 +3012,42 @@ function renderHabits() {
         <i class="ph-light ${h.icon}"></i>
       </div>
     </div>
-  `).join('');
+  `;
+}
+
+function renderHabits() {
+  const html = DATA.habits.length
+    ? DATA.habits.map(habitItemHTML).join('')
+    : '<p class="muted" style="font-size:12px; margin:8px 0;">Список пуст — выбери привычки в Журнале, раздел «Настройка».</p>';
 
   const doneCount = DATA.habits.filter(h => h.done).length;
   const totalCount = DATA.habits.length;
   const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
-  
-  document.getElementById('habitFill').style.width = pct + "%";
-  document.getElementById('habitProgText').textContent = `${doneCount}/${totalCount}`;
+
+  // Один компонент — два экрана: «Сегодня» и чек-ин в Журнале.
+  [
+    { list: 'habitList', fill: 'habitFill', prog: 'habitProgText' },
+    { list: 'journalHabitList', fill: 'journalHabitFill', prog: 'journalHabitProgText' }
+  ].forEach(t => {
+    const listEl = document.getElementById(t.list);
+    if (listEl) listEl.innerHTML = html;
+    const fillEl = document.getElementById(t.fill);
+    if (fillEl) fillEl.style.width = pct + "%";
+    const progEl = document.getElementById(t.prog);
+    if (progEl) progEl.textContent = `${doneCount}/${totalCount}`;
+  });
 }
 
 function toggleHabit(id) {
   const h = DATA.habits.find(x => x.id === id);
-  if (h) {
-    h.done = !h.done;
-    renderHabits();
-    gsap.fromTo(`.habit-item`, 
-      { scale: 0.99 }, 
-      { scale: 1, duration: 0.3, ease: "power2.out" }
-    );
-  }
+  if (!h) return;
+  h.done = !h.done;
+  persistHabits();
+  renderHabits();
+  gsap.fromTo(`.habit-item[data-habit="${id}"]`,
+    { scale: 0.97 },
+    { scale: 1, duration: 0.3, ease: "power2.out" }
+  );
 }
 
 function animateRecoveryRing() {
@@ -2180,13 +3190,17 @@ function toggleBiomarkerDetail(idx) {
     panel.innerHTML = `
       <div class="discuss-box" style="display: block; opacity: 0; transform: translateY(-10px);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <b style="font-size: 13px; color: var(--ink);">Рекомендация по маркеру: ${b.name}</b>
+          <b style="font-size: 13px; color: var(--ink);">Рекомендация по маркеру: ${escapeHtml(b.name)}</b>
           <span class="mono muted">Доверие: ${b.grade}</span>
         </div>
         <div>${b.discuss}</div>
-        <div style="margin-top: 10px; display:flex; gap:10px;">
+        <div style="margin-top: 12px; display:flex; gap:10px; flex-wrap:wrap;">
           <button class="btn-secondary" style="font-size:10px; padding: 4px 8px;" onclick="alert('Добавлено в вопросы для врача')">Зафиксировать для врача</button>
+          <button class="btn-secondary agent-btn" style="font-size:10px; padding: 4px 8px;" id="bioAgentBtn" onclick="runBioResearch(${idx})">
+            <i class="ph-light ph-microscope"></i> Дип-ресёрч по маркеру
+          </button>
         </div>
+        <div class="agent-box" id="bioAgentBox" style="margin-top: 12px; display: none;"></div>
       </div>
     `;
     panel.style.display = 'block';
@@ -2253,100 +3267,64 @@ function updateCorrelationsScreen() {
 }
 
 function initJournalScreen() {
-  const grid = document.getElementById('behaviorGrid');
-  grid.innerHTML = DATA.allBehaviors.map(b => `
-    <div class="behavior-pill ${b.selected ? 'active' : ''}" onclick="toggleBehaviorSelection('${b.id}')">
-      <i class="ph-light ${b.icon}"></i>
-      <span style="font-size:12px; font-weight:500;">${b.label}</span>
-    </div>
-  `).join('');
+  renderBehaviorGrid();
+  renderHabits();
 
-  renderJournalForm();
+  // Восстановить заметку за сегодня (локально).
+  const notesEl = document.getElementById('journalNotes');
+  if (notesEl && !notesEl.value) {
+    try {
+      const saved = localStorage.getItem('openhealth.journal.notes.' + todayKey());
+      if (saved) notesEl.value = saved;
+    } catch (e) { /* ignore */ }
+  }
 }
 
+function renderBehaviorGrid() {
+  const grid = document.getElementById('behaviorGrid');
+  if (!grid) return;
+  grid.innerHTML = DATA.allBehaviors.map(b => `
+    <div class="behavior-pill ${b.selected ? 'active' : ''}" role="checkbox" aria-checked="${b.selected}" tabindex="0"
+         onclick="toggleBehaviorSelection('${b.id}')" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();toggleBehaviorSelection('${b.id}');}">
+      <i class="ph-light ${b.icon}"></i>
+      <span style="font-size:12px; font-weight:500;">${escapeHtml(b.label)}</span>
+    </div>
+  `).join('');
+}
+
+// Выбор в «Настройке» меняет единый список привычек: и в Журнале, и на «Сегодня».
 function toggleBehaviorSelection(id) {
   const b = DATA.allBehaviors.find(x => x.id === id);
-  if (b) {
-    b.selected = !b.selected;
-    initJournalScreen();
-  }
-}
+  if (!b) return;
+  b.selected = !b.selected;
 
-function renderJournalForm() {
-  const container = document.getElementById('journalFormContainer');
-  const selectedBehaviors = DATA.allBehaviors.filter(b => b.selected);
-  
-  if (selectedBehaviors.length === 0) {
-    container.innerHTML = `<p class="muted" style="font-size:13px; text-align:center; padding: 20px;">Нет выбранных привычек для заполнения. Включите их выше.</p>`;
-    return;
-  }
-  
-  container.innerHTML = selectedBehaviors.map(b => `
-    <div class="habit-item" style="cursor: default; margin-bottom: 8px;">
-      <div class="habit-details">
-        <span class="habit-label">${b.label}</span>
-      </div>
-      <div style="display:flex; gap:6px;">
-        <button class="btn-secondary" style="font-size:11px; padding: 4px 10px;" id="btn-journal-${b.id}-no" onclick="setJournalValue('${b.id}', false)">Нет</button>
-        <button class="btn-secondary" style="font-size:11px; padding: 4px 10px;" id="btn-journal-${b.id}-yes" onclick="setJournalValue('${b.id}', true)">Да</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-const journalAnswers = {};
-
-function setJournalValue(id, val) {
-  journalAnswers[id] = val;
-  
-  const yesBtn = document.getElementById(`btn-journal-${id}-yes`);
-  const noBtn = document.getElementById(`btn-journal-${id}-no`);
-  
-  if (val) {
-    yesBtn.style.background = "var(--ok)";
-    yesBtn.style.color = "#04130b";
-    yesBtn.style.borderColor = "var(--ok)";
-    noBtn.style.background = "transparent";
-    noBtn.style.color = "var(--ink)";
-    noBtn.style.borderColor = "var(--line)";
+  if (b.selected) {
+    if (!DATA.habits.some(h => h.id === id)) {
+      DATA.habits.push({ id: b.id, label: b.label, done: false, delta: deltaForBehavior(b), icon: b.icon });
+    }
   } else {
-    noBtn.style.background = "var(--bad)";
-    noBtn.style.color = "#04130b";
-    noBtn.style.borderColor = "var(--bad)";
-    yesBtn.style.background = "transparent";
-    yesBtn.style.color = "var(--ink)";
-    yesBtn.style.borderColor = "var(--line)";
+    DATA.habits = DATA.habits.filter(h => h.id !== id);
   }
+
+  persistHabits();
+  renderBehaviorGrid();
+  renderHabits();
 }
 
 function saveJournalEntry() {
-  const notes = document.getElementById('journalNotes').value;
+  const notesEl = document.getElementById('journalNotes');
   const status = document.getElementById('journalSaveStatus');
-  status.textContent = "Сохранение...";
-  
-  setTimeout(() => {
-    status.textContent = "Запись успешно сохранена локально";
-    gsap.fromTo('#journalSaveStatus', { opacity: 0 }, { opacity: 1, duration: 0.3 });
-    
-    DATA.allBehaviors.forEach(b => {
-      if (b.selected && journalAnswers[b.id] !== undefined) {
-        const existingHabit = DATA.habits.find(h => h.id === b.id);
-        if (existingHabit) {
-          existingHabit.done = journalAnswers[b.id];
-        } else {
-          DATA.habits.push({
-            id: b.id,
-            label: b.label,
-            done: journalAnswers[b.id],
-            delta: b.id === 'magnesium' ? 8 : (b.id === 'sugar_late' ? -10 : 4),
-            icon: b.icon
-          });
-        }
-      }
-    });
-    
-    updateTodayScreen();
-  }, 800);
+  const notes = (notesEl ? notesEl.value : '').trim();
+
+  try {
+    const key = 'openhealth.journal.notes.' + todayKey();
+    if (notes) localStorage.setItem(key, notes);
+    else localStorage.removeItem(key);
+  } catch (e) { /* ignore */ }
+
+  persistHabits();
+  status.textContent = 'Сохранено локально · ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  gsap.fromTo('#journalSaveStatus', { opacity: 0 }, { opacity: 1, duration: 0.3 });
 }
 
 function initTrendsScreen() {
@@ -2354,81 +3332,210 @@ function initTrendsScreen() {
   renderAreaChart('trendsHrvChart', 'trendsHrvLine', 'trendsHrvArea', DATA.trend30Hrv);
 }
 
+// --- SYNC: живые потоки (WHOOP / Apple Health / Oura / Garmin) -------------
+// Каждая карточка ведёт в реальный флоу импорта: модал с шагами и командами.
+
+const STREAM_KEYS = ['whoop', 'apple', 'oura', 'garmin'];
+const STREAM_FALLBACK = {
+  whoop: { label: 'WHOOP Tracker', icon: 'ph-activity' },
+  apple: { label: 'Apple Health', icon: 'ph-heart' },
+  oura: { label: 'Oura Ring', icon: 'ph-shield' },
+  garmin: { label: 'Garmin Connect', icon: 'ph-barbell' }
+};
+
+const REBUILD_STEP = {
+  text: 'Перегенерируй данные дашборда и обнови страницу:',
+  cmd: 'python3 ui/web/build_dashboard_data.py',
+  action: '<button class="btn-secondary step-action-btn" onclick="location.reload()"><i class="ph-light ph-arrow-clockwise"></i> Обновить страницу</button>'
+};
+
+const SYNC_GUIDES = {
+  whoop: {
+    title: 'WHOOP — импорт данных',
+    sub: 'экспорт из аккаунта WHOOP → локальная команда импорта',
+    steps: [
+      {
+        text: 'Запроси экспорт данных: <b>app.whoop.com</b> → Profile → Data Export (письмо с архивом придёт на почту). Либо используй WHOOP API token, если он у тебя настроен.',
+        link: 'https://app.whoop.com', linkLabel: 'app.whoop.com'
+      },
+      { text: 'Импортируй скачанный файл (путь подставь свой):', cmd: 'python3 -m openhealth import-whoop ~/Downloads/whoop_export.zip' },
+      REBUILD_STEP
+    ]
+  },
+  apple: {
+    title: 'Apple Health — импорт данных',
+    sub: 'экспорт с iPhone → локальная команда импорта',
+    steps: [
+      { text: 'На iPhone: <b>Здоровье</b> → фото профиля справа вверху → «Экспортировать все данные». Получится <span class="mono">export.zip</span> — передай его на этот Mac (AirDrop).' },
+      { text: 'Импортируй архив:', cmd: 'python3 -m openhealth import-apple-health export.zip' },
+      REBUILD_STEP
+    ]
+  },
+  oura: {
+    title: 'Oura — подключение по токену',
+    sub: 'Personal Access Token → локальная команда импорта',
+    steps: [
+      {
+        text: 'Создай Personal Access Token в кабинете Oura:',
+        link: 'https://cloud.ouraring.com/personal-access-tokens', linkLabel: 'cloud.ouraring.com/personal-access-tokens'
+      },
+      { text: 'Импортируй данные, подставив свой токен:', cmd: 'python3 -m openhealth import-oura --token <PERSONAL_ACCESS_TOKEN>' },
+      REBUILD_STEP
+    ]
+  },
+  garmin: {
+    title: 'Garmin — импорт данных',
+    sub: 'экспорт из Garmin Connect → локальная команда импорта',
+    steps: [
+      {
+        text: 'В <b>Garmin Connect</b>: Аккаунт → Управление данными → «Экспорт данных». Архив придёт на почту.',
+        link: 'https://connect.garmin.com', linkLabel: 'connect.garmin.com'
+      },
+      { text: 'Импортируй скачанный архив:', cmd: 'python3 -m openhealth import-garmin ~/Downloads/garmin_export.zip' },
+      REBUILD_STEP
+    ]
+  }
+};
+
+function cmdHTML(cmd) {
+  return `
+    <div class="cmd-row">
+      <code>${escapeHtml(cmd)}</code>
+      <button class="cmd-copy" onclick="copyCmd(this)" aria-label="Копировать команду">
+        <i class="ph-light ph-copy"></i><span>копировать</span>
+      </button>
+    </div>`;
+}
+
+function stepsHTML(steps) {
+  return '<ol class="steps">' + steps.map(s => `
+    <li class="step">
+      ${s.text ? `<div class="step-text">${s.text}</div>` : ''}
+      ${s.link ? `<a class="step-link" href="${s.link}" target="_blank" rel="noopener">${s.linkLabel || s.link} <i class="ph-light ph-arrow-up-right"></i></a>` : ''}
+      ${s.cmd ? cmdHTML(s.cmd) : ''}
+      ${s.action ? `<div class="step-action">${s.action}</div>` : ''}
+    </li>`).join('') + '</ol>';
+}
+
+function showSyncGuide(key) {
+  const g = SYNC_GUIDES[key];
+  if (!g) return;
+  const note = '<p class="cmd-hint" style="margin-top:18px;">Команды выполняются в терминале из корня репозитория openhealth. Данные обрабатываются локально и не покидают устройство.</p>';
+  openModal(g.title, g.sub, stepsHTML(g.steps) + note);
+}
+
 function updateSyncScreen() {
-  const grid = document.getElementById('syncGrid');
-  grid.innerHTML = Object.entries(DATA.connections).map(([key, c]) => `
+  const grid = document.getElementById('syncStreams');
+  if (!grid) return;
+  const conns = DATA.connections || {};
+
+  grid.innerHTML = STREAM_KEYS.map(key => {
+    const fb = STREAM_FALLBACK[key];
+    const c = conns[key] || {};
+    const label = c.label || fb.label;
+    const icon = c.icon || fb.icon;
+    const connected = !!c.connected;
+    return `
     <div class="card-outer sync-card">
       <div class="card-inner">
         <div class="card-header" style="margin-bottom:8px;">
           <div class="card-title-group">
-            <h3>${c.label}</h3>
-            <div class="sub">${c.connected ? 'Автоматический импорт активен' : 'Интеграция не настроена'}</div>
+            <h3>${escapeHtml(label)}</h3>
+            <div class="sub">${connected ? 'данные уже в дашборде' : 'источник не подключён'}</div>
           </div>
-          <i class="ph-light ${c.icon} card-header-icon"></i>
+          <i class="ph-light ${icon} card-header-icon"></i>
         </div>
-        
+
         <div class="sync-status-row">
-          <div class="sync-indicator ${c.connected ? 'connected' : 'disconnected'}">
+          <div class="sync-indicator ${connected ? 'connected' : 'disconnected'}">
             <span class="dot"></span>
-            <span>${c.connected ? 'Подключено' : 'Отключено'}</span>
+            <span>${connected ? 'Подключено' : 'Отключено'}</span>
           </div>
           <span class="mono muted" style="font-size:11px;">
-            ${c.connected ? c.lastSync : 'Никогда'}
+            ${connected ? escapeHtml(c.lastSync || '—') : 'нет данных'}
           </span>
         </div>
-        
+
         <div style="margin-top:20px; display:flex; gap:8px;">
-          ${c.connected ? `
-            <button class="btn-secondary" style="flex:1;" onclick="triggerSync('${key}', this)">
-              <i class="ph-light ph-arrows-clockwise"></i> Обновить
-            </button>
-            <button class="btn-secondary" style="border-color:var(--bad-glow); color:var(--bad);" onclick="disconnectSync('${key}')">Отключить</button>
-          ` : `
-            <button class="btn-primary" style="flex:1;" onclick="connectSync('${key}')">
-              <i class="ph-light ph-plugs"></i> Подключить
-            </button>
-          `}
+          <button class="${connected ? 'btn-secondary' : 'btn-primary'}" style="flex:1;" onclick="showSyncGuide('${key}')">
+            <i class="ph-light ${connected ? 'ph-arrows-clockwise' : 'ph-plugs'}"></i>
+            ${connected ? 'Обновить данные' : 'Как подключить'}
+          </button>
         </div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+
+  updateUploadStatuses();
 }
 
-function triggerSync(key, btn) {
-  const icon = btn.querySelector('i');
-  icon.classList.add('ph-spin');
-  btn.disabled = true;
-  
-  setTimeout(() => {
-    icon.classList.remove('ph-spin');
-    btn.disabled = false;
-    DATA.connections[key].lastSync = "Только что";
-    updateSyncScreen();
-  }, 1500);
+function updateUploadStatuses() {
+  const conns = DATA.connections || {};
+  const labsEl = document.getElementById('uploadLabsStatus');
+  if (labsEl) labsEl.textContent = (conns.labs && conns.labs.connected && conns.labs.lastSync)
+    ? 'импорт: ' + conns.labs.lastSync : 'ещё не загружалось';
+  const dnaEl = document.getElementById('uploadDnaStatus');
+  if (dnaEl) dnaEl.textContent = (conns.dna && conns.dna.connected && conns.dna.lastSync)
+    ? 'импорт: ' + conns.dna.lastSync : 'ещё не загружалось';
 }
 
-function disconnectSync(key) {
-  DATA.connections[key].connected = false;
-  DATA.connections[key].lastSync = null;
-  
-  if (key === 'labs') {
-    DATA.biomarkersConnected = false;
-    updateBiomarkersScreen();
+// --- SYNC: разовые загрузки (файл выбирается локально, никуда не уходит) ---
+
+function pickedFileHTML(file, iconClass) {
+  return `
+    <div class="picked-file">
+      <i class="ph-light ${iconClass}"></i>
+      <span class="fname" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
+      <span class="fsize">${fmtSize(file.size)}</span>
+    </div>`;
+}
+
+function shellQuote(name) {
+  return '"' + name.replace(/"/g, '\\"') + '"';
+}
+
+function handleUploadPick(inputId, boxId, fileIcon, cmdName) {
+  const input = document.getElementById(inputId);
+  const box = document.getElementById(boxId);
+  if (!input || !box) return;
+  input.addEventListener('change', () => {
+    const f = input.files && input.files[0];
+    if (!f) return;
+    box.innerHTML =
+      pickedFileHTML(f, fileIcon) +
+      cmdHTML(`python3 -m openhealth ${cmdName} ${shellQuote(f.name)}`) +
+      `<p class="cmd-hint">Если файл лежит не в папке запуска команды — подставь полный путь к нему.</p>`;
+    gsap.fromTo(box, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' });
+  });
+}
+
+function bindUploadInputs() {
+  handleUploadPick('labsFileInput', 'labsUploadResult', 'ph-file-pdf', 'import-labs');
+  handleUploadPick('dnaFileInput', 'dnaUploadResult', 'ph-dna', 'import-dna');
+
+  // Скриншоты: после выбора — разбор локальным агентом через bridge.
+  const shotInput = document.getElementById('shotFileInput');
+  const shotBox = document.getElementById('shotUploadResult');
+  if (shotInput && shotBox) {
+    shotInput.addEventListener('change', () => {
+      const f = shotInput.files && shotInput.files[0];
+      if (!f) return;
+      shotBox.innerHTML =
+        pickedFileHTML(f, 'ph-image') +
+        `<p class="cmd-hint">Разбор скриншота агентом: bridge передаст задачу локальному агенту, текст и значения попадут в журнал.</p>
+         <div class="step-action">
+           <button class="btn-primary agent-btn" id="shotAgentBtn" onclick="analyzeScreenshot()">
+             <i class="ph-light ph-robot"></i> Разобрать агентом
+           </button>
+         </div>
+         <div class="agent-box" id="shotAgentBox" style="margin-top:12px; display:none;"></div>`;
+      gsap.fromTo(shotBox, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' });
+    });
   }
-  
-  updateSyncScreen();
 }
 
-function connectSync(key) {
-  DATA.connections[key].connected = true;
-  DATA.connections[key].lastSync = "Только что";
-  
-  if (key === 'labs') {
-    DATA.biomarkersConnected = true;
-    updateBiomarkersScreen();
-  }
-  
-  updateSyncScreen();
+function analyzeScreenshot() {
+  runAgentTask({ boxId: 'shotAgentBox', btnId: 'shotAgentBtn', task: 'transcript', param: '', retryCall: 'analyzeScreenshot()', skipOfflineGate: true });
 }
 
 function renderAreaChart(svgId, lineId, areaId, arr) {
@@ -2482,12 +3589,441 @@ const titles = {
   today: "Overview / Сегодня",
   pulse: "Пульс дня",
   biomarkers: "Biomarkers (Анализы)",
-  'whoop-overview': "WHOOP Overview",
-  'whoop-correlations': "WHOOP Correlations",
+  'whoop-overview': "Обзор показателей",
+  'whoop-correlations': "Корреляции",
   journal: "Журнал",
   trends: "Тренды",
-  sync: "Синхронизация"
+  sync: "Синхронизация",
+  timeline: "Timeline",
+  body: "Состав тела",
+  workouts: "Тренировки",
+  protocols: "Protocols",
+  research: "Research",
+  reports: "Отчёты",
+  digests: "Дайджесты"
 };
+
+// === Переиспользуемый модал ================================================
+
+let modalReturnFocus = null;
+
+function openModal(title, sub, bodyHTML) {
+  const overlay = document.getElementById('modalOverlay');
+  const card = document.getElementById('modalCard');
+  document.getElementById('modalTitle').textContent = title || '';
+  document.getElementById('modalSub').textContent = sub || '';
+  document.getElementById('modalBody').innerHTML = bodyHTML || '';
+
+  modalReturnFocus = document.activeElement;
+  overlay.classList.add('on');
+  gsap.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.22, ease: 'power1.out' });
+  gsap.fromTo(card, { opacity: 0, scale: 0.96, y: 10 }, { opacity: 1, scale: 1, y: 0, duration: 0.32, ease: 'power3.out' });
+  document.getElementById('modalClose').focus();
+}
+
+function closeModal() {
+  const overlay = document.getElementById('modalOverlay');
+  if (!overlay.classList.contains('on')) return;
+  const card = document.getElementById('modalCard');
+  gsap.to(card, { opacity: 0, scale: 0.97, y: 8, duration: 0.18, ease: 'power2.in' });
+  gsap.to(overlay, {
+    opacity: 0, duration: 0.2, ease: 'power1.in',
+    onComplete: () => {
+      overlay.classList.remove('on');
+      gsap.set([overlay, card], { clearProps: 'all' });
+      if (modalReturnFocus && document.contains(modalReturnFocus)) modalReturnFocus.focus();
+      modalReturnFocus = null;
+    }
+  });
+}
+
+// Esc закрывает модал; Tab не убегает за overlay (мини focus-trap).
+document.addEventListener('keydown', e => {
+  const overlay = document.getElementById('modalOverlay');
+  if (!overlay || !overlay.classList.contains('on')) return;
+  if (e.key === 'Escape') { e.preventDefault(); closeModal(); return; }
+  if (e.key === 'Tab') {
+    const focusables = overlay.querySelectorAll('button, [href], input:not([hidden]), select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (!focusables.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    else if (!overlay.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+  }
+});
+
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+
+// Копирование команд: navigator.clipboard + фидбэк «скопировано».
+function copyCmd(btn) {
+  const code = btn.parentElement.querySelector('code');
+  if (!code) return;
+  const text = code.textContent;
+
+  const done = ok => {
+    const span = btn.querySelector('span');
+    const icon = btn.querySelector('i');
+    if (!span || !icon) return;
+    btn.classList.toggle('copied', ok);
+    span.textContent = ok ? 'скопировано' : 'не вышло';
+    icon.className = ok ? 'ph-light ph-check' : 'ph-light ph-warning';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      span.textContent = 'копировать';
+      icon.className = 'ph-light ph-copy';
+    }, 1800);
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => done(true)).catch(() => done(fallbackCopy(text)));
+  } else {
+    done(fallbackCopy(text));
+  }
+}
+
+function fallbackCopy(text) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) { return false; }
+}
+
+// === Bridge: локальный агент (server.py на 127.0.0.1) ======================
+
+const BRIDGE = { checked: false, ok: false, agents: {} };
+
+async function checkBridge() {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 1500);
+  try {
+    const res = await fetch('/api/health', { signal: ctrl.signal, cache: 'no-store' });
+    if (res.ok) {
+      const j = await res.json();
+      BRIDGE.ok = !!j.ok;
+      BRIDGE.agents = j.agents || {};
+    } else {
+      BRIDGE.ok = false;
+    }
+  } catch (e) {
+    BRIDGE.ok = false;
+  } finally {
+    clearTimeout(timer);
+    BRIDGE.checked = true;
+    applyBridgeState();
+  }
+  return BRIDGE.ok;
+}
+
+function bridgeAgentName() {
+  const order = ['claude', 'codex', 'openhealth'];
+  return order.find(a => BRIDGE.agents && BRIDGE.agents[a]) || null;
+}
+
+function applyBridgeState() {
+  document.body.classList.toggle('bridge-offline', !BRIDGE.ok);
+
+  const tip = 'Bridge не запущен — запусти OpenHealth.command';
+  document.querySelectorAll('.agent-btn').forEach(btn => {
+    if (BRIDGE.ok) {
+      btn.removeAttribute('title');
+      btn.removeAttribute('aria-disabled');
+    } else {
+      btn.setAttribute('title', tip);
+      btn.setAttribute('aria-disabled', 'true');
+    }
+  });
+
+  const st = document.getElementById('bridgeStatus');
+  if (st) {
+    if (BRIDGE.ok) {
+      const agent = bridgeAgentName();
+      st.textContent = 'bridge: онлайн' + (agent ? ' · ' + agent : '');
+      st.classList.add('online');
+      st.title = 'Локальный bridge работает' + (agent ? ', агент: ' + agent : '');
+    } else {
+      st.textContent = 'bridge: офлайн';
+      st.classList.remove('online');
+      st.title = 'Bridge не запущен — нажми, чтобы узнать как запустить';
+    }
+  }
+}
+
+function onBridgeStatusClick() {
+  if (BRIDGE.ok) {
+    const agent = bridgeAgentName();
+    openModal('Bridge на связи', 'локальный агент готов к задачам',
+      `<p class="step-text">Сервер bridge работает на этой странице. Доступный агент: <b>${agent || 'не найден'}</b>.</p>
+       <p class="cmd-hint">Кнопки «Сгенерировать инсайт», «Анализ трендов», «Пересчитать корреляции» и «Дип-ресёрч» активны.</p>`);
+  } else {
+    showBridgeHelp();
+  }
+}
+
+function showBridgeHelp() {
+  openModal('Как запустить bridge', 'локальный сервер агентных задач — 127.0.0.1, без облака',
+    stepsHTML([
+      { text: 'Запусти <b>OpenHealth.command</b> двойным кликом в Finder — он поднимет локальный bridge и откроет дашборд.' },
+      { text: 'Или вручную из корня репозитория:', cmd: 'python3 ui/web/server.py --port 8770 --dir ui/web' },
+      { text: 'Открой дашборд по адресу bridge (иначе /api/* недоступны):', link: 'http://127.0.0.1:8770', linkLabel: 'http://127.0.0.1:8770' }
+    ]) +
+    `<div class="step-action" style="margin-top:18px;">
+       <button class="btn-primary" id="bridgeRecheckBtn" onclick="recheckBridge(this)">
+         <i class="ph-light ph-plugs-connected"></i> Проверить снова
+       </button>
+     </div>`);
+}
+
+async function recheckBridge(btn) {
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner" style="border-top-color: var(--bg);"></span> Проверяю…';
+  const ok = await checkBridge();
+  btn.disabled = false;
+  if (ok) {
+    btn.innerHTML = '<i class="ph-light ph-check"></i> Bridge на связи';
+    setTimeout(closeModal, 700);
+  } else {
+    btn.innerHTML = original;
+    const note = document.createElement('p');
+    note.className = 'cmd-hint';
+    note.textContent = 'Всё ещё офлайн. Проверь, что server.py запущен и страница открыта с его адреса.';
+    btn.parentElement.appendChild(note);
+    setTimeout(() => note.remove(), 4000);
+  }
+}
+
+// --- Запуск агент-задач с состояниями loading / ok / error / offline -------
+
+function skeletonHTML() {
+  return `
+    <div class="skeleton" aria-hidden="true">
+      <div class="skeleton-line" style="width: 92%;"></div>
+      <div class="skeleton-line" style="width: 100%;"></div>
+      <div class="skeleton-line" style="width: 84%;"></div>
+      <div class="skeleton-line" style="width: 56%;"></div>
+    </div>
+    <div class="agent-wait"><span class="spinner"></span> Агент думает над твоими данными — обычно 15-60 секунд</div>`;
+}
+
+function agentResultHTML(r) {
+  const took = typeof r.took_ms === 'number' ? (r.took_ms / 1000).toFixed(1) + ' с' : '';
+  return `
+    <div class="agent-result-meta">
+      <span class="agent-chip"><i class="ph-light ph-robot"></i>${escapeHtml(r.agent || 'agent')}</span>
+      ${took ? `<span class="mono dim" style="font-size:11px;">${took}</span>` : ''}
+    </div>
+    <div class="agent-text">${escapeHtml(r.result || '')}</div>`;
+}
+
+function agentErrorHTML(message, retryCall) {
+  return `
+    <div class="agent-error">
+      <div class="agent-error-msg">
+        <i class="ph-light ph-warning-circle"></i>
+        <span>${escapeHtml(message)}</span>
+      </div>
+      <div class="agent-actions">
+        ${retryCall ? `<button class="btn-secondary" onclick="${retryCall}"><i class="ph-light ph-arrow-clockwise"></i> Повторить</button>` : ''}
+        <button class="btn-secondary" onclick="showBridgeHelp()"><i class="ph-light ph-question"></i> Как запустить bridge</button>
+      </div>
+    </div>`;
+}
+
+function agentOfflineHTML(retryCall) {
+  return `
+    <div class="agent-error">
+      <div class="agent-error-msg">
+        <i class="ph-light ph-plugs"></i>
+        <span>Bridge не запущен — запусти <b>OpenHealth.command</b>, и локальный агент станет доступен.</span>
+      </div>
+      <div class="agent-actions">
+        <button class="btn-secondary" onclick="showBridgeHelp()"><i class="ph-light ph-info"></i> Как запустить</button>
+        ${retryCall ? `<button class="btn-secondary" onclick="checkBridge().then(ok => { if (ok) ${retryCall} })"><i class="ph-light ph-arrow-clockwise"></i> Проверить и повторить</button>` : ''}
+      </div>
+    </div>`;
+}
+
+async function agentRequest(task, param) {
+  const res = await fetch('/api/agent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ task, param: param || '', lang: 'ru' })
+  });
+  let body = null;
+  try { body = await res.json(); } catch (e) { /* не-JSON ответ */ }
+  if (!res.ok) {
+    throw new Error((body && body.message) ? body.message : 'HTTP ' + res.status);
+  }
+  return body || {};
+}
+
+function runAgentTask(opts) {
+  const box = document.getElementById(opts.boxId);
+  const btn = opts.btnId ? document.getElementById(opts.btnId) : null;
+  if (!box) return;
+  box.style.display = 'block';
+
+  if (!BRIDGE.ok && !opts.skipOfflineGate) {
+    box.innerHTML = agentOfflineHTML(opts.retryCall);
+    return;
+  }
+
+  box.innerHTML = skeletonHTML();
+  if (btn) btn.disabled = true;
+
+  agentRequest(opts.task, opts.param)
+    .then(r => {
+      if (r.status === 'ok') {
+        box.innerHTML = agentResultHTML(r);
+        gsap.fromTo(box, { opacity: 0.4 }, { opacity: 1, duration: 0.4, ease: 'power1.out' });
+      } else if (r.status === 'no_agent') {
+        box.innerHTML = agentErrorHTML(r.message || 'Агент не найден: установи Claude Code или Codex CLI.', opts.retryCall);
+      } else if (r.status === 'timeout') {
+        box.innerHTML = agentErrorHTML('Агент не уложился в лимит времени. Попробуй ещё раз — повторный запуск обычно быстрее.', opts.retryCall);
+      } else {
+        box.innerHTML = agentErrorHTML(r.message || 'Неизвестная ошибка агента.', opts.retryCall);
+      }
+    })
+    .catch(() => {
+      BRIDGE.ok = false;
+      applyBridgeState();
+      box.innerHTML = agentOfflineHTML(opts.retryCall);
+    })
+    .finally(() => { if (btn) btn.disabled = false; });
+}
+
+// Конкретные агент-кнопки (каждая со своим контейнером и retry).
+function generateInsight() {
+  runAgentTask({ boxId: 'insightBox', btnId: 'insightBtn', task: 'insight', param: '', retryCall: 'generateInsight()' });
+}
+
+function runTrendsAgent() {
+  runAgentTask({ boxId: 'trendsAgentBox', btnId: 'trendsAgentBtn', task: 'insight', param: 'тренды за 30 дней', retryCall: 'runTrendsAgent()' });
+}
+
+function runCorrAgent() {
+  runAgentTask({ boxId: 'corrAgentBox', btnId: 'corrAgentBtn', task: 'correlations', param: '', retryCall: 'runCorrAgent()' });
+}
+
+function runBioResearch(idx) {
+  const b = DATA.biomarkers[idx];
+  if (!b) return;
+  runAgentTask({ boxId: 'bioAgentBox', btnId: 'bioAgentBtn', task: 'research', param: b.name, retryCall: 'runBioResearch(' + idx + ')' });
+}
+
+// === Источник данных в подписях (device-agnostic) ==========================
+
+function sourceLabel() {
+  const c = DATA.connections || {};
+  if (c.whoop && c.whoop.connected) return 'WHOOP';
+  const alt = ['apple', 'oura', 'garmin'].find(k => c[k] && c[k].connected);
+  if (alt) return (c[alt].label || alt).replace(/ (Tracker|Connect|Ring)$/, '');
+  return null;
+}
+
+function updateSourceBadges() {
+  const lbl = sourceLabel();
+  document.querySelectorAll('.src-badge').forEach(el => {
+    el.textContent = lbl ? 'источник: ' + lbl : 'демо-данные';
+  });
+}
+
+// === Настройка меню: скрытие разделов (localStorage) =======================
+
+const NAV_HIDDEN_KEY = 'openhealth.nav.hidden';
+const NAV_HIDEABLE = [
+  { z: 'pulse', label: 'Пульс дня', icon: 'ph-heart' },
+  { z: 'biomarkers', label: 'Biomarkers (Анализы)', icon: 'ph-flask' },
+  { z: 'whoop-overview', label: 'Обзор показателей', icon: 'ph-chart-line-up' },
+  { z: 'whoop-correlations', label: 'Корреляции', icon: 'ph-scales' },
+  { z: 'journal', label: 'Журнал', icon: 'ph-notebook' },
+  { z: 'trends', label: 'Тренды', icon: 'ph-calendar' },
+  { z: 'timeline', label: 'Timeline', icon: 'ph-footprints' },
+  { z: 'body', label: 'Состав тела', icon: 'ph-chart-pie' },
+  { z: 'workouts', label: 'Тренировки', icon: 'ph-barbell' },
+  { z: 'protocols', label: 'Protocols', icon: 'ph-book-open' },
+  { z: 'research', label: 'Research', icon: 'ph-microscope' },
+  { z: 'reports', label: 'Отчёты', icon: 'ph-file-text' },
+  { z: 'digests', label: 'Дайджесты', icon: 'ph-bell' }
+];
+
+function getHiddenNav() {
+  try {
+    const v = JSON.parse(localStorage.getItem(NAV_HIDDEN_KEY) || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch (e) { return []; }
+}
+
+function applyNavVisibility() {
+  const hidden = getHiddenNav();
+  document.querySelectorAll('aside nav a[data-z]').forEach(a => {
+    const z = a.dataset.z;
+    const hideable = NAV_HIDEABLE.some(item => item.z === z);
+    a.style.display = (hideable && hidden.includes(z)) ? 'none' : '';
+  });
+}
+
+function toggleNavHidden(z, rowEl) {
+  let hidden = getHiddenNav();
+  if (hidden.includes(z)) hidden = hidden.filter(x => x !== z);
+  else hidden.push(z);
+  try { localStorage.setItem(NAV_HIDDEN_KEY, JSON.stringify(hidden)); } catch (e) { /* ignore */ }
+
+  if (rowEl) {
+    rowEl.classList.toggle('on', !hidden.includes(z));
+    const input = rowEl.querySelector('input');
+    if (input) input.checked = !hidden.includes(z);
+  }
+  applyNavVisibility();
+
+  // Если скрыли активную зону — уходим на «Сегодня».
+  const active = document.querySelector('.zone.on');
+  if (hidden.includes(z) && active && active.id === 'z-' + z) go('today');
+}
+
+function openNavConfig() {
+  const hidden = getHiddenNav();
+  const rows = NAV_HIDEABLE.map(item => `
+    <label class="nav-config-row ${hidden.includes(item.z) ? '' : 'on'}">
+      <span class="nav-config-check"><i class="ph-light ph-check"></i></span>
+      <input type="checkbox" ${hidden.includes(item.z) ? '' : 'checked'}
+             onchange="toggleNavHidden('${item.z}', this.closest('.nav-config-row'))">
+      <i class="ph-light ${item.icon} row-icon"></i>
+      <span>${item.label}</span>
+    </label>`).join('');
+
+  const fxOn = localStorage.getItem('openhealth.fx') !== 'off';
+  const bgOn = localStorage.getItem('openhealth.bg') === 'on';
+  const extras = `
+    <div class="nav-config-note" style="margin-top:14px; font-weight:600; color: var(--ink);">Оформление</div>
+    <label class="nav-config-row ${fxOn ? 'on' : ''}">
+      <span class="nav-config-check"><i class="ph-light ph-check"></i></span>
+      <input type="checkbox" ${fxOn ? 'checked' : ''}
+             onchange="localStorage.setItem('openhealth.fx', this.checked ? 'on' : 'off'); this.closest('.nav-config-row').classList.toggle('on', this.checked)">
+      <i class="ph-light ph-sparkle row-icon"></i>
+      <span>Микро-праздники при отличных показателях</span>
+    </label>
+    <label class="nav-config-row ${bgOn ? 'on' : ''}">
+      <span class="nav-config-check"><i class="ph-light ph-check"></i></span>
+      <input type="checkbox" ${bgOn ? 'checked' : ''}
+             onchange="localStorage.setItem('openhealth.bg', this.checked ? 'on' : 'off'); this.closest('.nav-config-row').classList.toggle('on', this.checked); applyZoneBackgrounds()">
+      <i class="ph-light ph-image row-icon"></i>
+      <span>Атмосферные фоны разделов (тёмная тема)</span>
+    </label>`;
+
+  openModal('Настройка меню', 'какие разделы показывать в навигации',
+    rows + extras + '<p class="nav-config-note">«Сегодня» и «Синхронизация» — системные разделы, они видны всегда. Настройка хранится локально в браузере.</p>');
+}
 
 function toggleDrawer(force) {
   const aside = document.querySelector('aside');
@@ -2604,11 +4140,14 @@ function renderDashboard() {
   document.querySelectorAll('aside nav a').forEach(a => a.classList.toggle('active', a.dataset.z === 'today'));
   document.getElementById('zoneTitle').textContent = titles.today;
 
+  initHabitsState();
   updateTodayScreen();
   exploreCorrelations();
   updateBiomarkersScreen();
   updateSyncScreen();
   initJournalScreen();
+  updateSourceBadges();
+  applyBridgeState();
 
   gsap.fromTo('#z-today .card-outer',
     { opacity: 0, y: 25 },
@@ -2617,15 +4156,126 @@ function renderDashboard() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  applyNavVisibility();
+  bindUploadInputs();
   // Render immediately with whatever DATA we have, then re-render if real
   // local data loads (keeps demo instant and avoids a blank first paint).
   loadRealData().then(loaded => { if (loaded) renderDashboard(); });
   renderDashboard();
+  // Один тихий запрос к /api/health с таймаутом 1.5 с — без спама.
+  checkBridge();
 });
 
 function exploreCorrelations() {
   updateCorrelationsScreen();
 }
+
+// ============================================================
+// PWA: офлайн-оболочка (sw.js). Только на http(s), молча.
+// ============================================================
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+// ============================================================
+// Микро-праздники (пасхалки): максимум одна за сессию, ≤2с,
+// только реальные позитивные сигналы, отключаемо, не при красной зоне.
+// ============================================================
+const FX_KEY = 'openhealth.fx';
+const fxEnabled = () => localStorage.getItem(FX_KEY) !== 'off' &&
+  !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let fxFiredThisSession = false;
+
+function confettiBurst(anchorEl, count) {
+  if (!anchorEl) return;
+  const rect = anchorEl.getBoundingClientRect();
+  const colors = ['#10b981', '#34d399', '#eab308', '#7cc8ff'];
+  for (let i = 0; i < Math.min(count || 14, 20); i++) {
+    const p = document.createElement('div');
+    const size = 4 + Math.round((i * 7) % 4);
+    p.style.cssText = 'position:fixed;z-index:9999;pointer-events:none;border-radius:2px;' +
+      'width:' + size + 'px;height:' + size + 'px;' +
+      'left:' + (rect.left + rect.width / 2) + 'px;top:' + (rect.top + rect.height / 2) + 'px;' +
+      'background:' + colors[i % colors.length] + ';';
+    document.body.appendChild(p);
+    const ang = (i / (count || 14)) * Math.PI * 2;
+    const dist = 60 + (i * 13) % 50;
+    gsap.to(p, {
+      x: Math.cos(ang) * dist,
+      y: Math.sin(ang) * dist - 30,
+      rotation: 180 + (i * 47) % 180,
+      opacity: 0,
+      duration: 1.1 + (i % 4) * 0.15,
+      ease: 'power2.out',
+      onComplete: () => p.remove(),
+    });
+  }
+}
+
+// Вызывается из renderDashboard после отрисовки (см. хук ниже).
+function maybeCelebrate() {
+  if (fxFiredThisSession || !fxEnabled()) return;
+  const v = DATA.recovery;
+  if (typeof v !== 'number' || v < 34) return; // никогда при красной зоне
+  if (v >= 85) {
+    fxFiredThisSession = true;
+    confettiBurst(document.querySelector('.ring-container'), 16);
+    return;
+  }
+  // Все привычки дня отмечены — маленький бёрст из прогресс-бара.
+  const hs = DATA.habits || [];
+  if (hs.length >= 3 && hs.every(h => h.done)) {
+    fxFiredThisSession = true;
+    confettiBurst(document.getElementById('habitFill') || document.getElementById('habitProgText'), 12);
+  }
+}
+
+// Тоггл в модале «Настроить меню» управляется ключом openhealth.fx (см. настройки).
+const _renderDashboardBase = renderDashboard;
+renderDashboard = function () {
+  _renderDashboardBase();
+  setTimeout(maybeCelebrate, 900);
+};
+
+// ============================================================
+// Фоны разделов (Cosmos, опционально): тонкая атмосфера под зонами.
+// Ключ openhealth.bg = 'on' | 'off' (дефолт off — чистый дашборд).
+// ============================================================
+const BG_KEY = 'openhealth.bg';
+const ZONE_BG = {
+  'z-today': 'assets/bg/dark-silk.jpg',
+  'z-trends': 'assets/bg/ice-waves.jpg',
+  'z-pulse': 'assets/bg/ember-grain.jpg',
+  'z-biomarkers': 'assets/bg/emission.jpg',
+};
+
+function applyZoneBackgrounds() {
+  const on = localStorage.getItem(BG_KEY) === 'on' &&
+    document.documentElement.dataset.theme === 'dark';
+  Object.entries(ZONE_BG).forEach(([id, url]) => {
+    const z = document.getElementById(id);
+    if (!z) return;
+    if (on) {
+      z.style.backgroundImage =
+        'linear-gradient(rgba(6,7,9,0.92), rgba(6,7,9,0.97)), url(' + url + ')';
+      z.style.backgroundSize = 'cover';
+      z.style.backgroundPosition = 'center';
+      z.style.borderRadius = '24px';
+    } else {
+      z.style.backgroundImage = '';
+    }
+  });
+}
+
+function toggleZoneBackgrounds() {
+  const cur = localStorage.getItem(BG_KEY) === 'on';
+  localStorage.setItem(BG_KEY, cur ? 'off' : 'on');
+  applyZoneBackgrounds();
+}
+
+window.addEventListener('DOMContentLoaded', applyZoneBackgrounds);
 </script>
 </body>
 </html>

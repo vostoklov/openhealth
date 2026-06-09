@@ -9,6 +9,13 @@ Health export) needs only an iPhone.
 from .apple_health import import_apple_health  # noqa: F401
 from .oura import import_oura  # noqa: F401
 from .garmin import import_garmin  # noqa: F401
+from .telegram_intake import (  # noqa: F401
+    update_to_envelope,
+    write_envelope,
+    write_card,
+    load_allowlist,
+    is_allowed,
+)
 from .google_calendar import (  # noqa: F401
     GoogleCalendarClient,
     GoogleCalendarError,
@@ -22,6 +29,11 @@ __all__ = [
     "import_apple_health",
     "import_oura",
     "import_garmin",
+    "update_to_envelope",
+    "write_envelope",
+    "write_card",
+    "load_allowlist",
+    "is_allowed",
     "GoogleCalendarClient",
     "GoogleCalendarError",
     "ensure_derived_calendar",

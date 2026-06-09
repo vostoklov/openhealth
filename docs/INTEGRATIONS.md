@@ -72,12 +72,12 @@ are authoritative.
 
 ### WHOOP — supported
 
-- Portal: <https://developer.whoop.com/> · Docs: <https://developer.whoop.com/docs/developing/getting-started/> · API: `https://api.prod.whoop.com/developer/v2`
+- Portal: <https://developer-dashboard.whoop.com/> (app creation) · Docs portal: <https://developer.whoop.com/> · Docs: <https://developer.whoop.com/docs/developing/getting-started/> · API: `https://api.prod.whoop.com/developer/v2`
 - Data: recovery, HRV, resting HR, sleep, strain, workouts, cycles, respiratory rate, SpO2, skin temp.
 
 Create credentials:
 
-1. Sign in at developer.whoop.com with your WHOOP account and open the Developer Dashboard.
+1. Sign in at https://developer-dashboard.whoop.com/ with your WHOOP account (the dashboard where apps are created).
 2. Create a Team (once), then **Create App** (up to 5 apps per account).
 3. Scopes: `read:profile`, `read:recovery`, `read:cycles`, `read:sleep` (`read:workout` optional).
 4. Add a redirect URL, e.g. `http://localhost:8765/callback` — it must match the OAuth request exactly.

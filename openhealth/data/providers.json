@@ -11,20 +11,35 @@
       "auth": "oauth2",
       "status": "supported",
       "api_base": "https://api.prod.whoop.com/developer/v2",
-      "dev_portal_url": "https://developer.whoop.com/",
+      "dev_portal_url": "https://developer-dashboard.whoop.com/",
       "docs_url": "https://developer.whoop.com/docs/developing/getting-started/",
       "key_steps": [
-        "Go to developer.whoop.com and sign in with your WHOOP account, then open the Developer Dashboard.",
+        "Open https://developer-dashboard.whoop.com/ and sign in with your WHOOP account (this is the actual app-creation dashboard).",
         "Create a Team (required once), then 'Create App' (up to 5 apps per account).",
         "Select scopes: read:profile, read:recovery, read:cycles, read:sleep (read:workout optional).",
         "Add a redirect URL, e.g. http://localhost:8765/callback — it must match your OAuth request exactly.",
         "Copy the Client ID and Client Secret from the app page (secret is server-side only, never log it).",
         "Export OPENHEALTH_WHOOP_CLIENT_ID, OPENHEALTH_WHOOP_CLIENT_SECRET, OPENHEALTH_WHOOP_REDIRECT_URI, then run 'openhealth whoop-auth-url' and 'openhealth whoop-exchange-code' to finish the OAuth flow."
       ],
-      "data_types": ["recovery", "hrv", "resting_hr", "sleep", "strain", "workouts", "cycles", "respiratory_rate", "spo2", "skin_temp"],
+      "data_types": [
+        "recovery",
+        "hrv",
+        "resting_hr",
+        "sleep",
+        "strain",
+        "workouts",
+        "cycles",
+        "respiratory_rate",
+        "spo2",
+        "skin_temp"
+      ],
       "rate_limit_note": "Per-app limits (defaults around 100 requests/min and 10,000/day). Daily sync needs only a handful of calls.",
       "connector": "openhealth/whoop.py",
-      "env_vars": ["OPENHEALTH_WHOOP_CLIENT_ID", "OPENHEALTH_WHOOP_CLIENT_SECRET", "OPENHEALTH_WHOOP_REDIRECT_URI"]
+      "env_vars": [
+        "OPENHEALTH_WHOOP_CLIENT_ID",
+        "OPENHEALTH_WHOOP_CLIENT_SECRET",
+        "OPENHEALTH_WHOOP_REDIRECT_URI"
+      ]
     },
     {
       "id": "oura",
@@ -43,10 +58,23 @@
         "Run the OAuth2 code flow against api.ouraring.com; send 'Authorization: Bearer <token>' on /v2/usercollection/* endpoints.",
         "Note: legacy Personal Access Tokens were deprecated in December 2025 — OAuth2 is now the only auth method."
       ],
-      "data_types": ["sleep", "readiness", "activity", "hrv", "resting_hr", "temperature", "spo2", "respiratory_rate", "workouts"],
+      "data_types": [
+        "sleep",
+        "readiness",
+        "activity",
+        "hrv",
+        "resting_hr",
+        "temperature",
+        "spo2",
+        "respiratory_rate",
+        "workouts"
+      ],
       "rate_limit_note": "Per-token rate limits enforced by the v2 API; polling daily summaries once a day stays far below them.",
       "connector": "openhealth/connectors/oura.py (file export today; live OAuth2 pull planned)",
-      "env_vars": ["OPENHEALTH_OURA_CLIENT_ID", "OPENHEALTH_OURA_CLIENT_SECRET"]
+      "env_vars": [
+        "OPENHEALTH_OURA_CLIENT_ID",
+        "OPENHEALTH_OURA_CLIENT_SECRET"
+      ]
     },
     {
       "id": "garmin",
@@ -63,10 +91,24 @@
         "Once approved you get portal access, an evaluation environment and consumer key/secret for the OAuth flow; the Health API is primarily push/webhook based.",
         "Personal no-approval fallback (what our connector uses today): account.garmin.com → 'Export Your Data', or Garmin Connect per-metric CSV exports, then feed the files to connectors/garmin.py."
       ],
-      "data_types": ["sleep", "hrv", "resting_hr", "stress", "body_battery", "steps", "activity", "workouts", "respiration", "spo2"],
+      "data_types": [
+        "sleep",
+        "hrv",
+        "resting_hr",
+        "stress",
+        "body_battery",
+        "steps",
+        "activity",
+        "workouts",
+        "respiration",
+        "spo2"
+      ],
       "rate_limit_note": "Evaluation keys carry reduced quotas; production Health API is push-based so polling limits rarely matter.",
       "connector": "openhealth/connectors/garmin.py (file export)",
-      "env_vars": ["OPENHEALTH_GARMIN_CONSUMER_KEY", "OPENHEALTH_GARMIN_CONSUMER_SECRET"]
+      "env_vars": [
+        "OPENHEALTH_GARMIN_CONSUMER_KEY",
+        "OPENHEALTH_GARMIN_CONSUMER_SECRET"
+      ]
     },
     {
       "id": "fitbit",
@@ -84,10 +126,23 @@
         "Set a redirect URI, e.g. http://localhost:8765/callback, and save to get Client ID and Client Secret.",
         "Run the OAuth2 Authorization Code flow with PKCE; request scopes like sleep, heartrate, activity, weight, oxygen_saturation."
       ],
-      "data_types": ["sleep", "heart_rate", "hrv", "steps", "spo2", "breathing_rate", "skin_temp", "weight", "activity"],
+      "data_types": [
+        "sleep",
+        "heart_rate",
+        "hrv",
+        "steps",
+        "spo2",
+        "breathing_rate",
+        "skin_temp",
+        "weight",
+        "activity"
+      ],
       "rate_limit_note": "150 requests/hour per user token — batch daily pulls and cache aggressively.",
       "connector": null,
-      "env_vars": ["OPENHEALTH_FITBIT_CLIENT_ID", "OPENHEALTH_FITBIT_CLIENT_SECRET"]
+      "env_vars": [
+        "OPENHEALTH_FITBIT_CLIENT_ID",
+        "OPENHEALTH_FITBIT_CLIENT_SECRET"
+      ]
     },
     {
       "id": "polar",
@@ -104,10 +159,21 @@
         "Copy the Client ID and Client Secret shown after creation.",
         "Run the OAuth2 code flow, then register the user against the AccessLink /v3/users endpoint before pulling data."
       ],
-      "data_types": ["sleep", "nightly_recharge", "hrv", "continuous_hr", "activity", "exercises", "physical_info"],
+      "data_types": [
+        "sleep",
+        "nightly_recharge",
+        "hrv",
+        "continuous_hr",
+        "activity",
+        "exercises",
+        "physical_info"
+      ],
       "rate_limit_note": "AccessLink documents per-user request quotas; most data is fetched via transaction endpoints which are inherently batched.",
       "connector": null,
-      "env_vars": ["OPENHEALTH_POLAR_CLIENT_ID", "OPENHEALTH_POLAR_CLIENT_SECRET"]
+      "env_vars": [
+        "OPENHEALTH_POLAR_CLIENT_ID",
+        "OPENHEALTH_POLAR_CLIENT_SECRET"
+      ]
     },
     {
       "id": "suunto",
@@ -124,10 +190,18 @@
         "Edit the OAuth settings in your profile to register your app (name, redirect URL) — the authorization server is cloudapi-oauth.suunto.com.",
         "Send the Ocp-Apim-Subscription-Key header on every Cloud API request (not needed on the OAuth endpoints) plus the user's Bearer token."
       ],
-      "data_types": ["workouts", "daily_activity", "sleep"],
+      "data_types": [
+        "workouts",
+        "daily_activity",
+        "sleep"
+      ],
       "rate_limit_note": "Development subscription has reduced request limits; production keys are granted after review.",
       "connector": null,
-      "env_vars": ["OPENHEALTH_SUUNTO_SUBSCRIPTION_KEY", "OPENHEALTH_SUUNTO_CLIENT_ID", "OPENHEALTH_SUUNTO_CLIENT_SECRET"]
+      "env_vars": [
+        "OPENHEALTH_SUUNTO_SUBSCRIPTION_KEY",
+        "OPENHEALTH_SUUNTO_CLIENT_ID",
+        "OPENHEALTH_SUUNTO_CLIENT_SECRET"
+      ]
     },
     {
       "id": "coros",
@@ -144,10 +218,18 @@
         "After approval COROS issues OAuth2 credentials and the API documentation/base URL for your account.",
         "No-approval fallback: COROS app → export activities as FIT files and ingest those."
       ],
-      "data_types": ["workouts", "daily_activity", "sleep", "heart_rate"],
+      "data_types": [
+        "workouts",
+        "daily_activity",
+        "sleep",
+        "heart_rate"
+      ],
       "rate_limit_note": "Quotas are communicated with the approved application; not publicly documented.",
       "connector": null,
-      "env_vars": ["OPENHEALTH_COROS_CLIENT_ID", "OPENHEALTH_COROS_CLIENT_SECRET"]
+      "env_vars": [
+        "OPENHEALTH_COROS_CLIENT_ID",
+        "OPENHEALTH_COROS_CLIENT_SECRET"
+      ]
     },
     {
       "id": "amazfit_zepp",
@@ -164,7 +246,13 @@
         "Practical route 2: pair the watch with Gadgetbridge (open-source, local BLE, no cloud) and export its database.",
         "Practical route 3: let Zepp sync to another platform you can read (e.g. Google/Health Connect on-device)."
       ],
-      "data_types": ["steps", "heart_rate", "sleep", "spo2", "stress"],
+      "data_types": [
+        "steps",
+        "heart_rate",
+        "sleep",
+        "spo2",
+        "stress"
+      ],
       "rate_limit_note": "Not applicable — file export / local bridge only.",
       "connector": null,
       "env_vars": []
@@ -184,7 +272,11 @@
         "Route 2: pair the band with Gadgetbridge — fully local BLE, exportable SQLite database, no Xiaomi cloud at all.",
         "Route 3 (sensors, not wearables): Xiaomi/Aqara home sensors integrate cleanly into Home Assistant (BLE/Zigbee), then read them via the Home Assistant API — see the home_assistant entry."
       ],
-      "data_types": ["steps", "heart_rate", "sleep"],
+      "data_types": [
+        "steps",
+        "heart_rate",
+        "sleep"
+      ],
       "rate_limit_note": "Not applicable — local bridge / export only.",
       "connector": null,
       "env_vars": []
@@ -203,7 +295,14 @@
         "Practical route 1: Samsung Health app → Settings → 'Download personal data' and ingest the export.",
         "Practical route 2: sync Samsung Health to Health Connect on-device and export from there."
       ],
-      "data_types": ["steps", "heart_rate", "sleep", "spo2", "body_composition", "blood_pressure"],
+      "data_types": [
+        "steps",
+        "heart_rate",
+        "sleep",
+        "spo2",
+        "body_composition",
+        "blood_pressure"
+      ],
       "rate_limit_note": "Not applicable — partner API only; personal access is export-based.",
       "connector": null,
       "env_vars": []
@@ -222,7 +321,18 @@
         "On iPhone: Health app → tap your profile picture → 'Export All Health Data' → share the resulting export.zip.",
         "Unzip and feed export.xml to connectors/apple_health.py — it maps records to canonical Observations."
       ],
-      "data_types": ["sleep", "heart_rate", "hrv", "steps", "workouts", "spo2", "respiratory_rate", "body_temperature", "weight", "mindfulness"],
+      "data_types": [
+        "sleep",
+        "heart_rate",
+        "hrv",
+        "steps",
+        "workouts",
+        "spo2",
+        "respiratory_rate",
+        "body_temperature",
+        "weight",
+        "mindfulness"
+      ],
       "rate_limit_note": "Not applicable — file export (export grows large; expect hundreds of MB after years of data).",
       "connector": "openhealth/connectors/apple_health.py",
       "env_vars": []
@@ -242,7 +352,13 @@
         "Practical route 2: the Home Assistant companion app can push selected Android sensors to your Home Assistant instance — then read via the home_assistant entry.",
         "Note: Fitbit cloud data is NOT behind Health Connect — use the fitbit entry (dev.fitbit.com) for direct API access."
       ],
-      "data_types": ["steps", "heart_rate", "sleep", "exercise", "spo2"],
+      "data_types": [
+        "steps",
+        "heart_rate",
+        "sleep",
+        "exercise",
+        "spo2"
+      ],
       "rate_limit_note": "Not applicable — on-device API, local export only.",
       "connector": null,
       "env_vars": []
@@ -262,10 +378,21 @@
         "Set OPENHEALTH_HOME_ASSISTANT_URL to your instance (e.g. http://homeassistant.local:8123) and OPENHEALTH_HOME_ASSISTANT_TOKEN to the token.",
         "Read /api/states or /api/history/period/<timestamp> with header 'Authorization: Bearer <token>'. Everything stays on your LAN — a perfect local-first fit."
       ],
-      "data_types": ["air_quality", "temperature", "humidity", "co2", "weight", "presence", "any_sensor_entity"],
+      "data_types": [
+        "air_quality",
+        "temperature",
+        "humidity",
+        "co2",
+        "weight",
+        "presence",
+        "any_sensor_entity"
+      ],
       "rate_limit_note": "Local instance — no vendor rate limits; be gentle with history queries on large recorder databases.",
       "connector": null,
-      "env_vars": ["OPENHEALTH_HOME_ASSISTANT_URL", "OPENHEALTH_HOME_ASSISTANT_TOKEN"]
+      "env_vars": [
+        "OPENHEALTH_HOME_ASSISTANT_URL",
+        "OPENHEALTH_HOME_ASSISTANT_TOKEN"
+      ]
     },
     {
       "id": "withings",
@@ -283,10 +410,22 @@
         "Run the OAuth2 web flow (account.withings.com authorize endpoint), then call wbsapi.withings.net endpoints like /measure, /v2/sleep, /v2/heart.",
         "Covers the whole Withings family from one integration: scales (Body+, Body Scan), BPM blood-pressure monitors, Sleep Analyzer mat, ScanWatch."
       ],
-      "data_types": ["weight", "body_composition", "blood_pressure", "heart_rate", "ecg", "sleep", "spo2", "temperature"],
+      "data_types": [
+        "weight",
+        "body_composition",
+        "blood_pressure",
+        "heart_rate",
+        "ecg",
+        "sleep",
+        "spo2",
+        "temperature"
+      ],
       "rate_limit_note": "Documented per-client limit around 120 requests/minute — generous for daily syncs.",
       "connector": null,
-      "env_vars": ["OPENHEALTH_WITHINGS_CLIENT_ID", "OPENHEALTH_WITHINGS_CLIENT_SECRET"]
+      "env_vars": [
+        "OPENHEALTH_WITHINGS_CLIENT_ID",
+        "OPENHEALTH_WITHINGS_CLIENT_SECRET"
+      ]
     },
     {
       "id": "omron",
@@ -302,7 +441,10 @@
         "Practical route: OMRON connect app → history → export readings as CSV/PDF and ingest the CSV.",
         "Alternative: prefer a Withings BPM device if you want blood pressure over a real open API (see the withings entry)."
       ],
-      "data_types": ["blood_pressure", "pulse"],
+      "data_types": [
+        "blood_pressure",
+        "pulse"
+      ],
       "rate_limit_note": "Not applicable — file export only.",
       "connector": null,
       "env_vars": []
@@ -322,7 +464,10 @@
         "Practical route 2: community BLE integrations read some Eufy scales locally into Home Assistant — then use the home_assistant entry.",
         "Alternative: a Withings scale gives the same measurements behind an official OAuth2 API."
       ],
-      "data_types": ["weight", "body_composition"],
+      "data_types": [
+        "weight",
+        "body_composition"
+      ],
       "rate_limit_note": "Not applicable — file export / local bridge only.",
       "connector": null,
       "env_vars": []
@@ -343,10 +488,19 @@
         "For your real data run the OAuth2 code flow against api.dexcom.com (EU accounts: api.eu.dexcom.com) and pull /v3/users/self/egvs.",
         "Know the limitation: the API serves retrospective estimated glucose values with a delay, not a real-time stream."
       ],
-      "data_types": ["glucose_egv", "glucose_events", "calibrations", "alerts", "devices"],
+      "data_types": [
+        "glucose_egv",
+        "glucose_events",
+        "calibrations",
+        "alerts",
+        "devices"
+      ],
       "rate_limit_note": "Per-app limits documented on the portal; EGVs update every 5 minutes so frequent polling is pointless anyway.",
       "connector": null,
-      "env_vars": ["OPENHEALTH_DEXCOM_CLIENT_ID", "OPENHEALTH_DEXCOM_CLIENT_SECRET"]
+      "env_vars": [
+        "OPENHEALTH_DEXCOM_CLIENT_ID",
+        "OPENHEALTH_DEXCOM_CLIENT_SECRET"
+      ]
     },
     {
       "id": "freestyle_libre",
@@ -363,7 +517,11 @@
         "Unofficial route (use at your own risk, may break, ToS-sensitive): the LibreLinkUp endpoints (api-eu.libreview.io and regional variants) power community tools like nightscout-librelink-up; they authenticate with LibreLinkUp follower credentials.",
         "If you need a supported CGM API, Dexcom is the one with a real developer portal."
       ],
-      "data_types": ["glucose", "glucose_history", "notes"],
+      "data_types": [
+        "glucose",
+        "glucose_history",
+        "notes"
+      ],
       "rate_limit_note": "Unofficial endpoints are undocumented — poll conservatively (every 5+ minutes) if you accept the risk.",
       "connector": null,
       "env_vars": []
@@ -382,7 +540,10 @@
         "Practical route: connect the underlying sensor directly (see dexcom / freestyle_libre entries) — you get the raw data those apps are built on.",
         "Some of these apps offer in-app CSV export; if yours does, ingest that file."
       ],
-      "data_types": ["glucose", "metabolic_score"],
+      "data_types": [
+        "glucose",
+        "metabolic_score"
+      ],
       "rate_limit_note": "Not applicable — no public API.",
       "connector": null,
       "env_vars": []
@@ -402,10 +563,19 @@
         "Copy the token and set OPENHEALTH_AWAIR_TOKEN.",
         "Call e.g. GET /v1/users/self/devices and /v1/users/self/devices/{type}/{id}/air-data/latest with header 'Authorization: Bearer <token>'."
       ],
-      "data_types": ["temperature", "humidity", "co2", "voc", "pm25", "awair_score"],
+      "data_types": [
+        "temperature",
+        "humidity",
+        "co2",
+        "voc",
+        "pm25",
+        "awair_score"
+      ],
       "rate_limit_note": "Hobbyist tier is quota-limited per day — poll every 15 minutes or less often, not continuously.",
       "connector": null,
-      "env_vars": ["OPENHEALTH_AWAIR_TOKEN"]
+      "env_vars": [
+        "OPENHEALTH_AWAIR_TOKEN"
+      ]
     },
     {
       "id": "airthings",
@@ -422,10 +592,21 @@
         "Store the generated Client ID and Client Secret.",
         "Use the OAuth2 client-credentials grant: POST https://accounts-api.airthings.com/v1/token, then call ext-api.airthings.com/v1/devices and .../latest-samples with the Bearer token."
       ],
-      "data_types": ["radon", "co2", "voc", "pm25", "humidity", "temperature", "pressure"],
+      "data_types": [
+        "radon",
+        "co2",
+        "voc",
+        "pm25",
+        "humidity",
+        "temperature",
+        "pressure"
+      ],
       "rate_limit_note": "Consumer API is rate-limited (on the order of 120 requests/hour per client) — sample every few minutes at most.",
       "connector": null,
-      "env_vars": ["OPENHEALTH_AIRTHINGS_CLIENT_ID", "OPENHEALTH_AIRTHINGS_CLIENT_SECRET"]
+      "env_vars": [
+        "OPENHEALTH_AIRTHINGS_CLIENT_ID",
+        "OPENHEALTH_AIRTHINGS_CLIENT_SECRET"
+      ]
     },
     {
       "id": "netatmo",
@@ -442,10 +623,19 @@
         "For personal use the portal's Token Generator can mint a token directly: pick scopes (read_station, read_homecoach) and click 'Generate Token'.",
         "Call api.netatmo.com/api/getstationsdata (Weather Station) or /api/gethomecoachsdata (Healthy Home Coach) with the Bearer token."
       ],
-      "data_types": ["co2", "temperature", "humidity", "noise", "pressure"],
+      "data_types": [
+        "co2",
+        "temperature",
+        "humidity",
+        "noise",
+        "pressure"
+      ],
       "rate_limit_note": "Per-user and per-app quotas (tens of requests per 10 seconds) — fine for 5-minute polling.",
       "connector": null,
-      "env_vars": ["OPENHEALTH_NETATMO_CLIENT_ID", "OPENHEALTH_NETATMO_CLIENT_SECRET"]
+      "env_vars": [
+        "OPENHEALTH_NETATMO_CLIENT_ID",
+        "OPENHEALTH_NETATMO_CLIENT_SECRET"
+      ]
     },
     {
       "id": "eve_homekit",
@@ -461,7 +651,13 @@
         "Practical route: pair the device with Home Assistant via the HomeKit Device (homekit_controller) or Matter integration — readings become local entities with history.",
         "Then read them through the Home Assistant REST API (see the home_assistant entry). Fully local chain, very much in the spirit of this project."
       ],
-      "data_types": ["temperature", "humidity", "co2", "voc", "air_quality"],
+      "data_types": [
+        "temperature",
+        "humidity",
+        "co2",
+        "voc",
+        "air_quality"
+      ],
       "rate_limit_note": "Not applicable — local protocols only.",
       "connector": null,
       "env_vars": []
@@ -480,7 +676,13 @@
         "Practical route 1: request a personal data export from Eight Sleep support (GDPR/CCPA) and ingest the files.",
         "Practical route 2 (unofficial, at your own risk): community Home Assistant integrations expose sleep stages and bed temperature; read them via the home_assistant entry."
       ],
-      "data_types": ["sleep_stages", "bed_temperature", "heart_rate", "hrv", "respiratory_rate"],
+      "data_types": [
+        "sleep_stages",
+        "bed_temperature",
+        "heart_rate",
+        "hrv",
+        "respiratory_rate"
+      ],
       "rate_limit_note": "Not applicable — no official API; unofficial clients should poll sparingly.",
       "connector": null,
       "env_vars": []
@@ -500,10 +702,18 @@
         "Set OPENHEALTH_TODOIST_TOKEN (or write the token to ~/.openhealth/todoist.token).",
         "The connector reads active tasks via REST v2 (api.todoist.com/rest/v2) and completed history via Sync v9 completed/get_all; completed health-looking tasks ('тренировка', 'yoga', label health/fitness) become journal candidates for human review."
       ],
-      "data_types": ["completed_tasks", "active_tasks", "projects", "labels", "journal_candidates"],
+      "data_types": [
+        "completed_tasks",
+        "active_tasks",
+        "projects",
+        "labels",
+        "journal_candidates"
+      ],
       "rate_limit_note": "REST v2: 450 requests per 15 minutes per user; Sync v9 has comparable per-user quotas. A daily pull uses a handful of calls.",
       "connector": "openhealth/connectors/todoist.py",
-      "env_vars": ["OPENHEALTH_TODOIST_TOKEN"]
+      "env_vars": [
+        "OPENHEALTH_TODOIST_TOKEN"
+      ]
     },
     {
       "id": "ticktick",
@@ -520,10 +730,18 @@
         "Run the OAuth2 code flow with scopes tasks:read (tasks:write optional) against ticktick.com/oauth/authorize and /oauth/token.",
         "Call the Open API at api.ticktick.com/open/v1 (projects, tasks, completed task lookup by project) with the Bearer token."
       ],
-      "data_types": ["completed_tasks", "active_tasks", "projects", "habits_via_export"],
+      "data_types": [
+        "completed_tasks",
+        "active_tasks",
+        "projects",
+        "habits_via_export"
+      ],
       "rate_limit_note": "Open API quotas are not publicly documented in detail — poll once or twice a day, not continuously.",
       "connector": null,
-      "env_vars": ["OPENHEALTH_TICKTICK_CLIENT_ID", "OPENHEALTH_TICKTICK_CLIENT_SECRET"]
+      "env_vars": [
+        "OPENHEALTH_TICKTICK_CLIENT_ID",
+        "OPENHEALTH_TICKTICK_CLIENT_SECRET"
+      ]
     },
     {
       "id": "things",
@@ -540,7 +758,12 @@
         "Local route 2 (the real one for journal candidates): on macOS read completed to-dos via AppleScript automation or the local Things SQLite database (~/Library/Group Containers/JLMPQHK86H.com.culturedcode.ThingsMac/), fully local.",
         "Route 3: Things → File → Export, then ingest the exported file."
       ],
-      "data_types": ["completed_tasks", "active_tasks", "projects", "tags"],
+      "data_types": [
+        "completed_tasks",
+        "active_tasks",
+        "projects",
+        "tags"
+      ],
       "rate_limit_note": "Not applicable — local URL scheme / AppleScript / database read only, no cloud API.",
       "connector": null,
       "env_vars": []
@@ -560,10 +783,17 @@
         "Set OPENHEALTH_NOTION_TOKEN and query the database's data source with a filter on the status/checkbox property to find tasks completed on a given day.",
         "Note: use the data_source_id (not the legacy database_id) in modern API versions."
       ],
-      "data_types": ["completed_tasks", "active_tasks", "databases", "properties"],
+      "data_types": [
+        "completed_tasks",
+        "active_tasks",
+        "databases",
+        "properties"
+      ],
       "rate_limit_note": "About 3 requests/second per integration on average — paginate gently and cache database schemas.",
       "connector": null,
-      "env_vars": ["OPENHEALTH_NOTION_TOKEN"]
+      "env_vars": [
+        "OPENHEALTH_NOTION_TOKEN"
+      ]
     }
   ]
 }

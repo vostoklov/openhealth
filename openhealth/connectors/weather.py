@@ -44,7 +44,10 @@ ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 FORECAST_PAST_DAYS = 85
 MAX_RANGE_DAYS = 370
 
-DAILY_VARS = "temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,weather_code"
+DAILY_VARS = (
+    "temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,"
+    "weather_code,sunrise,sunset,daylight_duration,uv_index_max"
+)
 HOURLY_VARS = "temperature_2m,pressure_msl,relative_humidity_2m"
 
 # --- thresholds (referenced by tests and by the dashboard contract) ----------
@@ -109,6 +112,38 @@ def set_location(lat: Any, lon: Any, label: str) -> Path:
     os.chmod(tmp, 0o600)
     os.replace(tmp, path)
     return path
+
+
+GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
+
+
+def geocode_city(name: str, count: int = 1, timeout: float = 8.0) -> Optional[Dict[str, Any]]:
+    """Город по имени → {"lat", "lon", "label"} через open-meteo geocoding (без ключа).
+
+    Для UI «город проживания»: set_location(**geocode_city("Amsterdam")).
+    None — если не нашлось/сеть упала (вызывающий решает, как сообщить).
+    """
+    name = (name or "").strip()
+    if not name or len(name) > 80:
+        return None
+    from urllib.parse import urlencode
+    from urllib.request import urlopen
+
+    url = GEOCODING_URL + "?" + urlencode({"name": name, "count": count, "language": "ru", "format": "json"})
+    try:
+        with urlopen(url, timeout=timeout) as resp:  # noqa: S310 (https, фикс. хост)
+            payload = json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        return None
+    results = (payload or {}).get("results") or []
+    if not results:
+        return None
+    top = results[0]
+    label = ", ".join(x for x in (top.get("name"), top.get("country")) if x)
+    try:
+        return {"lat": float(top["latitude"]), "lon": float(top["longitude"]), "label": label}
+    except (KeyError, TypeError, ValueError):
+        return None
 
 
 def load_location() -> Optional[Dict[str, Any]]:
@@ -183,6 +218,10 @@ _DAY_KEYS = (
     "humidity_mean",
     "precipitation_mm",
     "wind_max",
+    "sunrise",
+    "sunset",
+    "daylight_h",
+    "uv_index_max",
     "weather_code",
 )
 
@@ -208,6 +247,17 @@ def _aggregate(payload: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         entry["wind_max"] = _at(daily.get("wind_speed_10m_max") or [], i)
         code = _at(daily.get("weather_code") or [], i)
         entry["weather_code"] = int(code) if code is not None else None
+        # Внешние факторы: световой день и UV (open-meteo daily).
+        # sunrise/sunset — ISO-строки, _at() их съест float'ом — берём сырыми.
+        def _at_str(values, idx):
+            return str(values[idx])[11:16] if idx < len(values) and values[idx] else None
+
+        entry["sunrise"] = _at_str(daily.get("sunrise") or [], i)
+        entry["sunset"] = _at_str(daily.get("sunset") or [], i)
+        dl = _at(daily.get("daylight_duration") or [], i)  # секунды
+        entry["daylight_h"] = round(dl / 3600.0, 1) if dl is not None else None
+        uv = _at(daily.get("uv_index_max") or [], i)
+        entry["uv_index_max"] = round(uv, 1) if uv is not None else None
 
     # Daily means for pressure/humidity/temperature are computed from hourly
     # arrays ourselves: both endpoints serve these reliably, while the daily

@@ -591,6 +591,40 @@ def build_quality_block(con: sqlite3.Connection) -> dict:
         return {}
 
 
+def build_weather_block() -> dict:
+    """Погода как внешний фактор дня (open-meteo, локация из ~/.openhealth/weather.json).
+
+    Без локации/сети — пустой dict (дашборд валиден без погоды). Кроме сводки —
+    световой день, UV, изменение давления: и в карточку, и в кандидаты корреляций.
+    """
+    try:
+        from openhealth.connectors import weather
+
+        if weather.load_location() is None:
+            return {}
+        from datetime import date, timedelta
+
+        today = date.today().isoformat()
+        day = weather.fetch_day(today)
+        if not day or all(day.get(k) is None for k in ("t_mean", "t_max", "pressure_msl_mean")):
+            # forecast на сегодня ещё пуст ранним утром — берём вчера честно.
+            day = weather.fetch_day((date.today() - timedelta(days=1)).isoformat()) or day
+        flags = weather.weather_context(day)
+        return {
+            "today_summary": weather.day_summary_ru(day),
+            "flags": flags,
+            "pressure_change": day.get("pressure_change_24h"),
+            "daylight_h": day.get("daylight_h"),
+            "sunrise": day.get("sunrise"),
+            "sunset": day.get("sunset"),
+            "uv_index_max": day.get("uv_index_max"),
+            "t_mean": day.get("t_mean"),
+            "label": (weather.load_location() or {}).get("label"),
+        }
+    except Exception:
+        return {}
+
+
 def build_payload(db_path: Path) -> dict:
     con = sqlite3.connect(str(db_path))
     try:
@@ -626,6 +660,10 @@ def build_payload(db_path: Path) -> dict:
     if quality_block:
         # Проверка данных: score 0-100 + топ-10 проблем (дубли/будущее/невозможные/gap).
         payload["quality"] = quality_block
+    weather_block = build_weather_block()
+    if weather_block:
+        # Внешние факторы: погода/давление/световой день/UV для контекста и корреляций.
+        payload["weather"] = weather_block
     # Correlations require labeled daily behaviors (journal), which this dataset
     # does not yet contain — so we intentionally omit them and let the dashboard
     # keep its demo correlations. Same for habits / allBehaviors.

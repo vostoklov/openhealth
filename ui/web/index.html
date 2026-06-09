@@ -2846,6 +2846,356 @@
   .footer-bridge:hover { color: var(--ink); }
   .footer-bridge.online { color: var(--ok); }
   .footer-bridge.online:hover { color: var(--ok); }
+
+  /* ---- Журнал: полный каталог поведения (поиск + аккордеоны + выбранные) ---- */
+  .behavior-search {
+    position: relative;
+    margin-bottom: 14px;
+  }
+
+  .behavior-search i {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px;
+    color: var(--dim);
+    pointer-events: none;
+  }
+
+  .behavior-search input {
+    width: 100%;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 11px 12px 11px 38px;
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 13px;
+    transition: border-color 0.2s ease;
+  }
+
+  .behavior-search input:focus { outline: none; border-color: var(--line2); }
+
+  .beh-selected-wrap {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border: 1px dashed var(--line2);
+    border-radius: 12px;
+  }
+
+  .beh-selected-wrap .lbl {
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--dim);
+    margin-bottom: 8px;
+  }
+
+  .beh-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+
+  .beh-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 500 12px var(--font);
+    color: var(--ink);
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 11px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+    max-width: 100%;
+  }
+
+  .beh-chip:hover { border-color: var(--line2); }
+  .beh-chip.on { border-color: var(--accent); background: var(--accent-glow); }
+  .beh-chip i { font-size: 13px; color: var(--mut); flex-shrink: 0; }
+  .beh-chip.on i { color: var(--accent); }
+  .beh-chip .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .beh-chip .type-tag {
+    font: 600 8.5px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--dim);
+    background: var(--line);
+    border-radius: 4px;
+    padding: 1px 5px;
+    flex-shrink: 0;
+  }
+  .beh-chip .x { font-size: 12px; color: var(--dim); flex-shrink: 0; }
+  .beh-chip .x:hover { color: var(--bad); }
+
+  details.beh-acc {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--card-outer);
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+
+  details.beh-acc summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    list-style: none;
+    font-weight: 600;
+    font-size: 13px;
+    user-select: none;
+  }
+
+  details.beh-acc summary::-webkit-details-marker { display: none; }
+  details.beh-acc summary i.cat { font-size: 16px; color: var(--mut); }
+  details.beh-acc summary .cnt {
+    font: 600 10px var(--mono);
+    color: var(--dim);
+    background: var(--line);
+    border-radius: 999px;
+    padding: 2px 8px;
+  }
+  details.beh-acc summary .sel-cnt { font: 600 10px var(--mono); color: var(--accent); }
+  details.beh-acc summary i.chev {
+    margin-left: auto;
+    font-size: 13px;
+    color: var(--dim);
+    transition: transform 0.2s ease;
+  }
+  details.beh-acc[open] summary i.chev { transform: rotate(180deg); }
+  details.beh-acc .beh-chips { padding: 2px 14px 14px; }
+
+  .beh-cat-foot {
+    margin: 12px 0 0;
+    font-size: 11px;
+    color: var(--dim);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .beh-cat-foot i { font-size: 13px; flex-shrink: 0; }
+
+  /* ---- Чек-ин: шкала 1-5 и число (кастомные типы параметров) ---- */
+  .habit-item.no-toggle { cursor: default; }
+  .habit-item.no-toggle:hover { transform: none; }
+
+  .scale-dots { display: inline-flex; gap: 5px; flex-shrink: 0; }
+
+  .scale-dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    border: 1px solid var(--line2);
+    background: var(--card-inner);
+    color: var(--mut);
+    font: 600 11px var(--mono);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+  }
+
+  .scale-dot:hover { border-color: var(--accent); color: var(--ink); }
+  .scale-dot.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .habit-num-wrap { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+  .habit-num-wrap input {
+    width: 72px;
+    background: var(--card-inner);
+    border: 1px solid var(--line2);
+    border-radius: 8px;
+    padding: 5px 8px;
+    color: var(--ink);
+    font: 500 12px var(--mono);
+    text-align: right;
+  }
+
+  .habit-num-wrap input:focus { outline: none; border-color: var(--accent); }
+  .habit-num-wrap .unit { font: 500 10px var(--mono); color: var(--dim); }
+
+  /* ---- DnD-наложение: drop-зона и вспышка слияния ---- */
+  #z-today.layout-edit .today-widget.overlay-target {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    animation: none;
+    box-shadow: 0 0 0 6px var(--accent-glow), 0 0 36px var(--accent-glow);
+    border-radius: var(--radius-outer);
+  }
+
+  .overlay-flash {
+    position: fixed;
+    z-index: 600;
+    pointer-events: none;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(16,185,129,0.55), rgba(16,185,129,0) 70%);
+  }
+
+  .overlay-legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 4px 0 10px; }
+  .overlay-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 500 11px var(--mono);
+    color: var(--mut);
+  }
+  .overlay-legend .sw { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+
+  .overlay-stat {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 14px 0 4px;
+  }
+  .overlay-stat .r { font: 300 36px var(--mono); letter-spacing: -0.04em; line-height: 1; }
+  .overlay-stat .cap { font: 500 11px var(--mono); color: var(--dim); }
+
+  /* ---- Источники данных: каталог провайдеров ---- */
+  .prov-cat-head {
+    margin: 22px 0 10px;
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .prov-cat-head:first-child { margin-top: 0; }
+  .prov-cat-head i { font-size: 14px; }
+
+  .prov-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+    gap: 10px;
+  }
+
+  .prov-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 13px 14px;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--font);
+    color: var(--ink);
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .prov-card:hover { border-color: var(--line2); transform: translateY(-1px); }
+  .prov-card .nm { font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  .prov-card .nm i { font-size: 15px; color: var(--mut); }
+  .prov-card .meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+
+  .prov-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font: 600 9px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2.5px 8px;
+    border-radius: 999px;
+  }
+
+  .prov-badge .d { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .prov-badge.supported { color: var(--ok); background: var(--ok-glow); }
+  .prov-badge.planned { color: var(--mut); background: var(--line); }
+  .prov-badge.export_only { color: var(--warn); background: var(--warn-glow); }
+  .prov-card .auth-tag { font: 500 9.5px var(--mono); color: var(--dim); }
+
+  /* ---- Бейдж-напоминание в навигации (опросник недели) ---- */
+  .nav-remind {
+    margin-left: auto;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--warn);
+    box-shadow: 0 0 6px var(--warn);
+    flex-shrink: 0;
+  }
+
+  /* ---- Опросник: модал-стэппер ---- */
+  .survey-progress {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+  }
+
+  .survey-progress span {
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--line2);
+    transition: background 0.2s ease;
+  }
+
+  .survey-progress span.done { background: var(--accent); }
+
+  .survey-q { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 4px; }
+  .survey-hint { font-size: 11.5px; color: var(--mut); margin: 0 0 18px; }
+
+  .survey-scale { display: flex; gap: 8px; }
+
+  .survey-scale button {
+    flex: 1;
+    padding: 14px 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--card-outer);
+    color: var(--ink);
+    cursor: pointer;
+    font-family: var(--font);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+  }
+
+  .survey-scale button:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .survey-scale button .n { font: 600 17px var(--mono); }
+  .survey-scale button .c { font: 500 9px var(--mono); color: var(--dim); text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .survey-ends {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font: 500 10px var(--mono);
+    color: var(--dim);
+  }
+
+  /* ---- Пульс в сайдбаре: кликабельный ---- */
+  .docmini { cursor: pointer; transition: border-color 0.2s ease; }
+  .docmini:hover { border-color: var(--line2); }
+
+  /* ---- Настройки: строка-ссылка (v2) ---- */
+  .settings-link-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 11px 14px;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: border-color 0.2s ease;
+  }
+
+  .settings-link-row:hover { border-color: var(--line2); }
+  .settings-link-row i.lead { font-size: 16px; color: var(--mut); }
+  .settings-link-row .ver { font: 500 10px var(--mono); color: var(--dim); }
+  .settings-link-row i.ext { margin-left: auto; font-size: 13px; color: var(--dim); }
 </style>
 </head>
 <body>
@@ -2906,6 +3256,10 @@
         <span>Тренировки</span>
         <span class="navdot" aria-hidden="true"></span>
       </a>
+      <a data-z="dna" data-icon="ph-dna" onclick="go('dna')">
+        <i class="ph-light ph-dna"></i>
+        <span>ДНК</span>
+      </a>
     </nav>
 
     <div class="navsec">Знание</div>
@@ -2933,9 +3287,9 @@
         <span>Дайджесты</span>
         <span class="navdot" aria-hidden="true"></span>
       </a>
-      <a data-z="sync" data-icon="ph-arrows-clockwise" onclick="go('sync')">
-        <i class="ph-light ph-arrows-clockwise"></i>
-        <span>Синхронизация</span>
+      <a data-z="sync" data-icon="ph-plugs-connected" onclick="go('sync')">
+        <i class="ph-light ph-plugs-connected"></i>
+        <span>Источники данных</span>
       </a>
       <a data-z="diagnostics" data-icon="ph-pulse" onclick="go('diagnostics')">
         <i class="ph-light ph-pulse"></i>
@@ -2944,12 +3298,14 @@
       <a data-z="settings" data-icon="ph-gear-six" onclick="go('settings')">
         <i class="ph-light ph-gear-six"></i>
         <span>Настройки</span>
+        <span class="nav-remind" id="surveyRemindDot" style="display:none;" title="Пора пройти мини-опросник самочувствия" aria-hidden="true"></span>
       </a>
     </nav>
   </div>
 
   <div class="sidefoot">
-    <div class="docmini" id="pulseHome">
+    <div class="docmini" id="pulseHome" title="Спросить Пульса о дне" role="button" tabindex="0"
+         onclick="onPulseHomeClick()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();onPulseHomeClick();}">
       <div class="face zone-yellow" id="docFace"><img src="assets/pulse-mascot.png" alt="Пульс" id="pulseImg"></div>
       <div class="t">
         <b>Пульс</b>
@@ -3418,13 +3774,23 @@
             <div class="card-inner">
               <div class="card-header">
                 <div class="card-title-group">
-                  <h3>Настройка</h3>
-                  <div class="sub">выбери привычки из каталога — список действует и здесь, и на экране «Сегодня»</div>
+                  <h3>Настройка отслеживания</h3>
+                  <div class="sub">полный каталог поведения + свои параметры — список действует и здесь, и на экране «Сегодня»</div>
                 </div>
-                <i class="ph-light ph-sliders-horizontal card-header-icon"></i>
+                <button class="btn-secondary" onclick="openCustomBehaviorModal()">
+                  <i class="ph-light ph-plus"></i> Свой параметр
+                </button>
               </div>
 
-              <div class="journal-grid" id="behaviorGrid"></div>
+              <div class="behavior-search">
+                <i class="ph-light ph-magnifying-glass"></i>
+                <input type="text" id="behaviorSearch" placeholder="Поиск по каталогу: кофеин, стресс, сауна…"
+                       oninput="renderBehaviorCatalog()" aria-label="Поиск параметра">
+              </div>
+
+              <div class="beh-selected-wrap" id="behaviorSelected"></div>
+
+              <div id="behaviorCatalog"></div>
             </div>
           </div>
 
@@ -3587,10 +3953,20 @@
 
         <div class="sync-section">
           <div class="sync-section-head">
-            <h2>Синхронизации</h2>
+            <h2>Подключено</h2>
             <span class="hint">живой поток · регулярный импорт</span>
           </div>
           <div class="sync-grid" id="syncStreams"></div>
+        </div>
+
+        <div class="sync-section">
+          <div class="sync-section-head">
+            <h2>Доступно</h2>
+            <span class="hint">каталог интеграций · клик — шаги подключения</span>
+          </div>
+          <div class="card-outer">
+            <div class="card-inner" id="syncAvailable"></div>
+          </div>
         </div>
 
         <div class="sync-section">
@@ -3780,6 +4156,11 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <!-- SCREEN 11b: DNA — генотип (контент зависит от connections.dna) -->
+      <section class="zone" id="z-dna">
+        <div class="bento-grid" id="dnaContent"></div>
       </section>
 
       <!-- SCREEN 12: PROTOCOLS (empty-state) -->
@@ -3997,6 +4378,39 @@
 
                 <div class="nav-config-note" style="margin-top:20px; font-weight:600; color: var(--ink);">Эффекты</div>
                 <div id="fxToggles"></div>
+
+                <a class="settings-link-row" href="dashboard-v2.html" target="_blank" rel="noopener">
+                  <i class="ph-light ph-flask lead"></i>
+                  <span>Экспериментальный дизайн v2</span>
+                  <span class="ver">ver 0.1</span>
+                  <i class="ph-light ph-arrow-up-right ext"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Опросники -->
+          <div class="settings-sec">
+            <h2 class="settings-sec-head">Опросники</h2>
+            <div class="card-outer">
+              <div class="card-inner">
+                <div class="card-header">
+                  <div class="card-title-group">
+                    <h3>Мини-опросник самочувствия</h3>
+                    <div class="sub">5 вопросов по шкале 1-5: энергия, стресс, качество сна, боль, настроение · раз в неделю</div>
+                  </div>
+                  <i class="ph-light ph-clipboard-text card-header-icon"></i>
+                </div>
+                <div id="surveyStatusBox"></div>
+                <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+                  <button class="btn-primary" onclick="startSurvey()">
+                    <i class="ph-light ph-play"></i> Пройти сейчас
+                  </button>
+                </div>
+                <p class="privacy-note">
+                  <i class="ph-light ph-lock-simple"></i>
+                  <span>Ответы сохраняются локально в браузере (<span class="mono">openhealth.survey.*</span>) и никуда не отправляются.</span>
+                </p>
               </div>
             </div>
           </div>
@@ -4294,8 +4708,18 @@ function updateTodayScreen() {
 
 // --- Единый чек-ин: DATA.habits — один источник состояния для «Сегодня» и Журнала.
 // Состояние на сегодня переживает перезагрузку: openhealth.habits.YYYY-MM-DD.
+// Формат значения дня: boolean-привычка -> true/false (как раньше),
+// scale/number-параметр -> число (1-5 или значение в единицах). Старые записи
+// из чистых boolean читаются без миграции.
 const HABITS_DONE_KEY = () => 'openhealth.habits.' + todayKey();
 const HABITS_LIST_KEY = 'openhealth.habits.list';
+const HABIT_TYPES = ['boolean', 'scale', 'number'];
+
+// Дефолтный эмо-параметр: шкала 1-5, добавляется в чек-ин один раз
+// (если пользователь удалил — повторно не навязываем).
+const MOOD_HABIT_ID = 'mood_energy';
+const MOOD_INJECT_KEY = 'openhealth.mood.injected';
+const MOOD_EMOJI = ['😖', '😕', '😐', '🙂', '😄'];
 
 function deltaForBehavior(b) {
   const corr = (DATA.correlations || []).find(c => c.label === b.label);
@@ -4303,14 +4727,34 @@ function deltaForBehavior(b) {
   return b.category === 'toxic' ? -6 : 4;
 }
 
+function normalizeHabitType(t) {
+  return HABIT_TYPES.includes(t) ? t : 'boolean';
+}
+
 function initHabitsState() {
   // 1. Состав списка: сохранённый пользователем набор важнее демо/реальных данных.
   try {
     const saved = JSON.parse(localStorage.getItem(HABITS_LIST_KEY) || 'null');
     if (Array.isArray(saved) && saved.length && saved.every(h => h && h.id && h.label)) {
-      DATA.habits = saved.map(h => ({ id: h.id, label: h.label, done: false, delta: h.delta || 0, icon: h.icon || 'ph-check' }));
+      DATA.habits = saved.map(h => ({
+        id: h.id, label: h.label, done: false, delta: h.delta || 0,
+        icon: h.icon || 'ph-check',
+        type: normalizeHabitType(h.type), unit: h.unit || '', value: null
+      }));
     }
   } catch (e) { /* повреждённый localStorage — остаёмся на DATA.habits */ }
+  DATA.habits.forEach(h => { h.type = normalizeHabitType(h.type); if (h.value === undefined) h.value = null; });
+
+  // 1b. «Настроение / энергия» (шкала 1-5) — дефолтный эмо-чек-ин, добавляется один раз.
+  if (!DATA.habits.some(h => h.id === MOOD_HABIT_ID)) {
+    let injected = null;
+    try { injected = localStorage.getItem(MOOD_INJECT_KEY); } catch (e) { /* ignore */ }
+    if (injected !== '1') {
+      DATA.habits.push({ id: MOOD_HABIT_ID, label: 'Настроение / энергия', done: false, delta: 0, icon: 'ph-smiley', type: 'scale', unit: '', value: null });
+      try { localStorage.setItem(MOOD_INJECT_KEY, '1'); } catch (e) { /* ignore */ }
+      persistHabits(); // сразу в сохранённый список — повторный init (re-render) его не потеряет
+    }
+  }
 
   // 2. Каталог «Настройки» синхронизируется со списком: selected = привычка активна.
   DATA.habits.forEach(h => {
@@ -4320,11 +4764,21 @@ function initHabitsState() {
   });
   DATA.allBehaviors.forEach(b => { b.selected = DATA.habits.some(h => h.id === b.id); });
 
-  // 3. Отметки за сегодня — из localStorage.
+  // 3. Отметки за сегодня — из localStorage (boolean или число — по типу параметра).
   try {
     const done = JSON.parse(localStorage.getItem(HABITS_DONE_KEY()) || 'null');
     if (done && typeof done === 'object') {
-      DATA.habits.forEach(h => { if (h.id in done) h.done = !!done[h.id]; });
+      DATA.habits.forEach(h => {
+        if (!(h.id in done)) return;
+        const v = done[h.id];
+        if (h.type !== 'boolean' && typeof v === 'number' && isFinite(v)) {
+          h.value = v;
+          h.done = true;
+        } else {
+          h.done = !!v;
+          if (h.type === 'boolean') h.value = null;
+        }
+      });
     }
   } catch (e) { /* ignore */ }
 }
@@ -4332,15 +4786,53 @@ function initHabitsState() {
 function persistHabits() {
   try {
     const done = {};
-    DATA.habits.forEach(h => { done[h.id] = !!h.done; });
+    DATA.habits.forEach(h => {
+      if (h.type !== 'boolean') done[h.id] = (h.value != null && isFinite(h.value)) ? h.value : false;
+      else done[h.id] = !!h.done;
+    });
     localStorage.setItem(HABITS_DONE_KEY(), JSON.stringify(done));
     localStorage.setItem(HABITS_LIST_KEY, JSON.stringify(
-      DATA.habits.map(h => ({ id: h.id, label: h.label, delta: h.delta, icon: h.icon }))
+      DATA.habits.map(h => ({ id: h.id, label: h.label, delta: h.delta, icon: h.icon, type: h.type || 'boolean', unit: h.unit || '' }))
     ));
   } catch (e) { /* private mode / квота — чек-ин просто не переживёт перезагрузку */ }
 }
 
 function habitItemHTML(h) {
+  const type = normalizeHabitType(h.type);
+
+  if (type === 'scale') {
+    const dots = [1, 2, 3, 4, 5].map(n => `
+      <button type="button" class="scale-dot ${h.value === n ? 'on' : ''}" aria-pressed="${h.value === n}"
+              aria-label="${escapeHtml(h.label)}: ${n} из 5" onclick="setHabitScale('${h.id}', ${n})">${n}</button>`).join('');
+    return `
+      <div class="habit-item no-toggle ${h.done ? 'done' : ''}" data-habit="${h.id}">
+        <div class="habit-icon" style="font-size:17px;">
+          ${h.id === MOOD_HABIT_ID && h.value ? MOOD_EMOJI[h.value - 1] : `<i class="ph-light ${safeIcon(h.icon)}"></i>`}
+        </div>
+        <div class="habit-details">
+          <span class="habit-label">${escapeHtml(h.label)}</span>
+          <span class="scale-dots" role="group" aria-label="Шкала 1-5">${dots}</span>
+        </div>
+      </div>`;
+  }
+
+  if (type === 'number') {
+    return `
+      <div class="habit-item no-toggle ${h.done ? 'done' : ''}" data-habit="${h.id}">
+        <div class="habit-icon"><i class="ph-light ${safeIcon(h.icon)}"></i></div>
+        <div class="habit-details">
+          <span class="habit-label">${escapeHtml(h.label)}</span>
+          <span class="habit-num-wrap">
+            <input type="number" step="any" inputmode="decimal" value="${h.value != null ? h.value : ''}"
+                   aria-label="${escapeHtml(h.label)}" placeholder="—"
+                   onchange="setHabitNumber('${h.id}', this.value)"
+                   onkeydown="if(event.key==='Enter'){this.blur();}">
+            ${h.unit ? `<span class="unit">${escapeHtml(h.unit)}</span>` : ''}
+          </span>
+        </div>
+      </div>`;
+  }
+
   return `
     <div class="habit-item ${h.done ? 'done' : ''}" data-habit="${h.id}" role="checkbox" aria-checked="${h.done}" tabindex="0"
          onclick="toggleHabit('${h.id}')" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();toggleHabit('${h.id}');}">
@@ -4349,12 +4841,12 @@ function habitItemHTML(h) {
       </div>
       <div class="habit-details">
         <span class="habit-label">${escapeHtml(h.label)}</span>
-        <span class="habit-impact ${h.delta > 0 ? 'up' : 'down'}">
+        ${h.delta ? `<span class="habit-impact ${h.delta > 0 ? 'up' : 'down'}">
           ${h.delta > 0 ? '+' : ''}${h.delta}% recovery
-        </span>
+        </span>` : ''}
       </div>
       <div class="habit-icon">
-        <i class="ph-light ${h.icon}"></i>
+        <i class="ph-light ${safeIcon(h.icon)}"></i>
       </div>
     </div>
   `;
@@ -4385,7 +4877,7 @@ function renderHabits() {
 
 function toggleHabit(id) {
   const h = DATA.habits.find(x => x.id === id);
-  if (!h) return;
+  if (!h || normalizeHabitType(h.type) !== 'boolean') return;
   h.done = !h.done;
   persistHabits();
   renderHabits();
@@ -4393,6 +4885,31 @@ function toggleHabit(id) {
     { scale: 0.97 },
     { scale: 1, duration: 0.3, ease: "power2.out" }
   );
+}
+
+// Шкала 1-5: повторный клик по выбранной точке снимает ответ.
+function setHabitScale(id, v) {
+  const h = DATA.habits.find(x => x.id === id);
+  if (!h) return;
+  h.value = (h.value === v) ? null : v;
+  h.done = h.value != null;
+  persistHabits();
+  renderHabits();
+  gsap.fromTo(`.habit-item[data-habit="${id}"]`,
+    { scale: 0.97 },
+    { scale: 1, duration: 0.3, ease: "power2.out" }
+  );
+}
+
+// Число с единицей: пустое поле = ответа нет.
+function setHabitNumber(id, raw) {
+  const h = DATA.habits.find(x => x.id === id);
+  if (!h) return;
+  const v = parseFloat(String(raw).replace(',', '.'));
+  h.value = isFinite(v) ? v : null;
+  h.done = h.value != null;
+  persistHabits();
+  renderHabits();
 }
 
 function animateRecoveryRing() {
@@ -4528,6 +5045,7 @@ function toggleTodayEdit() {
   });
   renderTodayHiddenPanel();
   if (!todayEditMode) persistTodayLayout(todayLayoutFromDOM());
+  if (todayEditMode) maybeShowOverlayHint();
 }
 
 function addWidgetControls(w) {
@@ -4641,6 +5159,12 @@ function startTodayDrag(e) {
   todayDrag.started = true;
 }
 
+function clearOverlayTarget() {
+  document.querySelectorAll('#todayGrid > .today-widget.overlay-target')
+    .forEach(el => el.classList.remove('overlay-target'));
+  if (todayDrag) todayDrag.overlayTarget = null;
+}
+
 function moveTodayDrag(e) {
   const { ghost, w } = todayDrag;
   if (!ghost) return;
@@ -4651,9 +5175,20 @@ function moveTodayDrag(e) {
   const el = document.elementFromPoint(e.clientX, e.clientY);
   ghost.style.display = '';
   const over = el && el.closest ? el.closest('#todayGrid > .today-widget') : null;
-  if (!over || over === w) return;
+  if (!over || over === w) { clearOverlayTarget(); return; }
 
   const r = over.getBoundingClientRect();
+
+  // Центральная зона чужого виджета = drop-зона «наложения» (микро-корреляция):
+  // подсвечиваем и не переставляем. Края — обычная перестановка.
+  const inCenter = Math.abs(e.clientX - (r.left + r.width / 2)) < r.width * 0.3 &&
+                   Math.abs(e.clientY - (r.top + r.height / 2)) < r.height * 0.3;
+  if (inCenter && overlayPairAvailable(w.dataset.widget, over.dataset.widget)) {
+    if (todayDrag.overlayTarget !== over) { clearOverlayTarget(); over.classList.add('overlay-target'); todayDrag.overlayTarget = over; }
+    return;
+  }
+  clearOverlayTarget();
+
   // Узкие блоки решает горизонталь, широкие (col-12) — вертикаль.
   const wide = r.width > window.innerWidth * 0.6;
   const before = wide ? e.clientY < r.top + r.height / 2 : e.clientX < r.left + r.width / 2;
@@ -4664,11 +5199,233 @@ function moveTodayDrag(e) {
 
 function endTodayDrag() {
   if (!todayDrag) return;
-  const { w, ghost, started } = todayDrag;
+  const { w, ghost, started, overlayTarget } = todayDrag;
   if (ghost) ghost.remove();
   if (w) w.classList.remove('drag-src');
+  clearOverlayTarget();
   if (started) persistTodayLayout(todayLayoutFromDOM());
   todayDrag = null;
+  if (started && overlayTarget && w && overlayTarget !== w) {
+    mergeWidgets(w, overlayTarget);
+  }
+}
+
+// ============================================================
+// НАЛОЖЕНИЕ ПАРАМЕТРОВ (микро-корреляция): дроп виджета на виджет
+// в режиме «Редактировать» -> анимация слияния -> модал с двойным
+// графиком, Pearson по доступным дням и кнопкой «Спросить агента».
+// Честность: n=30, сырая корреляция C1-C2, не причинность.
+// ============================================================
+
+const OVERLAY_HINT_KEY = 'openhealth.hint.overlay';
+let OVERLAY_PAIR = null; // {a, b} — текущая пара для retry агента
+
+// Числовой ряд каждого виджета (выравнивается по хвосту, даты из seriesDates).
+function overlayMetricFor(widgetId) {
+  if (widgetId === 'recovery') {
+    const v = Array.isArray(DATA.trend30Rec) ? DATA.trend30Rec : [];
+    return v.length >= 6 ? { label: 'Recovery', unit: '%', color: 'var(--accent)', values: v } : null;
+  }
+  if (widgetId === 'readiness') {
+    const v = Array.isArray(DATA.trend30Hrv) ? DATA.trend30Hrv : [];
+    return v.length >= 6 ? { label: 'HRV', unit: 'мс', color: '#a855f7', values: v, note: 'блок «Готовность» наложен через свой числовой ряд — дневную HRV' } : null;
+  }
+  if (widgetId === 'checklist') {
+    const len = (Array.isArray(DATA.trend30Rec) ? DATA.trend30Rec.length : 0) || 30;
+    const dates = seriesDates(len, 0);
+    let any = false;
+    const values = dates.map(d => {
+      try {
+        const done = JSON.parse(localStorage.getItem('openhealth.habits.' + dateKeyOf(d)) || 'null');
+        if (!done || typeof done !== 'object') return null;
+        const ids = Object.keys(done);
+        if (!ids.length) return null;
+        any = true;
+        const hit = ids.filter(id => !!done[id]).length;
+        return Math.round((hit / ids.length) * 100);
+      } catch (e) { return null; }
+    });
+    return any ? { label: 'Журнал', unit: '% отметок дня', color: '#60a5fa', values } : null;
+  }
+  return null; // insight: числового ряда нет
+}
+
+function overlayPairAvailable(idA, idB) {
+  if (!idA || !idB || idA === idB) return false;
+  return !!(overlayMetricFor(idA) && overlayMetricFor(idB));
+}
+
+// Pearson r по парам без пропусков. Возвращает {r, n}.
+function pearsonR(xs0, ys0) {
+  const xs = [], ys = [];
+  const n0 = Math.min(xs0.length, ys0.length);
+  for (let i = 0; i < n0; i++) {
+    const x = xs0[i], y = ys0[i];
+    if (x == null || y == null || !isFinite(x) || !isFinite(y)) continue;
+    xs.push(x); ys.push(y);
+  }
+  const n = xs.length;
+  if (n < 3) return { r: null, n };
+  const mx = avgArr(xs), my = avgArr(ys);
+  let num = 0, dx = 0, dy = 0;
+  for (let i = 0; i < n; i++) {
+    num += (xs[i] - mx) * (ys[i] - my);
+    dx += (xs[i] - mx) ** 2;
+    dy += (ys[i] - my) ** 2;
+  }
+  const den = Math.sqrt(dx * dy);
+  return { r: den ? num / den : null, n };
+}
+
+// Красивое слияние (GSAP): оба виджета сжимаются, вспышка в точке дропа, модал.
+function mergeWidgets(elA, elB) {
+  const idA = elA.dataset.widget, idB = elB.dataset.widget;
+  if (!overlayPairAvailable(idA, idB)) return;
+
+  const rb = elB.getBoundingClientRect();
+  const flash = document.createElement('div');
+  flash.className = 'overlay-flash';
+  const size = 150;
+  flash.style.width = flash.style.height = size + 'px';
+  flash.style.left = (rb.left + rb.width / 2 - size / 2) + 'px';
+  flash.style.top = (rb.top + rb.height / 2 - size / 2) + 'px';
+  document.body.appendChild(flash);
+
+  const clean = el => gsap.set(el, { clearProps: 'transform,opacity' });
+  gsap.fromTo([elA, elB], { scale: 1 }, {
+    scale: 0.94, opacity: 0.75, duration: 0.16, ease: 'power2.in', yoyo: true, repeat: 1,
+    onComplete: () => { clean(elA); clean(elB); }
+  });
+  gsap.fromTo(flash, { scale: 0.2, opacity: 0 }, {
+    scale: 2.1, opacity: 1, duration: 0.42, ease: 'power2.out',
+    onComplete: () => gsap.to(flash, { opacity: 0, duration: 0.25, onComplete: () => flash.remove() })
+  });
+
+  setTimeout(() => openOverlayModal(idA, idB), 340);
+}
+
+// Двойной line-chart: оба ряда нормированы на свой min-max (оси сопоставимы по форме).
+function overlayChartSVG(sA, sB, n) {
+  const W = 560, H = 170, L = 12, R = 12, T = 14, B = 24;
+  const iw = W - L - R, ih = H - T - B;
+  const x = i => L + (n > 1 ? (i / (n - 1)) * iw : iw / 2);
+  const lineOf = (vals, color, id) => {
+    const fin = vals.filter(v => v != null && isFinite(v));
+    if (fin.length < 2) return '';
+    const mn = Math.min(...fin), mx = Math.max(...fin);
+    const rng = (mx - mn) || 1;
+    const y = v => T + (1 - (v - mn) / rng) * ih;
+    let d = '', pen = false;
+    vals.forEach((v, i) => {
+      if (v == null || !isFinite(v)) { pen = false; return; }
+      d += (pen ? ' L ' : ' M ') + x(i).toFixed(1) + ' ' + y(v).toFixed(1);
+      pen = true;
+    });
+    const dots = vals.map((v, i) => (v == null || !isFinite(v)) ? '' :
+      `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="2.4" fill="${color}" opacity="0.85"></circle>`).join('');
+    return `<path id="${id}" d="${d.trim()}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>${dots}`;
+  };
+  return `
+    <svg class="rep-chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Наложение двух рядов (нормированные оси)">
+      <line x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}" stroke="var(--line)" stroke-width="1"></line>
+      ${lineOf(sA.values, sA.color, 'ovLineA')}
+      ${lineOf(sB.values, sB.color === sA.color ? '#a855f7' : sB.color, 'ovLineB')}
+    </svg>`;
+}
+
+function openOverlayModal(idA, idB) {
+  const sA = overlayMetricFor(idA);
+  const sB = overlayMetricFor(idB);
+  if (!sA || !sB) return;
+
+  // Выравнивание по хвосту: последняя точка обоих рядов = день выгрузки.
+  const n = Math.min(sA.values.length, sB.values.length);
+  const a = { ...sA, values: sA.values.slice(-n) };
+  const b = { ...sB, values: sB.values.slice(-n) };
+  if (b.color === a.color) b.color = '#a855f7';
+  OVERLAY_PAIR = { a: a.label, b: b.label };
+
+  const { r, n: nPairs } = pearsonR(a.values, b.values);
+
+  // Сплит по медиане A: средний B в «высокие» дни против «низких».
+  const pairs = [];
+  for (let i = 0; i < n; i++) {
+    if (a.values[i] != null && b.values[i] != null && isFinite(a.values[i]) && isFinite(b.values[i])) {
+      pairs.push([a.values[i], b.values[i]]);
+    }
+  }
+  let splitLine = '';
+  if (pairs.length >= 4) {
+    const sorted = pairs.map(p => p[0]).sort((p, q) => p - q);
+    const med = sorted[Math.floor(sorted.length / 2)];
+    const hi = pairs.filter(p => p[0] > med).map(p => p[1]);
+    const lo = pairs.filter(p => p[0] <= med).map(p => p[1]);
+    if (hi.length && lo.length) {
+      const d = avgArr(hi) - avgArr(lo);
+      const dTxt = Math.abs(d) < 0.05 ? 'практически не отличается' :
+        `в среднем ${d > 0 ? 'выше' : 'ниже'} на ${Math.abs(d) % 1 ? Math.abs(d).toFixed(1) : Math.round(Math.abs(d))} ${escapeHtml(b.unit)}`;
+      splitLine = `<p class="step-text" style="margin:6px 0 0;">В дни высокого «${escapeHtml(a.label)}» (выше медианы) «${escapeHtml(b.label)}» ${dTxt}.</p>`;
+    }
+  }
+
+  const rTxt = r == null ? '—' : (r > 0 ? '+' : '') + r.toFixed(2);
+  const rColor = r == null ? 'var(--mut)' : Math.abs(r) < 0.25 ? 'var(--mut)' : r > 0 ? 'var(--ok)' : 'var(--bad)';
+  const strength = r == null ? '' :
+    Math.abs(r) >= 0.6 ? 'заметная связь' : Math.abs(r) >= 0.3 ? 'умеренная связь' : 'связь слабая или её нет';
+
+  openModal(`Наложение: ${a.label} × ${b.label}`, 'микро-отчёт по двум рядам · нормированные оси', `
+    <div class="overlay-legend">
+      <span><span class="sw" style="background:${a.color}"></span>${escapeHtml(a.label)}${a.unit ? ', ' + escapeHtml(a.unit) : ''}</span>
+      <span><span class="sw" style="background:${b.color}"></span>${escapeHtml(b.label)}${b.unit ? ', ' + escapeHtml(b.unit) : ''}</span>
+    </div>
+    ${overlayChartSVG(a, b, n)}
+    <div class="overlay-stat">
+      <span class="r mono" style="color:${rColor};">${rTxt}</span>
+      <span class="cap">Pearson r · n=${nPairs} ${nPairs < n ? `из ${n} дней (пропуски не считаются)` : 'дней'}</span>
+    </div>
+    ${r == null
+      ? '<p class="step-text">Совпадающих дней с данными в обоих рядах слишком мало (нужно ≥ 3) — отметь несколько дней в журнале и попробуй снова.</p>'
+      : `<p class="step-text">${strength.charAt(0).toUpperCase() + strength.slice(1)} между «${escapeHtml(a.label)}» и «${escapeHtml(b.label)}» на этом окне.</p>`}
+    ${splitLine}
+    ${a.note || b.note ? `<p class="cmd-hint">${escapeHtml(a.note || b.note)}</p>` : ''}
+    <p class="cmd-hint">Это сырая корреляция уровня C1-C2, не причинность: оба ряда может двигать третий фактор (сон, нагрузка, болезнь). Гипотезу проверяет только n-of-1 эксперимент.</p>
+    <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+      <button class="btn-primary agent-btn" id="overlayAgentBtn" onclick="runOverlayAgent()">
+        <i class="ph-light ph-sparkle"></i> Спросить агента
+      </button>
+    </div>
+    <div class="agent-box" id="overlayAgentBox" style="margin-top:12px; display:none;"></div>`);
+
+  const lineA = document.getElementById('ovLineA');
+  const lineB = document.getElementById('ovLineB');
+  if (lineA) drawPath(lineA, { duration: 1.0 });
+  if (lineB) drawPath(lineB, { duration: 1.0, delay: 0.15 });
+}
+
+function runOverlayAgent() {
+  if (!OVERLAY_PAIR) return;
+  runAgentTask({
+    boxId: 'overlayAgentBox', btnId: 'overlayAgentBtn', task: 'correlations',
+    param: OVERLAY_PAIR.a + ' vs ' + OVERLAY_PAIR.b, retryCall: 'runOverlayAgent()'
+  });
+}
+
+// First-run hint: коачмарк при первом входе в edit-режим + 2с пульс на втором виджете.
+function maybeShowOverlayHint() {
+  let seen = null;
+  try { seen = localStorage.getItem(OVERLAY_HINT_KEY); } catch (e) { /* ignore */ }
+  if (seen === 'seen') return;
+  try { localStorage.setItem(OVERLAY_HINT_KEY, 'seen'); } catch (e) { /* ignore */ }
+  showToast('Перетащи один блок на другой — увидишь связь параметров');
+  const widgets = Array.from(document.querySelectorAll('#todayGrid > .today-widget'))
+    .filter(w => w.style.display !== 'none' && overlayMetricFor(w.dataset.widget));
+  const target = widgets[1] || widgets[0];
+  if (!target) return;
+  target.classList.add('overlay-target');
+  gsap.fromTo(target, { scale: 1 }, {
+    scale: 1.015, duration: 0.33, repeat: 5, yoyo: true, ease: 'power1.inOut',
+    onComplete: () => { target.classList.remove('overlay-target'); gsap.set(target, { clearProps: 'transform' }); }
+  });
 }
 
 function initPulseScreen() {
@@ -5205,7 +5962,7 @@ function updateCorrelationsScreen() {
 }
 
 function initJournalScreen() {
-  renderBehaviorGrid();
+  loadBehaviorCatalog();
   renderHabits();
 
   // Восстановить заметку за сегодня (локально).
@@ -5218,35 +5975,295 @@ function initJournalScreen() {
   }
 }
 
-function renderBehaviorGrid() {
-  const grid = document.getElementById('behaviorGrid');
-  if (!grid) return;
-  grid.innerHTML = DATA.allBehaviors.map(b => `
-    <div class="behavior-pill ${b.selected ? 'active' : ''}" role="checkbox" aria-checked="${b.selected}" tabindex="0"
-         onclick="toggleBehaviorSelection('${b.id}')" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();toggleBehaviorSelection('${b.id}');}">
-      <i class="ph-light ${b.icon}"></i>
-      <span style="font-size:12px; font-weight:500;">${escapeHtml(b.label)}</span>
-    </div>
-  `).join('');
+// ============================================================
+// КАТАЛОГ ПОВЕДЕНИЯ: полный список из /api/behaviors (215 параметров,
+// 6 разделов) + «Мои параметры» (кастомные, localStorage) + фолбэк на
+// вшитый мини-каталог, когда bridge выключен. Выбор = присутствие в
+// DATA.habits — единый список для чек-ина «Сегодня» и Журнала.
+// ============================================================
+
+const CUSTOM_BEHAVIORS_KEY = 'openhealth.custom.behaviors';
+const BEHAVIOR_CATALOG = { state: 'idle', source: null, categories: [], behaviors: [] };
+const BEH_OPEN_CATS = new Set(); // открытые аккордеоны (в памяти сессии)
+
+const BEH_CAT_ICONS = {
+  health_symptoms: 'ph-thermometer',
+  hormonal_health: 'ph-drop-half',
+  lifestyle: 'ph-sun-horizon',
+  mental_wellbeing: 'ph-brain',
+  nutrition: 'ph-fork-knife',
+  recovery_activities: 'ph-heartbeat',
+  custom: 'ph-star',
+  mini: 'ph-list-bullets'
+};
+
+const FALLBACK_CAT_LABELS = { toxic: 'Вредное', habit: 'Привычки', activity: 'Активность', supps: 'Добавки' };
+
+function getCustomBehaviors() {
+  try {
+    const v = JSON.parse(localStorage.getItem(CUSTOM_BEHAVIORS_KEY) || '[]');
+    return Array.isArray(v) ? v.filter(b => b && b.id && b.label) : [];
+  } catch (e) { return []; }
 }
 
-// Выбор в «Настройке» меняет единый список привычек: и в Журнале, и на «Сегодня».
-function toggleBehaviorSelection(id) {
-  const b = DATA.allBehaviors.find(x => x.id === id);
-  if (!b) return;
-  b.selected = !b.selected;
+function saveCustomBehaviors(list) {
+  try { localStorage.setItem(CUSTOM_BEHAVIORS_KEY, JSON.stringify(list)); } catch (e) { /* private mode */ }
+}
 
-  if (b.selected) {
-    if (!DATA.habits.some(h => h.id === id)) {
-      DATA.habits.push({ id: b.id, label: b.label, done: false, delta: deltaForBehavior(b), icon: b.icon });
-    }
-  } else {
+// Фолбэк-каталог из вшитого мини-списка (когда bridge выключен).
+function fallbackCatalog() {
+  const cats = [];
+  const seen = {};
+  (DATA.allBehaviors || []).forEach(b => {
+    const c = b.category || 'habit';
+    if (!seen[c]) { seen[c] = 1; cats.push({ id: c, label_ru: FALLBACK_CAT_LABELS[c] || c }); }
+  });
+  return {
+    categories: cats,
+    behaviors: (DATA.allBehaviors || []).filter(b => b.id !== MOOD_HABIT_ID).map(b => ({
+      id: b.id, name: b.id, label_ru: b.label, category: b.category || 'habit',
+      answer_type: 'boolean', icon: b.icon
+    }))
+  };
+}
+
+function loadBehaviorCatalog() {
+  renderBehaviorSelected();
+  if (BEHAVIOR_CATALOG.state === 'ready') { renderBehaviorCatalog(); return; }
+  if (BEHAVIOR_CATALOG.state === 'loading') return;
+  BEHAVIOR_CATALOG.state = 'loading';
+  const box = document.getElementById('behaviorCatalog');
+  if (box) box.innerHTML = settingsSkeletonHTML();
+
+  fetchWithTimeout('/api/behaviors', 4000)
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(j => {
+      if (!j || !Array.isArray(j.behaviors) || !j.behaviors.length) throw new Error('пустой каталог');
+      BEHAVIOR_CATALOG.categories = Array.isArray(j.categories) ? j.categories : [];
+      BEHAVIOR_CATALOG.behaviors = j.behaviors;
+      BEHAVIOR_CATALOG.source = 'bridge';
+      BEHAVIOR_CATALOG.state = 'ready';
+      renderBehaviorCatalog();
+    })
+    .catch(() => {
+      // Bridge выключен или старый — честный мини-каталог вместо пустоты.
+      const fb = fallbackCatalog();
+      BEHAVIOR_CATALOG.categories = fb.categories;
+      BEHAVIOR_CATALOG.behaviors = fb.behaviors;
+      BEHAVIOR_CATALOG.source = 'fallback';
+      BEHAVIOR_CATALOG.state = 'ready';
+      renderBehaviorCatalog();
+    });
+}
+
+// Описание параметра по id: каталог + кастомные + активный список.
+function behaviorDefById(id) {
+  const custom = getCustomBehaviors().find(b => b.id === id);
+  if (custom) {
+    return { id, label: custom.label, icon: 'ph-star', type: normalizeHabitType(custom.type), unit: custom.unit || '', category: 'custom' };
+  }
+  const cat = BEHAVIOR_CATALOG.behaviors.find(b => b.id === id);
+  if (cat) {
+    return {
+      id, label: cat.label_ru || cat.name || id,
+      icon: cat.icon || BEH_CAT_ICONS[cat.category] || 'ph-circle',
+      type: cat.answer_type === 'quantity' ? 'number' : 'boolean',
+      unit: '', category: cat.category
+    };
+  }
+  const mini = (DATA.allBehaviors || []).find(b => b.id === id);
+  if (mini) return { id, label: mini.label, icon: mini.icon, type: 'boolean', unit: '', category: mini.category || 'habit' };
+  return null;
+}
+
+// Клик по чипу каталога: добавить в чек-ин или убрать из него.
+function toggleCatalogBehavior(id) {
+  const selected = DATA.habits.some(h => h.id === id);
+  if (selected) {
     DATA.habits = DATA.habits.filter(h => h.id !== id);
+  } else {
+    const def = behaviorDefById(id);
+    if (!def) return;
+    DATA.habits.push({
+      id: def.id, label: def.label, done: false,
+      delta: def.type === 'boolean' ? deltaForBehavior(def) : 0,
+      icon: def.icon, type: def.type, unit: def.unit, value: null
+    });
+  }
+  const mini = (DATA.allBehaviors || []).find(b => b.id === id);
+  if (mini) mini.selected = !selected;
+  persistHabits();
+  renderHabits();
+  renderBehaviorSelected();
+  renderBehaviorCatalog();
+}
+
+function behChipHTML(b, selected, extra) {
+  const tag = b.type === 'scale' ? '<span class="type-tag">1-5</span>'
+    : b.type === 'number' ? `<span class="type-tag">${b.unit ? escapeHtml(b.unit) : 'число'}</span>` : '';
+  return `
+    <button type="button" class="beh-chip ${selected ? 'on' : ''}" aria-pressed="${selected}"
+            title="${escapeHtml(b.title || b.label)}" onclick="toggleCatalogBehavior('${b.id}')">
+      <i class="ph-light ${safeIcon(b.icon)}"></i>
+      <span class="t">${escapeHtml(b.label)}</span>${tag}
+      ${extra || ''}
+    </button>`;
+}
+
+// Блок «Выбранные» сверху: всё, что сейчас в чек-ине; клик по чипу убирает.
+function renderBehaviorSelected() {
+  const box = document.getElementById('behaviorSelected');
+  if (!box) return;
+  if (!DATA.habits.length) {
+    box.innerHTML = '<div class="lbl">Выбранные · 0</div><p class="muted" style="font-size:12px; margin:0;">Пока пусто — выбери параметры в каталоге ниже или добавь свой.</p>';
+    return;
+  }
+  box.innerHTML = `
+    <div class="lbl">Выбранные · ${DATA.habits.length} — в чек-ине «Сегодня» и Журнала</div>
+    <div class="beh-chips">${DATA.habits.map(h => behChipHTML(
+      { id: h.id, label: h.label, icon: h.icon, type: normalizeHabitType(h.type), unit: h.unit, title: 'Убрать из чек-ина' },
+      true, '<i class="ph-light ph-x x"></i>'
+    )).join('')}</div>`;
+}
+
+// Каталог: аккордеоны разделов + живой поиск по label_ru и name.
+function renderBehaviorCatalog() {
+  const box = document.getElementById('behaviorCatalog');
+  if (!box || BEHAVIOR_CATALOG.state !== 'ready') return;
+  const qEl = document.getElementById('behaviorSearch');
+  const q = (qEl ? qEl.value : '').trim().toLowerCase();
+  const isSel = id => DATA.habits.some(h => h.id === id);
+  const match = b => !q || String(b.label_ru || '').toLowerCase().includes(q) || String(b.name || '').toLowerCase().includes(q);
+
+  const sections = [];
+
+  // «Мои параметры» — кастомные, с удалением.
+  const allCustoms = getCustomBehaviors();
+  const customs = allCustoms.filter(b => !q || b.label.toLowerCase().includes(q));
+  if (!q || customs.length) {
+    const chips = customs.map(b => `
+      <span style="display:inline-flex; align-items:center; gap:4px;">
+        ${behChipHTML({ id: b.id, label: b.label, icon: 'ph-star', type: normalizeHabitType(b.type), unit: b.unit }, isSel(b.id))}
+        <button type="button" class="modal-close" style="width:24px; height:24px; font-size:12px;" title="Удалить параметр"
+                aria-label="Удалить ${escapeHtml(b.label)}" onclick="deleteCustomBehavior('${b.id}')"><i class="ph-light ph-trash"></i></button>
+      </span>`).join('');
+    sections.push(behAccHTML('custom', 'Мои параметры', BEH_CAT_ICONS.custom, allCustoms.length,
+      allCustoms.filter(b => isSel(b.id)).length,
+      chips || '<p class="muted" style="font-size:12px; margin:4px 0 6px;">Своих параметров пока нет — кнопка «Свой параметр» сверху создаст любой трекер: да/нет, шкала 1-5 или число.</p>',
+      q ? customs.length > 0 : allCustoms.length > 0));
   }
 
+  // Разделы каталога.
+  BEHAVIOR_CATALOG.categories.forEach(cat => {
+    const items = BEHAVIOR_CATALOG.behaviors.filter(b => b.category === cat.id);
+    const visible = items.filter(match);
+    if (q && !visible.length) return; // при поиске пустые разделы скрываем
+    const chips = visible.map(b => behChipHTML({
+      id: b.id, label: b.label_ru || b.name, icon: b.icon || BEH_CAT_ICONS[cat.id] || 'ph-circle',
+      type: b.answer_type === 'quantity' ? 'number' : 'boolean', unit: '', title: b.name
+    }, isSel(b.id))).join('');
+    sections.push(behAccHTML(cat.id, cat.label_ru || cat.id, BEH_CAT_ICONS[cat.id] || 'ph-circle',
+      items.length, items.filter(b => isSel(b.id)).length, chips, !!q));
+  });
+
+  const foot = BEHAVIOR_CATALOG.source === 'fallback'
+    ? `<p class="beh-cat-foot"><i class="ph-light ph-plugs"></i><span>Bridge выключен — показан вшитый мини-каталог. Запусти OpenHealth.command, и здесь появится полный каталог (215 параметров, 6 разделов).</span></p>`
+    : `<p class="beh-cat-foot"><i class="ph-light ph-info"></i><span>Каталог: ${BEHAVIOR_CATALOG.behaviors.length} параметров наблюдения (WHOOP Journal). Это самонаблюдение, не медицина.</span></p>`;
+
+  box.innerHTML = (sections.join('') || '<p class="muted" style="font-size:12px;">Ничего не нашлось — попробуй другой запрос.</p>') + foot;
+}
+
+function behAccHTML(catId, label, icon, total, selCount, chipsHTML, forceOpen) {
+  const open = forceOpen || BEH_OPEN_CATS.has(catId);
+  return `
+    <details class="beh-acc" data-cat="${escapeHtml(catId)}" ${open ? 'open' : ''} ontoggle="if(this.open){BEH_OPEN_CATS.add(this.dataset.cat)}else{BEH_OPEN_CATS.delete(this.dataset.cat)}">
+      <summary>
+        <i class="ph-light ${icon} cat"></i>
+        <span>${escapeHtml(label)}</span>
+        <span class="cnt">${total}</span>
+        ${selCount ? `<span class="sel-cnt">выбрано: ${selCount}</span>` : ''}
+        <i class="ph-light ph-caret-down chev"></i>
+      </summary>
+      <div class="beh-chips">${chipsHTML}</div>
+    </details>`;
+}
+
+// --- «Свой параметр»: форма в модале -> localStorage openhealth.custom.behaviors
+
+function openCustomBehaviorModal() {
+  openModal('Свой параметр', 'имя + тип ответа · хранится локально в браузере', `
+    <div class="form-group">
+      <label for="cbName">Название *</label>
+      <input type="text" id="cbName" maxlength="60" placeholder="Например: сауна, таблетка магния, головная боль"
+             onkeydown="if(event.key==='Enter'){saveCustomBehavior();}">
+    </div>
+    <div class="form-group">
+      <label>Тип ответа</label>
+      <div role="radiogroup" aria-label="Тип ответа" id="cbTypeGroup">
+        ${[['boolean', 'Да / нет', 'отметка как у привычек'], ['scale', 'Шкала 1-5', 'пять точек-кнопок'], ['number', 'Число + единица', 'например 350 мл']].map(([v, l, hint], i) => `
+          <label class="agent-radio-row ${i === 0 ? 'on' : ''}">
+            <input type="radio" name="cbType" value="${v}" ${i === 0 ? 'checked' : ''}
+                   onchange="document.querySelectorAll('#cbTypeGroup .agent-radio-row').forEach(r=>r.classList.toggle('on', r.contains(this))); document.getElementById('cbUnitGroup').style.display = this.value==='number' ? '' : 'none';">
+            <span class="agent-radio-dot"></span>
+            <span>${l}</span>
+            <span class="agent-radio-hint">${hint}</span>
+          </label>`).join('')}
+      </div>
+    </div>
+    <div class="form-group" id="cbUnitGroup" style="display:none;">
+      <label for="cbUnit">Единица измерения</label>
+      <input type="text" id="cbUnit" maxlength="16" placeholder="мл, мг, шагов, минут…">
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:18px;">
+      <button class="btn-secondary" onclick="closeModal()">Отмена</button>
+      <button class="btn-primary" onclick="saveCustomBehavior()"><i class="ph-light ph-plus"></i> Добавить в чек-ин</button>
+    </div>`);
+  const nameEl = document.getElementById('cbName');
+  if (nameEl) nameEl.focus();
+}
+
+function saveCustomBehavior() {
+  const nameEl = document.getElementById('cbName');
+  const label = (nameEl ? nameEl.value : '').trim();
+  if (!label) { showToast('Дай параметру имя', false); if (nameEl) nameEl.focus(); return; }
+  const typeEl = document.querySelector('#cbTypeGroup input[name="cbType"]:checked');
+  const type = normalizeHabitType(typeEl ? typeEl.value : 'boolean');
+  const unitEl = document.getElementById('cbUnit');
+  const unit = type === 'number' ? (unitEl ? unitEl.value : '').trim().slice(0, 16) : '';
+
+  const list = getCustomBehaviors();
+  if (list.some(b => b.label.toLowerCase() === label.toLowerCase())) {
+    showToast('Такой параметр уже есть в «Моих параметрах»', false);
+    return;
+  }
+  let id = 'custom_' + label.toLowerCase().replace(/[^a-zа-яё0-9]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+  if (!id.replace('custom_', '')) id = 'custom_p';
+  while (list.some(b => b.id === id) || DATA.habits.some(h => h.id === id)) id += '_2';
+
+  list.push({ id, label, type, unit, created: todayKey() });
+  saveCustomBehaviors(list);
+
+  // Сразу в чек-ин: создал — значит хочешь отслеживать.
+  DATA.habits.push({ id, label, done: false, delta: 0, icon: 'ph-star', type, unit, value: null });
   persistHabits();
-  renderBehaviorGrid();
   renderHabits();
+  renderBehaviorSelected();
+  BEH_OPEN_CATS.add('custom');
+  renderBehaviorCatalog();
+  closeModal();
+  showToast('Добавлено в чек-ин: ' + label);
+}
+
+function deleteCustomBehavior(id) {
+  const list = getCustomBehaviors();
+  const b = list.find(x => x.id === id);
+  saveCustomBehaviors(list.filter(x => x.id !== id));
+  DATA.habits = DATA.habits.filter(h => h.id !== id);
+  persistHabits();
+  renderHabits();
+  renderBehaviorSelected();
+  renderBehaviorCatalog();
+  showToast('Удалено: ' + (b ? b.label : 'параметр'));
 }
 
 function saveJournalEntry() {
@@ -5782,49 +6799,182 @@ function showSyncGuide(key) {
   openModal(g.title, g.sub, stepsHTML(g.steps) + note);
 }
 
+// «Подключено»: только реально подключённые источники из DATA.connections.
 function updateSyncScreen() {
   const grid = document.getElementById('syncStreams');
   if (!grid) return;
   const conns = DATA.connections || {};
+  const connectedKeys = Object.keys(conns).filter(k => conns[k] && conns[k].connected);
 
-  grid.innerHTML = STREAM_KEYS.map(key => {
-    const fb = STREAM_FALLBACK[key];
+  if (!connectedKeys.length) {
+    grid.innerHTML = `
+      <div class="card-outer sync-card" style="grid-column: 1 / -1;">
+        <div class="card-inner">
+          <p class="cand-hint" style="margin:0;">
+            <i class="ph-light ph-plugs"></i>
+            <span>Пока ничего не подключено — выбери источник в каталоге «Доступно» ниже или импортируй файл в «Загрузках».</span>
+          </p>
+        </div>
+      </div>`;
+    updateUploadStatuses();
+    return;
+  }
+
+  grid.innerHTML = connectedKeys.map(key => {
+    const fb = STREAM_FALLBACK[key] || {};
     const c = conns[key] || {};
-    const label = c.label || fb.label;
-    const icon = safeIcon(c.icon || fb.icon);
-    const connected = !!c.connected;
+    const label = c.label || fb.label || key;
+    const icon = safeIcon(c.icon || fb.icon || 'ph-plug');
+    const action = SYNC_GUIDES[key]
+      ? `<button class="btn-secondary" style="flex:1;" onclick="showSyncGuide('${key}')"><i class="ph-light ph-arrows-clockwise"></i> Обновить данные</button>`
+      : key === 'dna'
+        ? `<button class="btn-secondary" style="flex:1;" onclick="go('dna')"><i class="ph-light ph-dna"></i> Открыть раздел ДНК</button>`
+        : `<button class="btn-secondary" style="flex:1;" onclick="go('biomarkers')"><i class="ph-light ph-flask"></i> Смотреть анализы</button>`;
     return `
     <div class="card-outer sync-card">
       <div class="card-inner">
         <div class="card-header" style="margin-bottom:8px;">
           <div class="card-title-group">
             <h3>${escapeHtml(label)}</h3>
-            <div class="sub">${connected ? 'данные уже в дашборде' : 'источник не подключён'}</div>
+            <div class="sub">данные уже в дашборде</div>
           </div>
-          <i class="${connected ? 'ph-duotone' : 'ph-light'} ${icon} card-header-icon"${connected ? ' style="color: var(--ok);"' : ''}></i>
+          <i class="ph-duotone ${icon} card-header-icon" style="color: var(--ok);"></i>
         </div>
 
         <div class="sync-status-row">
-          <div class="sync-indicator ${connected ? 'connected' : 'disconnected'}">
+          <div class="sync-indicator connected">
             <span class="dot"></span>
-            <span>${connected ? 'Подключено' : 'Отключено'}</span>
+            <span>Подключено</span>
           </div>
-          <span class="mono muted" style="font-size:11px;">
-            ${connected ? escapeHtml(c.lastSync || '—') : 'нет данных'}
-          </span>
+          <span class="mono muted" style="font-size:11px;">${escapeHtml(c.lastSync || '—')}</span>
         </div>
 
-        <div style="margin-top:20px; display:flex; gap:8px;">
-          <button class="${connected ? 'btn-secondary' : 'btn-primary'}" style="flex:1;" onclick="showSyncGuide('${key}')">
-            <i class="ph-light ${connected ? 'ph-arrows-clockwise' : 'ph-plugs'}"></i>
-            ${connected ? 'Обновить данные' : 'Как подключить'}
-          </button>
-        </div>
+        <div style="margin-top:20px; display:flex; gap:8px;">${action}</div>
       </div>
     </div>`;
   }).join('');
 
   updateUploadStatuses();
+}
+
+// ============================================================
+// «ДОСТУПНО»: каталог провайдеров из /api/providers (providers.json).
+// Карточка: label + статус-бейдж; клик -> модал с шагами создания
+// API-ключа, ссылкой на dev-портал и env-паттерном.
+// ============================================================
+
+const PROVIDERS = { state: 'idle', list: [], env_pattern: '' };
+
+const PROV_CAT_META = {
+  tracker: { label: 'Трекеры', icon: 'ph-pulse' },
+  cgm: { label: 'Глюкоза (CGM)', icon: 'ph-drop' },
+  scale: { label: 'Умные весы', icon: 'ph-scales' },
+  bp: { label: 'Давление', icon: 'ph-heartbeat' },
+  sleep: { label: 'Сон', icon: 'ph-moon' },
+  air: { label: 'Воздух и среда', icon: 'ph-wind' },
+  hub: { label: 'Хабы данных', icon: 'ph-squares-four' },
+  todo: { label: 'Задачи и контекст', icon: 'ph-check-square-offset' }
+};
+
+const PROV_STATUS_META = {
+  supported: { label: 'есть коннектор' },
+  planned: { label: 'в планах' },
+  export_only: { label: 'только экспорт' }
+};
+
+function loadProviders() {
+  const box = document.getElementById('syncAvailable');
+  if (!box) return;
+  if (PROVIDERS.state === 'ready') { renderProvidersCatalog(); return; }
+  box.innerHTML = settingsSkeletonHTML();
+
+  fetchWithTimeout('/api/providers', 4500)
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(j => {
+      if (!j || !Array.isArray(j.providers) || !j.providers.length) throw new Error('пустой каталог');
+      PROVIDERS.list = j.providers;
+      PROVIDERS.env_pattern = j.env_pattern || '';
+      PROVIDERS.state = 'ready';
+      renderProvidersCatalog();
+    })
+    .catch(() => {
+      PROVIDERS.state = 'idle'; // повторная попытка при следующем входе
+      box.innerHTML = `
+        <p class="cand-hint" style="margin:0 0 12px;">
+          <i class="ph-light ph-plugs"></i>
+          <span>Bridge офлайн — каталог интеграций (28 устройств и сервисов) появится после запуска OpenHealth.command.</span>
+        </p>
+        <button class="btn-secondary" onclick="loadProviders()"><i class="ph-light ph-arrow-clockwise"></i> Проверить снова</button>`;
+    });
+}
+
+function renderProvidersCatalog() {
+  const box = document.getElementById('syncAvailable');
+  if (!box || PROVIDERS.state !== 'ready') return;
+  const conns = DATA.connections || {};
+  const order = ['tracker', 'cgm', 'scale', 'bp', 'sleep', 'air', 'hub', 'todo'];
+  const cats = order.filter(c => PROVIDERS.list.some(p => p.category === c))
+    .concat([...new Set(PROVIDERS.list.map(p => p.category))].filter(c => !order.includes(c)));
+
+  box.innerHTML = cats.map(cat => {
+    const meta = PROV_CAT_META[cat] || { label: cat, icon: 'ph-plug' };
+    const cards = PROVIDERS.list.filter(p => p.category === cat).map(p => {
+      const st = PROV_STATUS_META[p.status] || { label: p.status };
+      const already = conns[p.id] && conns[p.id].connected;
+      return `
+        <button type="button" class="prov-card" onclick="showProviderGuide('${escapeHtml(p.id)}')">
+          <span class="nm"><i class="ph-light ${meta.icon}"></i>${escapeHtml(p.label)}</span>
+          <span class="meta">
+            <span class="prov-badge ${escapeHtml(p.status)}"><span class="d"></span>${st.label}</span>
+            ${already ? '<span class="prov-badge supported"><span class="d"></span>подключено</span>' : ''}
+            ${p.auth ? `<span class="auth-tag">${escapeHtml(p.auth)}</span>` : ''}
+          </span>
+        </button>`;
+    }).join('');
+    return `
+      <div class="prov-cat-head"><i class="ph-light ${meta.icon}"></i>${meta.label}</div>
+      <div class="prov-grid">${cards}</div>`;
+  }).join('') + `
+    <p class="cand-hint" style="margin-top:18px;">
+      <i class="ph-light ph-info"></i>
+      <span>Всего в каталоге: ${PROVIDERS.list.length}. Статусы честные: «есть коннектор» — работает уже сейчас, «в планах» — официальный API есть, коннектор ещё не написан, «только экспорт» — открытого API нет, путь через файл-экспорт.</span>
+    </p>`;
+}
+
+function showProviderGuide(id) {
+  const p = PROVIDERS.list.find(x => x.id === id);
+  if (!p) return;
+  const st = PROV_STATUS_META[p.status] || { label: p.status };
+
+  const steps = (Array.isArray(p.key_steps) ? p.key_steps : []).map(s => ({ text: escapeHtml(s) }));
+  const stepsBlock = steps.length ? stepsHTML(steps)
+    : '<p class="step-text muted">Шагов подключения для этого источника пока нет — смотри документацию по ссылке ниже.</p>';
+
+  const links = [
+    p.dev_portal_url ? `<a class="step-link" href="${escapeHtml(p.dev_portal_url)}" target="_blank" rel="noopener">Кабинет разработчика <i class="ph-light ph-arrow-up-right"></i></a>` : '',
+    p.docs_url ? `<a class="step-link" href="${escapeHtml(p.docs_url)}" target="_blank" rel="noopener">Документация API <i class="ph-light ph-arrow-up-right"></i></a>` : ''
+  ].filter(Boolean).join('<br>');
+
+  const envBlock = Array.isArray(p.env_vars) && p.env_vars.length
+    ? `<div class="form-group" style="margin:16px 0 0;">
+         <label>Переменные окружения (паттерн ${escapeHtml(PROVIDERS.env_pattern || 'OPENHEALTH_*')})</label>
+         ${cmdHTML('export ' + p.env_vars.map(v => v + '=…').join(' '))}
+       </div>`
+    : '';
+
+  const connectorNote = p.connector
+    ? `<p class="cmd-hint">Коннектор в репозитории: <span class="mono">${escapeHtml(p.connector)}</span>${p.rate_limit_note ? ' · ' + escapeHtml(p.rate_limit_note) : ''}</p>`
+    : (p.rate_limit_note ? `<p class="cmd-hint">${escapeHtml(p.rate_limit_note)}</p>` : '');
+
+  openModal(p.label, `статус: ${st.label}` + (p.auth ? ` · auth: ${p.auth}` : ''),
+    stepsBlock + (links ? `<div style="margin-top:14px;">${links}</div>` : '') + envBlock + connectorNote +
+    '<p class="cmd-hint" style="margin-top:14px;">Ключи и токены хранятся только локально (env / ~/.openhealth) и не попадают в репозиторий.</p>');
+}
+
+// Вход в зону «Источники данных»: подключённые + живой каталог.
+function renderSyncScreen() {
+  updateSyncScreen();
+  loadProviders();
 }
 
 function updateUploadStatuses() {
@@ -6139,10 +7289,11 @@ const titles = {
   'whoop-correlations': "Корреляции",
   journal: "Журнал",
   trends: "Тренды",
-  sync: "Синхронизация",
+  sync: "Источники данных",
   timeline: "Timeline",
   body: "Состав тела",
   workouts: "Тренировки",
+  dna: "ДНК",
   protocols: "Protocols",
   research: "Research",
   reports: "Отчёты",
@@ -6499,6 +7650,7 @@ const NAV_HIDEABLE = [
   { z: 'timeline', label: 'Timeline', icon: 'ph-footprints' },
   { z: 'body', label: 'Состав тела', icon: 'ph-chart-pie' },
   { z: 'workouts', label: 'Тренировки', icon: 'ph-barbell' },
+  { z: 'dna', label: 'ДНК', icon: 'ph-dna' },
   { z: 'protocols', label: 'Protocols', icon: 'ph-book-open' },
   { z: 'research', label: 'Research', icon: 'ph-microscope' },
   { z: 'reports', label: 'Отчёты', icon: 'ph-file-text' },
@@ -6632,6 +7784,10 @@ function go(z) {
         renderDiagnostics();
       } else if (z === 'settings') {
         renderSettingsScreen();
+      } else if (z === 'sync') {
+        renderSyncScreen();
+      } else if (z === 'dna') {
+        renderDnaScreen();
       }
     }
   });
@@ -6769,6 +7925,7 @@ window.addEventListener('DOMContentLoaded', () => {
   bindProfileInputs();
   applyTodayLayout();
   bindTodayDrag();
+  updateSurveyReminder();
   // Render immediately with whatever DATA we have, then re-render if real
   // local data loads (keeps demo instant and avoids a blank first paint).
   loadRealData().then(loaded => { if (loaded) renderDashboard(); });
@@ -6899,15 +8056,15 @@ function parseDataDate() {
 const dateKeyOf = d =>
   d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 
-// id привычки -> {label, icon}: каталог + активный список + сохранённый список.
+// id привычки -> {label, icon, unit}: каталог + активный список + сохранённый список.
 function behaviorLabelMap() {
   const map = {};
-  (DATA.allBehaviors || []).forEach(b => { map[b.id] = { label: b.label, icon: b.icon }; });
-  (DATA.habits || []).forEach(h => { if (!map[h.id]) map[h.id] = { label: h.label, icon: h.icon }; });
+  (DATA.allBehaviors || []).forEach(b => { map[b.id] = { label: b.label, icon: b.icon, unit: '' }; });
+  (DATA.habits || []).forEach(h => { if (!map[h.id]) map[h.id] = { label: h.label, icon: h.icon, unit: h.unit || '' }; });
   try {
     const saved = JSON.parse(localStorage.getItem(HABITS_LIST_KEY) || 'null');
     if (Array.isArray(saved)) saved.forEach(h => {
-      if (h && h.id && !map[h.id]) map[h.id] = { label: h.label || h.id, icon: h.icon || 'ph-check' };
+      if (h && h.id && !map[h.id]) map[h.id] = { label: h.label || h.id, icon: h.icon || 'ph-check', unit: h.unit || '' };
     });
   } catch (e) { /* ignore */ }
   return map;
@@ -6920,9 +8077,18 @@ function tlDayEventsHTML(key, labels) {
   try {
     const done = JSON.parse(localStorage.getItem('openhealth.habits.' + key) || 'null');
     if (done && typeof done === 'object') {
-      Object.keys(done).filter(id => done[id]).forEach(id => {
+      // Эмодзи-точка дня: значение «Настроение / энергия» (шкала 1-5), если есть.
+      const moodV = done[MOOD_HABIT_ID];
+      if (typeof moodV === 'number' && moodV >= 1 && moodV <= 5) {
+        parts.push(`<span class="tl-chip" title="Настроение / энергия: ${moodV}/5">${MOOD_EMOJI[Math.round(moodV) - 1]}<span class="mono muted" style="font-size:10px;">${moodV}/5</span></span>`);
+        count++;
+      }
+      Object.keys(done).filter(id => done[id] && id !== MOOD_HABIT_ID).forEach(id => {
         const meta = labels[id] || { label: id, icon: 'ph-check' };
-        parts.push(`<span class="tl-chip"><i class="ph-light ${safeIcon(meta.icon)}"></i>${escapeHtml(meta.label)}</span>`);
+        const v = done[id];
+        const valTxt = (typeof v === 'number')
+          ? ` <span class="mono muted" style="font-size:10px;">${v}${meta.unit ? ' ' + escapeHtml(meta.unit) : ''}</span>` : '';
+        parts.push(`<span class="tl-chip"><i class="ph-light ${safeIcon(meta.icon)}"></i>${escapeHtml(meta.label)}${valTxt}</span>`);
         count++;
       });
     }
@@ -7343,8 +8509,206 @@ function renderSettingsScreen() {
   renderThemeCards();
   renderFxToggles();
   refreshDataInfoRow();
+  renderSurveyStatus();
   loadAgentConfigUI();
   loadAgentMemoryUI();
+}
+
+// ============================================================
+// ДНК: раздел в «Данные». Контент честный — без популяционных
+// интерпретаций; разбор только через локального агента.
+// ============================================================
+
+function renderDnaScreen() {
+  const box = document.getElementById('dnaContent');
+  if (!box) return;
+  const c = (DATA.connections || {}).dna;
+
+  if (c && c.connected) {
+    const name = (c.label || 'Atlas').replace(/\s*\/\s*ДНК\s*$/i, '');
+    box.innerHTML = `
+      <div class="card-outer col-12">
+        <div class="card-inner">
+          <div class="card-header">
+            <div class="card-title-group">
+              <h3>${escapeHtml(name)} · генотип подключён</h3>
+              <div class="sub">raw-файл импортирован локально${c.lastSync ? ' · ' + escapeHtml(c.lastSync) : ''}</div>
+            </div>
+            <i class="ph-duotone ph-dna card-header-icon" style="color: var(--ok);"></i>
+          </div>
+
+          <div class="settings-info-row" style="margin-bottom:14px;">
+            <i class="ph-light ph-shield-check" style="color: var(--ok);"></i>
+            <span>Файл генотипа лежит локально и не покидает устройство. Дашборд намеренно не показывает «расшифровку по SNP».</span>
+          </div>
+
+          <p class="step-text" style="margin:0 0 6px;">Разбор генетических данных — только через агента с твоим файлом и твоим контекстом: популяционные интерпретации без контекста вредны — один и тот же вариант значит разное в зависимости от образа жизни, среды и остального генома.</p>
+          <p class="cmd-hint">Агент сформулирует приоритеты для образа жизни как гипотезы C1-C2, не как диагнозы.</p>
+
+          <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+            <button class="btn-primary agent-btn" id="dnaAgentBtn" onclick="runDnaAgent()">
+              <i class="ph-light ph-sparkle"></i> Разобрать с агентом
+            </button>
+          </div>
+          <div class="agent-box" id="dnaAgentBox" style="margin-top:12px; display:none;"></div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="card-outer col-12">
+      <div class="card-inner" style="min-height: 420px;">
+        <div class="empty-state">
+          <div class="empty-icon-ring"><i class="ph-light ph-dna"></i></div>
+          <h4>ДНК</h4>
+          <p class="what">Генотип как контекст для образа жизни: разбор через локального агента, без облака.</p>
+          <p class="need">Импортируй raw-файл (MyGenetics, 23andMe, Atlas) в «Источниках данных» — блок «Загрузки» → «ДНК · raw-данные».</p>
+          <button class="btn-primary" onclick="go('sync')">
+            <i class="ph-light ph-plugs"></i> К источникам данных
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function runDnaAgent() {
+  runAgentTask({
+    boxId: 'dnaAgentBox', btnId: 'dnaAgentBtn', task: 'research',
+    param: 'мой генотип: приоритеты для образа жизни', retryCall: 'runDnaAgent()'
+  });
+}
+
+// ============================================================
+// ОПРОСНИК САМОЧУВСТВИЯ: 5 вопросов (шкала 1-5), модал-стэппер,
+// результат в localStorage openhealth.survey.YYYY-MM-DD.
+// Раз в неделю — бейдж-напоминание в nav у «Настроек».
+// ============================================================
+
+const SURVEY_PREFIX = 'openhealth.survey.';
+const SURVEY_QUESTIONS = [
+  { id: 'energy', q: 'Энергия', hint: 'Сколько сегодня было сил?', low: 'совсем нет', high: 'полон сил' },
+  { id: 'stress', q: 'Стресс', hint: 'Уровень напряжения за день', low: 'спокойно', high: 'на пределе' },
+  { id: 'sleep_quality', q: 'Качество сна', hint: 'Как спалось прошлой ночью?', low: 'плохо', high: 'отлично' },
+  { id: 'pain', q: 'Боль', hint: 'Физический дискомфорт сегодня', low: 'нет боли', high: 'сильная' },
+  { id: 'mood', q: 'Настроение', hint: 'Общий эмоциональный фон дня', low: 'тяжёлое', high: 'отличное' }
+];
+const SURVEY_LABELS = { energy: 'энергия', stress: 'стресс', sleep_quality: 'сон', pain: 'боль', mood: 'настроение' };
+let SURVEY_STATE = null;
+
+function lastSurveyKey() {
+  let best = null;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(SURVEY_PREFIX) && (!best || k > best)) best = k;
+    }
+  } catch (e) { /* ignore */ }
+  return best;
+}
+
+function daysSinceLastSurvey() {
+  const k = lastSurveyKey();
+  if (!k) return null;
+  const t = Date.parse(k.slice(SURVEY_PREFIX.length) + 'T00:00:00');
+  if (isNaN(t)) return null;
+  return (Date.now() - t) / 864e5;
+}
+
+function updateSurveyReminder() {
+  const dot = document.getElementById('surveyRemindDot');
+  if (!dot) return;
+  const days = daysSinceLastSurvey();
+  dot.style.display = (days == null || days > 7) ? '' : 'none';
+}
+
+function renderSurveyStatus() {
+  const box = document.getElementById('surveyStatusBox');
+  if (!box) return;
+  const k = lastSurveyKey();
+  if (!k) {
+    box.innerHTML = `<p class="cand-hint" style="margin:0;"><i class="ph-light ph-clipboard-text"></i><span>Опросник ещё не проходился — первый займёт меньше минуты.</span></p>`;
+    return;
+  }
+  let res = null;
+  try { res = JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { /* ignore */ }
+  const days = daysSinceLastSurvey();
+  const overdue = days != null && days > 7;
+  const chips = res ? SURVEY_QUESTIONS.map(q =>
+    res[q.id] ? `<span class="cal-gap-chip" style="color: var(--ink); background: var(--card-outer); border-color: var(--line);">${SURVEY_LABELS[q.id]} <b class="mono">${res[q.id]}</b></span>` : ''
+  ).join('') : '';
+  box.innerHTML = `
+    <p class="step-text" style="margin:0 0 10px;">Последний раз: <b>${escapeHtml(k.slice(SURVEY_PREFIX.length))}</b>${overdue ? ' · <span style="color: var(--warn);">прошло больше недели — пора обновить</span>' : ''}</p>
+    ${chips ? `<div class="cal-gap-chips" style="margin:0;">${chips}</div>` : ''}`;
+}
+
+function startSurvey() {
+  SURVEY_STATE = { idx: 0, answers: {} };
+  openModal('Мини-опросник самочувствия', '5 вопросов · шкала 1-5 · ответы остаются локально', '<div id="surveyBody"></div>');
+  renderSurveyStep();
+}
+
+function renderSurveyStep() {
+  const body = document.getElementById('surveyBody');
+  if (!body || !SURVEY_STATE) return;
+  const i = SURVEY_STATE.idx;
+  const q = SURVEY_QUESTIONS[i];
+  const bars = SURVEY_QUESTIONS.map((x, j) => `<span class="${j < i ? 'done' : ''}"></span>`).join('');
+  body.innerHTML = `
+    <div class="survey-progress">${bars}</div>
+    <p class="survey-q">${i + 1} / ${SURVEY_QUESTIONS.length} · ${escapeHtml(q.q)}</p>
+    <p class="survey-hint">${escapeHtml(q.hint)}</p>
+    <div class="survey-scale">
+      ${[1, 2, 3, 4, 5].map(n => `
+        <button type="button" onclick="answerSurvey(${n})" aria-label="${escapeHtml(q.q)}: ${n} из 5">
+          <span class="n">${n}</span>
+        </button>`).join('')}
+    </div>
+    <div class="survey-ends"><span>1 — ${escapeHtml(q.low)}</span><span>5 — ${escapeHtml(q.high)}</span></div>`;
+  gsap.fromTo(body, { opacity: 0, x: 10 }, { opacity: 1, x: 0, duration: 0.25, ease: 'power2.out', clearProps: 'opacity,transform' });
+}
+
+function answerSurvey(v) {
+  if (!SURVEY_STATE) return;
+  const q = SURVEY_QUESTIONS[SURVEY_STATE.idx];
+  SURVEY_STATE.answers[q.id] = v;
+  SURVEY_STATE.idx++;
+  if (SURVEY_STATE.idx < SURVEY_QUESTIONS.length) { renderSurveyStep(); return; }
+
+  // Финал: сохранить и показать сводку.
+  const payload = { ...SURVEY_STATE.answers, ts: new Date().toISOString() };
+  try { localStorage.setItem(SURVEY_PREFIX + todayKey(), JSON.stringify(payload)); } catch (e) { /* private mode */ }
+  SURVEY_STATE = null;
+  updateSurveyReminder();
+  renderSurveyStatus();
+
+  const body = document.getElementById('surveyBody');
+  if (body) {
+    body.innerHTML = `
+      <div class="survey-progress">${SURVEY_QUESTIONS.map(() => '<span class="done"></span>').join('')}</div>
+      <p class="survey-q">Готово</p>
+      <p class="survey-hint">Ответы сохранены локально (${todayKey()}). Следующее напоминание — через неделю, бейдж у «Настроек».</p>
+      <div class="cal-gap-chips" style="margin:0;">
+        ${SURVEY_QUESTIONS.map(q => `<span class="cal-gap-chip" style="color: var(--ink); background: var(--card-outer); border-color: var(--line);">${SURVEY_LABELS[q.id]} <b class="mono">${payload[q.id]}</b></span>`).join('')}
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-top:18px;">
+        <button class="btn-primary" onclick="closeModal()"><i class="ph-light ph-check"></i> Закрыть</button>
+      </div>`;
+  }
+  showToast('Опросник сохранён · ' + todayKey());
+}
+
+// ============================================================
+// ПУЛЬС В САЙДБАРЕ: клик = на «Сегодня» + сразу разбор дня агентом.
+// ============================================================
+
+function onPulseHomeClick() {
+  go('today');
+  if (BRIDGE.ok) {
+    generateInsight();
+  } else {
+    showToast('bridge офлайн — запусти OpenHealth.command, чтобы спросить Пульса', false);
+  }
 }
 
 // ============================================================
@@ -7551,6 +8915,14 @@ let fxFiredThisSession = false;
 
 function confettiBurst(anchorEl, count) {
   if (!anchorEl) return;
+  // Пульс радуется вместе: короткий подскок маскота (y -6, bounce на возврате).
+  const pulseHome = document.getElementById('pulseHome');
+  if (pulseHome) {
+    gsap.fromTo(pulseHome, { y: 0 }, {
+      y: -6, duration: 0.22, ease: 'power2.out', repeat: 1, yoyo: true, yoyoEase: 'bounce.out',
+      onComplete: () => gsap.set(pulseHome, { clearProps: 'transform' })
+    });
+  }
   const rect = anchorEl.getBoundingClientRect();
   const colors = ['#10b981', '#34d399', '#eab308', '#7cc8ff'];
   for (let i = 0; i < Math.min(count || 14, 20); i++) {

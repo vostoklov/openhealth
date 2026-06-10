@@ -4800,10 +4800,6 @@
 
       <!-- SCREEN 3: BIOMARKERS -->
       <section class="zone" id="z-biomarkers">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-          <span class="muted" style="font-size:12px;">Управление данными</span>
-          <button class="btn-secondary" id="toggleBiomarkerData">Симулировать пустые анализы</button>
-        </div>
 
         <div class="bento-grid" id="biomarkersContent">
           <!-- Table Panel -->
@@ -4846,8 +4842,8 @@
               <div class="empty-icon"><i class="ph-light ph-file-arrow-up"></i></div>
               <h4>Анализы не загружены</h4>
               <p class="muted">Загрузите PDF-файл результатов из клиник или подключите интеграцию Helix для отображения клинических оптимумов.</p>
-              <button class="btn-primary" onclick="simulateBiomarkerUpload()">
-                <i class="ph-light ph-upload-simple"></i> Загрузить PDF / Подключить анализы
+              <button class="btn-primary" onclick="go('sync')">
+                <i class="ph-light ph-upload-simple"></i> Импорт анализов → Источники
               </button>
             </div>
           </div>
@@ -6417,9 +6413,16 @@ function habitItemHTML(h) {
       </div>
       <div class="habit-details">
         <span class="habit-label">${escapeHtml(h.label)}</span>
-        ${h.delta ? `<span class="habit-impact ${h.delta > 0 ? 'up' : 'down'}">
-          ${h.delta > 0 ? '+' : ''}${h.delta}% recovery
-        </span>` : ''}
+        ${(function () {
+          // Дель​та recovery — только из РЕАЛЬНО посчитанной корреляции движка.
+          // В реальном режиме без корреляции бейдж не показываем (не выдумываем число).
+          if (REAL_DATA_META.loaded) {
+            const c = (DATA.correlations || []).find(x => x.id === h.id || x.label === h.label);
+            return (c && typeof c.delta === 'number')
+              ? `<span class="habit-impact ${c.delta > 0 ? 'up' : 'down'}">${c.delta > 0 ? '+' : ''}${c.delta}% recovery</span>` : '';
+          }
+          return h.delta ? `<span class="habit-impact ${h.delta > 0 ? 'up' : 'down'}">${h.delta > 0 ? '+' : ''}${h.delta}% recovery</span>` : '';
+        })()}
       </div>
       <div class="habit-icon">
         <i class="ph-light ${safeIcon(h.icon)}"></i>
@@ -7483,8 +7486,8 @@ function toggleBiomarkerDetail(idx) {
         <p class="bio-discuss">${b.discuss}</p>
 
         <div style="margin-top: 16px; display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn-secondary" onclick="alert('Добавлено в вопросы для врача')">
-            <i class="ph-light ph-clipboard-text"></i> Зафиксировать для врача
+          <button class="btn-secondary" onclick="pinMarkerForDoctor(${idx})">
+            <i class="ph-light ph-clipboard-text"></i> Скопировать для врача
           </button>
           <button class="btn-secondary agent-btn" id="bioAgentBtn" onclick="runBioResearch(${idx})">
             <i class="ph-light ph-microscope"></i> Дип-ресёрч агентом
@@ -7563,6 +7566,22 @@ function bioPeriodsHTML(b) {
       <thead><tr><th>Период</th><th>Среднее</th><th>Δ к прошлому окну</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+// Скопировать сводку маркера в буфер — для вопроса врачу (реально, а не alert-заглушка).
+function pinMarkerForDoctor(idx) {
+  const b = (DATA.biomarkers || [])[idx];
+  if (!b) { showToast('Маркер не найден', false); return; }
+  const ref = (b.refMin != null && b.refMax != null) ? `, реф ${b.refMin}–${b.refMax}` : '';
+  const txt = `${b.name}: ${b.value}${b.unit ? ' ' + b.unit : ''}${ref}, статус: ${b.status || '—'}${b.grade ? ', доверие ' + b.grade : ''}. Дата данных: ${DATA.date || '—'}.`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(
+      () => showToast('Скопировано для врача: ' + b.name, true),
+      () => showToast('Не удалось скопировать (нет доступа к буферу)', false)
+    );
+  } else {
+    showToast('Буфер недоступен в этом браузере', false);
+  }
 }
 
 function simulateBiomarkerUpload() {
@@ -9948,13 +9967,26 @@ function scheduleJournalSync(key) {
 }
 
 function pushJournalDay(key) {
+  const collected = collectDayPayload(key);
+  // Мёрж с днём на диске: серверные поля (meds_taken и любые, что фронт не собирает)
+  // сохраняются, а собранные браузером (habits/mood/survey/notes) — перекрывают.
+  // Иначе слепой POST стирал бы meds_taken при следующем синке привычек (баг данных).
+  const send = (existing) => {
+    const merged = (existing && typeof existing === 'object') ? { ...existing, ...collected } : collected;
+    try {
+      fetch('/api/journal/day', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: key, payload: merged })
+      }).catch(() => { /* bridge офлайн — localStorage уже всё хранит */ });
+    } catch (e) { /* file:// без fetch — тоже молчим */ }
+  };
   try {
-    fetch('/api/journal/day', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: key, payload: collectDayPayload(key) })
-    }).catch(() => { /* bridge офлайн — localStorage уже всё хранит */ });
-  } catch (e) { /* file:// без fetch — тоже молчим */ }
+    fetch('/api/journal/day?date=' + key, { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => send(j && j.payload))
+      .catch(() => send(null));
+  } catch (e) { send(null); }
 }
 
 // При входе в день подтягиваем зеркало с диска. Диск выигрывает только там,
@@ -10587,13 +10619,7 @@ try {
   if (savedTheme) applyTheme(savedTheme, false);
 } catch (e) { /* ignore */ }
 
-document.getElementById('toggleBiomarkerData').addEventListener('click', () => {
-  DATA.biomarkersConnected = !DATA.biomarkersConnected;
-  updateBiomarkersScreen();
-  
-  const btn = document.getElementById('toggleBiomarkerData');
-  btn.textContent = DATA.biomarkersConnected ? "Симулировать пустые анализы" : "Восстановить анализы";
-});
+// (демо-тоггл «Симулировать пустые анализы» удалён — состояние теперь только по реальным данным)
 
 // --- Real-data bridge ---------------------------------------------------
 // Try to load locally-generated real data (data.local.json, git-ignored).

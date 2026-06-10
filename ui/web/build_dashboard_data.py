@@ -26,9 +26,8 @@ import json
 import os
 import sqlite3
 from collections import defaultdict
-from datetime import datetime
+from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
-from statistics import mean
 
 # Recovery zone thresholds match the dashboard's col()/word() helpers.
 GREEN, YELLOW = 67, 34
@@ -168,12 +167,20 @@ def build_biomarkers(con: sqlite3.Connection) -> list[dict]:
 
     # Curated phylum-level view with rough healthy-adult reference bands (%).
     spec = [
-        ("Firmicutes", "%", 20, 80, 40, 65, "Доминирующий тип бактерий. В пределах нормы для здорового кишечника. Историчный снимок Atlas (май 2020)."),
-        ("Bacteroidetes", "%", 10, 60, 20, 45, "Второй по доле тип. Соотношение Firmicutes/Bacteroidetes в норме. Снимок 2020 года, текущее состояние может отличаться."),
-        ("Proteobacteria", "%", 0, 10, 0, 5, "Низкая доля — хороший признак (высокая Proteobacteria связана с дисбиозом). Историчный снимок."),
-        ("Actinobacteria", "%", 0, 10, 1, 5, "Включает Bifidobacterium. Доля в нижней части нормы. Снимок 2020 года."),
-        ("Faecalibacterium", "%", 2, 15, 5, 12, "Ключевой производитель бутирата (противовоспалительный). В норме. Историчный снимок Atlas."),
-        ("Akkermansia", "%", 0, 5, 1, 4, "Связана со здоровьем слизистой и метаболизмом. Присутствует — хороший признак. Снимок 2020 года."),
+        ("Firmicutes", "%", 20, 80, 40, 65,
+         "Доминирующий тип бактерий здорового кишечника. "
+         "Исторический снимок микробиоты — давность отражена в уровне доверия."),
+        ("Bacteroidetes", "%", 10, 60, 20, 45,
+         "Второй по доле тип; важно соотношение Firmicutes/Bacteroidetes. "
+         "Текущее состояние может отличаться от снимка."),
+        ("Proteobacteria", "%", 0, 10, 0, 5,
+         "Низкая доля — хороший признак (высокая связана с дисбиозом)."),
+        ("Actinobacteria", "%", 0, 10, 1, 5,
+         "Включает Bifidobacterium; типично нижняя часть нормы."),
+        ("Faecalibacterium", "%", 2, 15, 5, 12,
+         "Ключевой производитель бутирата (противовоспалительный)."),
+        ("Akkermansia", "%", 0, 5, 1, 4,
+         "Связана со здоровьем слизистой и метаболизмом; присутствие — хороший признак."),
     ]
     grades = {"Firmicutes": "C2", "Bacteroidetes": "C2", "Proteobacteria": "C2",
               "Actinobacteria": "C2", "Faecalibacterium": "C2", "Akkermansia": "C2"}
@@ -278,6 +285,346 @@ def _human_date(iso: str | None) -> str:
     return f"{weekdays[dt.weekday()]}, {dt.day} {months[dt.month - 1]} {dt.year}"
 
 
+def _daily_from_whoop(by_date: dict) -> dict:
+    """Reshape the WHOOP by-date map into the {date: {metric}} contract the
+    insights detectors expect (recovery / hrv / rhr / strain / sleep_h).
+
+    Sleep hours are not in this export, so sleep_h is approximated from
+    sleep_performance_percentage against an 8h need (the same approximation the
+    recovery block uses) and is therefore low-confidence for sleep detectors.
+    """
+    daily: dict = {}
+    for d, m in by_date.items():
+        row: dict = {}
+        if m.get("recovery_score") is not None:
+            row["recovery"] = m["recovery_score"]
+        hrv = m.get("hrv_rmssd_milli")
+        if hrv is None:
+            hrv = m.get("hrv_rmssd")
+        if hrv is not None:
+            row["hrv"] = hrv
+        if m.get("resting_heart_rate") is not None:
+            row["rhr"] = m["resting_heart_rate"]
+        if m.get("strain") is not None:
+            row["strain"] = m["strain"]
+        perf = m.get("sleep_performance_percentage")
+        if perf is not None:
+            row["sleep_h"] = round(8.0 * perf / 100.0, 1)
+        if row:
+            daily[d] = row
+    return daily
+
+
+def build_insights_block(con: sqlite3.Connection) -> dict:
+    """Compute insights + n-of-1 protocols from the engine, if importable.
+
+    Wrapped in try/except so the bridge still runs for users who only have the
+    dashboard checked out without the openhealth package on the path.
+    """
+    try:
+        import sys
+        # When run as a script, sys.path[0] is ui/web, not the repo root where
+        # the openhealth package lives; add the repo root so the import works.
+        repo_root = str(Path(__file__).resolve().parents[2])
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
+        from openhealth import insights as _insights
+        from openhealth import protocols as _protocols
+    except Exception:
+        return {"insights": [], "protocols": []}
+
+    daily = _daily_from_whoop(_load_whoop_by_date(con))
+    try:
+        found = _insights.detect_insights(daily, {"sleep_h": 8.0})
+        protos = _protocols.build_protocols(found, correlations=[])
+        return {
+            "insights": _insights.insights_to_dicts(found),
+            "protocols": _protocols.protocols_to_dicts(protos),
+        }
+    except Exception:
+        return {"insights": [], "protocols": []}
+
+
+def build_calendar_block() -> dict:
+    """Today's "day pulse" from the ICS subscription, if one is configured.
+
+    Wrapped in try/except: without ~/.openhealth/calendar.json (or with the
+    network down) the dashboard build works exactly as before — no calendar key.
+    The ICS URL is a secret and is never printed or written to the payload.
+    """
+    try:
+        import sys
+        repo_root = str(Path(__file__).resolve().parents[2])
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
+        from openhealth.connectors import ics_calendar
+
+        config = ics_calendar.load_calendar_config()
+        if not config or not config.get("enabled"):
+            return {}
+        parsed = ics_calendar.parse_ics(ics_calendar.fetch_ics(config["ics_url"]))
+        today = datetime.now().date().isoformat()
+        block = ics_calendar.day_load(parsed["events"], today)
+        block["warnings"] = parsed.get("warnings", [])[:5]
+        block["source"] = "ics"
+        return block
+    except Exception:
+        return {}
+
+
+def _tz_from_offset(offset: str | None):
+    """timezone from a WHOOP '+01:00'-style offset string; UTC fallback."""
+    try:
+        sign = 1 if offset.startswith("+") else -1
+        hours, minutes = offset.lstrip("+-").split(":")
+        return timezone(sign * timedelta(hours=int(hours), minutes=int(minutes)))
+    except Exception:
+        return timezone.utc
+
+
+def build_circadian_block(con: sqlite3.Connection) -> dict:
+    """Rise-style circadian energy schedule from the real sleep anchor.
+
+    Anchor = weighted habitual wake/bed time over the most recent (<=14 days)
+    non-nap WHOOP nights in the index; accumulated sleep debt (sleep_debt@v2)
+    deepens the afternoon dip and trims the peaks. Two-process model is
+    established science (C3-C4); the personal placement is C2. Returns {}
+    gracefully when the engine is not importable or there is no sleep data.
+    """
+    try:
+        import sys
+        repo_root = str(Path(__file__).resolve().parents[2])
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
+        from openhealth import circadian as _circadian
+        from openhealth.modules.recovery import sleep_debt as _sleep_debt
+    except Exception:
+        return {}
+    try:
+        rows = con.execute(
+            "SELECT payload_json FROM records WHERE record_type='TimelineEvent' "
+            "AND json_extract(payload_json,'$.event_kind')='whoop_sleep'"
+        ).fetchall()
+        sessions = []
+        for (payload,) in rows:
+            p = json.loads(payload)
+            md = p.get("metadata") or {}
+            if md.get("nap") or not md.get("start") or not md.get("end"):
+                continue
+            tz = _tz_from_offset(md.get("timezone_offset"))
+            sessions.append({
+                "start": datetime.fromisoformat(md["start"].replace("Z", "+00:00")).astimezone(tz),
+                "end": datetime.fromisoformat(md["end"].replace("Z", "+00:00")).astimezone(tz),
+            })
+        if not sessions:
+            return {}
+        sessions.sort(key=lambda s: s["end"], reverse=True)
+        last_night = sessions[0]["end"].date()
+        kept = []
+        for s in sessions:
+            s["days_ago"] = (last_night - s["end"].date()).days
+            if s["days_ago"] <= 14:
+                kept.append(s)
+        anchor = _circadian.compute_sleep_anchor(kept)
+        nights = [(s["end"] - s["start"]).total_seconds() / 3600.0 for s in reversed(kept)]
+        debt_h = float(_sleep_debt(nights[-1], recent_nights_h=nights).get("accumulated_debt_h") or 0.0)
+        wake_minutes = int(anchor["wake_minutes"]) % (24 * 60)
+        wake_dt = datetime.combine(
+            date.today(), time(wake_minutes // 60, wake_minutes % 60),
+            tzinfo=sessions[0]["end"].tzinfo,
+        )
+        schedule = _circadian.energy_schedule(wake_dt, anchor=anchor, sleep_debt_h=debt_h)
+
+        def _hhmm(iso: str) -> str:
+            return iso[11:16]
+
+        return {
+            "wake_time": _hhmm(schedule["wake_time"]),
+            "bed_time": _hhmm(schedule["bed_time"]),
+            "phases": [
+                {
+                    "phase": p["phase"],
+                    "start": _hhmm(p["start_iso"]),
+                    "end": _hhmm(p["end_iso"]),
+                    "label": p["label_ru"],
+                    "advice": p["advice_ru"],
+                    "confidence": p["confidence"],
+                }
+                for p in schedule["phases"]
+            ],
+            "curve": [
+                {"t": _hhmm(pt["t_iso"]), "e": round(pt["energy"]), "phase": pt["phase"]}
+                for pt in schedule["curve"]
+            ],
+            "points_per_hour": 4,
+            "melatonin_window": {
+                "start": _hhmm(schedule["melatonin_window"]["start_iso"]),
+                "end": _hhmm(schedule["melatonin_window"]["end_iso"]),
+            },
+            "sleep_debt_h": round(debt_h, 1),
+            "debt_note": (
+                f"Накопленный долг сна ~{debt_h:.1f} ч (sleep_debt@v2, окно {len(nights)} ноч.); "
+                f"анкор по ночам до {last_night.isoformat()}."
+            ),
+            "anchor_nights": len(kept),
+            "anchor_last_date": last_night.isoformat(),
+            "model": schedule["model"],
+            "confidence": "C2",
+        }
+    except Exception:
+        return {}
+
+
+def _all_records(con: sqlite3.Connection) -> list[dict]:
+    """Every record payload as a light dict, for the lab/quality blocks.
+
+    Flattens the metadata.score sub-object of WHOOP daily records into top-level
+    metric rows (recovery / hrv / rhr) so the quality checks see one value per
+    metric per date — the same reshape the recovery block uses.
+    """
+    out: list[dict] = []
+    rows = con.execute("SELECT payload_json FROM records").fetchall()
+    for (payload,) in rows:
+        p = json.loads(payload)
+        mn = p.get("metric_name")
+        if mn is None:
+            continue
+        out.append({
+            "name": mn,
+            "metric_name": mn,
+            "value": p.get("value"),
+            "unit": p.get("unit"),
+            "date": p.get("date") or p.get("start_date"),
+        })
+        # Mirror rhr / hrv carried inside a recovery score sub-object.
+        score = (p.get("metadata") or {}).get("score") or {}
+        d = p.get("date") or p.get("start_date")
+        for sk, alias in (("resting_heart_rate", "rhr"), ("hrv_rmssd_milli", "hrv")):
+            if score.get(sk) is not None:
+                out.append({"name": alias, "metric_name": alias,
+                            "value": score[sk], "unit": None, "date": d})
+    return out
+
+
+def build_lab_block(con: sqlite3.Connection) -> dict:
+    """Blood-panel analysis from real records, via the openhealth lab engine.
+
+    Emits panels (lipids/glycemia/iron/thyroid/inflammation/vitamins/kidney),
+    derived indices, per-marker history for markers that have data, and re-test
+    cadence hints. Wrapped in try/except so the bridge still runs without the
+    openhealth package importable. Returns {} when no recognised lab markers are
+    present (this dataset is WHOOP + microbiota, not a blood panel).
+    """
+    try:
+        import sys
+        repo_root = str(Path(__file__).resolve().parents[2])
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
+        from openhealth import lab_panel as _lab
+        from openhealth import reference_ranges as _rr
+    except Exception:
+        return {}
+    try:
+        records = _all_records(con)
+        panels = _lab.panel_summary(records)
+        indices = _lab.derived_indices(records)
+        # Only markers that actually have data get a history block.
+        history = []
+        recheck_hints = []
+        today = datetime.now().date().isoformat()
+        for key, spec in _rr.MARKERS.items():
+            hist = _lab.marker_history(records, spec.display_name)
+            if not isinstance(hist["latest"], (int, float)):
+                continue
+            history.append({
+                "marker_key": key,
+                "display_name": spec.display_name,
+                "latest": hist["latest"],
+                "unit": hist["unit"],
+                "trend": hist["trend"],
+                "optimal_status": hist["optimal_status"],
+                "points": hist["points"],
+            })
+            last_date = hist["points"][-1]["date"] if hist["points"] else None
+            recheck_hints.append(_lab.next_checkup_hint(spec.display_name, last_date, today))
+        has_lab = bool(history) or bool(indices)
+        return {
+            "available": has_lab,
+            "panels": panels,
+            "indices": indices,
+            "history": history,
+            "recheckHints": recheck_hints,
+            "note": ("Нет лабораторных маркеров крови в индексе — только WHOOP и "
+                     "микробиота." if not has_lab else None),
+        }
+    except Exception:
+        return {}
+
+
+def build_quality_block(con: sqlite3.Connection) -> dict:
+    """Data-quality report (score + top issues) over all real records.
+
+    Wrapped in try/except: without the openhealth package the bridge still runs.
+    """
+    try:
+        import sys
+        repo_root = str(Path(__file__).resolve().parents[2])
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
+        from openhealth import data_quality as _dq
+    except Exception:
+        return {}
+    try:
+        records = _all_records(con)
+        today = datetime.now().date().isoformat()
+        report = _dq.validate_records(records, today=today)
+        score = _dq.quality_score(report)
+        return {
+            "score": score["score"],
+            "verdict": score["verdict_ru"],
+            "breakdown": score["breakdown"],
+            "checked": report["checked"],
+            "counts": report["counts"],
+            "issues": report["issues"][:10],
+        }
+    except Exception:
+        return {}
+
+
+def build_weather_block() -> dict:
+    """Погода как внешний фактор дня (open-meteo, локация из ~/.openhealth/weather.json).
+
+    Без локации/сети — пустой dict (дашборд валиден без погоды). Кроме сводки —
+    световой день, UV, изменение давления: и в карточку, и в кандидаты корреляций.
+    """
+    try:
+        from openhealth.connectors import weather
+
+        if weather.load_location() is None:
+            return {}
+        from datetime import date, timedelta
+
+        today = date.today().isoformat()
+        day = weather.fetch_day(today)
+        if not day or all(day.get(k) is None for k in ("t_mean", "t_max", "pressure_msl_mean")):
+            # forecast на сегодня ещё пуст ранним утром — берём вчера честно.
+            day = weather.fetch_day((date.today() - timedelta(days=1)).isoformat()) or day
+        flags = weather.weather_context(day)
+        return {
+            "today_summary": weather.day_summary_ru(day),
+            "flags": flags,
+            "pressure_change": day.get("pressure_change_24h"),
+            "daylight_h": day.get("daylight_h"),
+            "sunrise": day.get("sunrise"),
+            "sunset": day.get("sunset"),
+            "uv_index_max": day.get("uv_index_max"),
+            "t_mean": day.get("t_mean"),
+            "label": (weather.load_location() or {}).get("label"),
+        }
+    except Exception:
+        return {}
+
+
 def build_payload(db_path: Path) -> dict:
     con = sqlite3.connect(str(db_path))
     try:
@@ -285,6 +632,10 @@ def build_payload(db_path: Path) -> dict:
         biomarkers = build_biomarkers(con)
         connections = build_connections(con)
         readiness = build_readiness(rec_block.get("recovery"))
+        insights_block = build_insights_block(con)
+        circadian_block = build_circadian_block(con)
+        lab_block = build_lab_block(con)
+        quality_block = build_quality_block(con)
     finally:
         con.close()
 
@@ -294,6 +645,25 @@ def build_payload(db_path: Path) -> dict:
     payload["biomarkers"] = biomarkers
     payload["biomarkersConnected"] = bool(biomarkers)
     payload["connections"] = connections
+    payload["insights"] = insights_block.get("insights", [])
+    payload["protocols"] = insights_block.get("protocols", [])
+    calendar_block = build_calendar_block()
+    if calendar_block:
+        # "Пульс дня": загрузка 0-100, встречи, первая/последняя, окна >= 1ч.
+        payload["calendar"] = calendar_block
+    if circadian_block:
+        # Rise-уровень: фазы энергии дня + волна 24ч + окно мелатонина.
+        payload["circadian"] = circadian_block
+    if lab_block:
+        # Кровь: панели, производные индексы, история маркеров, частота пересдач.
+        payload["lab"] = lab_block
+    if quality_block:
+        # Проверка данных: score 0-100 + топ-10 проблем (дубли/будущее/невозможные/gap).
+        payload["quality"] = quality_block
+    weather_block = build_weather_block()
+    if weather_block:
+        # Внешние факторы: погода/давление/световой день/UV для контекста и корреляций.
+        payload["weather"] = weather_block
     # Correlations require labeled daily behaviors (journal), which this dataset
     # does not yet contain — so we intentionally omit them and let the dashboard
     # keep its demo correlations. Same for habits / allBehaviors.
@@ -332,6 +702,33 @@ def main() -> None:
     print(f"  recovery={rec}  hrv={payload.get('hrv')}  rhr={payload.get('rhr')}  "
           f"sleep={payload.get('sleep')}  strain={payload.get('strain')}")
     print(f"  biomarkers={bm}  trend points(rec)={len(payload.get('trend30Rec', []))}")
+    print(f"  insights={len(payload.get('insights', []))}  protocols={len(payload.get('protocols', []))}")
+    cal = payload.get("calendar")
+    if cal:
+        print(f"  calendar: load={cal.get('day_load_score')}/100  meetings={cal.get('meetings_count')}  "
+              f"first={cal.get('first_event')}  gaps>1h={cal.get('gaps_over_1h')}")
+    else:
+        print("  calendar: not configured (POST /api/calendar or ~/.openhealth/calendar.json)")
+    circ = payload.get("circadian")
+    if circ:
+        mel = circ.get("melatonin_window", {})
+        print(f"  circadian: wake={circ.get('wake_time')}  bed={circ.get('bed_time')}  "
+              f"melatonin={mel.get('start')}-{mel.get('end')}  debt={circ.get('sleep_debt_h')}h  "
+              f"curve={len(circ.get('curve', []))}pts")
+    else:
+        print("  circadian: no sleep sessions in index (skipped)")
+    lab = payload.get("lab")
+    if lab:
+        print(f"  lab: available={lab.get('available')}  history_markers={len(lab.get('history', []))}  "
+              f"indices={len(lab.get('indices', []))}")
+    else:
+        print("  lab: no recognised blood markers in index (skipped)")
+    q = payload.get("quality")
+    if q:
+        print(f"  quality: score={q.get('score')}/100  checked={q.get('checked')}  "
+              f"issues={len(q.get('issues', []))}  counts={q.get('counts')}")
+    else:
+        print("  quality: skipped")
     print("  NOTE: data.local.json is real personal data — keep it local (git-ignored).")
 
 

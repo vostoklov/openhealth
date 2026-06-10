@@ -144,5 +144,154 @@ class LabPanelIngestTests(unittest.TestCase):
         self.assertTrue(any("see-clinician" in a["tags"] for a in alerts))
 
 
+class MarkerHistoryTests(unittest.TestCase):
+    def test_history_sorted_with_delta_and_trend(self):
+        from openhealth import lab_panel
+        recs = [
+            {"name": "LDL cholesterol", "value": 160.0, "unit": "mg/dL", "date": "2023-01-01"},
+            {"name": "LDL cholesterol", "value": 130.0, "unit": "mg/dL", "date": "2024-01-01"},
+            {"name": "LDL cholesterol", "value": 110.0, "unit": "mg/dL", "date": "2024-06-01"},
+        ]
+        hist = lab_panel.marker_history(recs, "LDL")
+        self.assertEqual(hist["marker_key"], "ldl")
+        self.assertEqual([p["value"] for p in hist["points"]], [160.0, 130.0, 110.0])
+        self.assertEqual(hist["latest"], 110.0)
+        self.assertEqual(hist["previous"], 130.0)
+        self.assertEqual(hist["delta"], -20.0)
+        # LDL is lower-is-better: dropping toward the <100 ceiling improves.
+        self.assertEqual(hist["trend"], lab_panel.TREND_IMPROVING)
+
+    def test_history_normalizes_si_units(self):
+        from openhealth import lab_panel
+        # 2.8 mmol/L LDL -> ~108 mg/dL; a later 90 mg/dL is the latest value.
+        recs = [
+            {"name": "LDL", "value": 2.8, "unit": "mmol/L", "date": "2024-01-01"},
+            {"name": "LDL", "value": 90.0, "unit": "mg/dL", "date": "2024-06-01"},
+        ]
+        hist = lab_panel.marker_history(recs, "LDL")
+        self.assertAlmostEqual(hist["points"][0]["value"], 108.3, places=1)
+        self.assertEqual(hist["latest"], 90.0)
+
+    def test_history_worsening_when_moving_away(self):
+        from openhealth import lab_panel
+        recs = [
+            {"name": "HDL cholesterol", "value": 62.0, "unit": "mg/dL", "date": "2024-01-01"},
+            {"name": "HDL cholesterol", "value": 48.0, "unit": "mg/dL", "date": "2024-06-01"},
+        ]
+        hist = lab_panel.marker_history(recs, "HDL")
+        # HDL higher-is-better: falling away from the >=60 floor worsens.
+        self.assertEqual(hist["trend"], lab_panel.TREND_WORSENING)
+
+    def test_history_unknown_marker_kept_raw(self):
+        from openhealth import lab_panel
+        recs = [{"name": "Unobtainium", "value": 5.0, "date": "2024-01-01"}]
+        hist = lab_panel.marker_history(recs, "Unobtainium")
+        self.assertIsNone(hist["marker_key"])
+        self.assertEqual(hist["latest"], 5.0)
+        self.assertEqual(hist["trend"], lab_panel.TREND_UNKNOWN)
+
+
+class PanelSummaryTests(unittest.TestCase):
+    def test_lipid_panel_all_optimal(self):
+        from openhealth import lab_panel
+        recs = [
+            {"name": "LDL", "value": 80.0, "unit": "mg/dL", "date": "2024-06-01"},
+            {"name": "HDL", "value": 65.0, "unit": "mg/dL", "date": "2024-06-01"},
+            {"name": "Triglycerides", "value": 70.0, "unit": "mg/dL", "date": "2024-06-01"},
+            {"name": "Total cholesterol", "value": 170.0, "unit": "mg/dL", "date": "2024-06-01"},
+        ]
+        panels = {p["panel"]: p for p in lab_panel.panel_summary(recs)}
+        self.assertEqual(panels["lipids"]["status"], lab_panel.PANEL_ALL_OPTIMAL)
+
+    def test_lipid_panel_has_off_target(self):
+        from openhealth import lab_panel
+        recs = [
+            {"name": "LDL", "value": 180.0, "unit": "mg/dL", "date": "2024-06-01"},
+            {"name": "HDL", "value": 65.0, "unit": "mg/dL", "date": "2024-06-01"},
+        ]
+        panels = {p["panel"]: p for p in lab_panel.panel_summary(recs)}
+        self.assertEqual(panels["lipids"]["status"], lab_panel.PANEL_HAS_OFF)
+
+    def test_panel_no_data(self):
+        from openhealth import lab_panel
+        panels = {p["panel"]: p for p in lab_panel.panel_summary([])}
+        self.assertEqual(panels["thyroid"]["status"], lab_panel.PANEL_NO_DATA)
+        self.assertTrue(all(not m["has_data"] for m in panels["thyroid"]["markers"]))
+
+
+class DerivedIndexTests(unittest.TestCase):
+    def test_ldl_hdl_ratio(self):
+        from openhealth import lab_panel
+        recs = [
+            {"name": "LDL", "value": 130.0, "unit": "mg/dL", "date": "2024-06-01"},
+            {"name": "HDL", "value": 65.0, "unit": "mg/dL", "date": "2024-06-01"},
+        ]
+        idx = {i["index"]: i for i in lab_panel.derived_indices(recs)}
+        self.assertAlmostEqual(idx["ldl_hdl_ratio"]["value"], 2.0, places=3)
+
+    def test_tg_hdl_ratio(self):
+        from openhealth import lab_panel
+        recs = [
+            {"name": "Triglycerides", "value": 150.0, "unit": "mg/dL", "date": "2024-06-01"},
+            {"name": "HDL", "value": 50.0, "unit": "mg/dL", "date": "2024-06-01"},
+        ]
+        idx = {i["index"]: i for i in lab_panel.derived_indices(recs)}
+        self.assertAlmostEqual(idx["tg_hdl_ratio"]["value"], 3.0, places=3)
+
+    def test_non_hdl_cholesterol(self):
+        from openhealth import lab_panel
+        recs = [
+            {"name": "Total cholesterol", "value": 200.0, "unit": "mg/dL", "date": "2024-06-01"},
+            {"name": "HDL", "value": 50.0, "unit": "mg/dL", "date": "2024-06-01"},
+        ]
+        idx = {i["index"]: i for i in lab_panel.derived_indices(recs)}
+        self.assertAlmostEqual(idx["non_hdl_cholesterol"]["value"], 150.0, places=3)
+
+    def test_homa_ir(self):
+        from openhealth import lab_panel
+        recs = [
+            {"name": "Glucose", "value": 90.0, "unit": "mg/dL", "date": "2024-06-01"},
+            {"name": "Insulin", "value": 9.0, "unit": "uIU/mL", "date": "2024-06-01"},
+        ]
+        idx = {i["index"]: i for i in lab_panel.derived_indices(recs)}
+        # 90 * 9 / 405 = 2.0
+        self.assertAlmostEqual(idx["homa_ir"]["value"], 2.0, places=3)
+        self.assertIn("405", idx["homa_ir"]["formula"])
+
+    def test_index_omitted_without_required_markers(self):
+        from openhealth import lab_panel
+        recs = [{"name": "LDL", "value": 100.0, "unit": "mg/dL", "date": "2024-06-01"}]
+        keys = {i["index"] for i in lab_panel.derived_indices(recs)}
+        self.assertNotIn("ldl_hdl_ratio", keys)  # no HDL
+        self.assertNotIn("homa_ir", keys)
+
+
+class RecheckHintTests(unittest.TestCase):
+    def test_due_when_older_than_interval(self):
+        from openhealth import lab_panel
+        # vitamin D interval is 6 months (~182 days); 250 days ago is overdue.
+        hint = lab_panel.next_checkup_hint("Vitamin D (25-OH)", "2024-01-01", today="2024-09-07")
+        self.assertEqual(hint["interval_months"], 6)
+        self.assertTrue(hint["due"])
+
+    def test_not_due_when_recent(self):
+        from openhealth import lab_panel
+        hint = lab_panel.next_checkup_hint("Vitamin D (25-OH)", "2024-08-01", today="2024-09-07")
+        self.assertFalse(hint["due"])
+
+    def test_boundary_exactly_at_interval(self):
+        from openhealth import lab_panel
+        # HbA1c interval 6 months -> threshold ~182.4 days; 183 days is due.
+        hint = lab_panel.next_checkup_hint("HbA1c", "2024-01-01", today="2024-07-02")
+        self.assertEqual(hint["days_since"], 183)
+        self.assertTrue(hint["due"])
+
+    def test_unknown_marker_no_interval(self):
+        from openhealth import lab_panel
+        hint = lab_panel.next_checkup_hint("Unobtainium", "2024-01-01", today="2024-09-07")
+        self.assertIsNone(hint["interval_months"])
+        self.assertIsNone(hint["due"])
+
+
 if __name__ == "__main__":
     unittest.main()

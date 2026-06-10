@@ -1,0 +1,492 @@
+"""Fast, science-based insight detectors over daily health series.
+
+This is the "find the real problem" layer that sits on top of the raw daily
+metrics (recovery, HRV, RHR, sleep hours, strain). Each detector turns a
+described, numeric observation in the *user's own* data into a cautious
+``Insight``: a finding phrased as a question with one concrete next step.
+
+Honesty rules (canon: ``openhealth.evidence``)
+----------------------------------------------
+- Every finding here is a *personal pattern*, so its confidence is capped at
+  **C2 ("weak signal")** until it survives an n-of-1 protocol. See
+  ``openhealth.protocols``. Sparse data drops it to C1.
+- ``severity`` (info | attention | warning) is a *separate axis* from
+  ``confidence``: it says how loud the signal is in the data, not how sure we
+  are about the cause. A loud signal we can't yet explain is a high-severity,
+  low-confidence finding.
+- Personal baselines, never population norms.
+- ``warning`` findings always carry a "if symptoms accompany this, see a
+  clinician" disclaimer. This is not diagnosis and not treatment advice.
+
+Pure stdlib. The thresholds are constants with the reasoning inline so they can
+be reviewed and tuned.
+"""
+
+from __future__ import annotations
+
+import statistics
+from dataclasses import dataclass, field
+from datetime import date as _date
+from typing import Any, Dict, List, Optional, Tuple
+
+from . import evidence
+
+# --- severity ----------------------------------------------------------------
+
+INFO = "info"
+ATTENTION = "attention"
+WARNING = "warning"
+
+# Sort order: loudest first. Used by detect_insights() and protocol building.
+_SEVERITY_RANK = {WARNING: 0, ATTENTION: 1, INFO: 2}
+
+# Appended to the action of any WARNING finding. The system never diagnoses;
+# a loud signal that could be illness must point at a human clinician.
+WARNING_DISCLAIMER = (
+    "Если это сопровождается симптомами (жар, боль, одышка, затяжная слабость) - "
+    "это повод показаться врачу, а не экспериментировать."
+)
+
+# --- thresholds (documented, tunable) ---------------------------------------
+
+# Sleep debt. Default nightly target if the user gives no goal. 5h/week of
+# accumulated shortfall (~43 min/night) is where short-sleep effects on
+# autonomic recovery start showing up consistently in restriction studies.
+DEFAULT_SLEEP_GOAL_H = 8.0
+SLEEP_DEBT_WEEK_ATTENTION_H = 5.0   # >= 5h shortfall over 7 nights
+SLEEP_DEBT_WEEK_WARNING_H = 10.0    # >= 10h (~1.4h/night) = marked chronic deficit
+
+# HRV downtrend: 7d mean vs personal 14-28d baseline. A sustained drop in the
+# HRV trend reflects rising load / under-recovery; 8% / 15% are pragmatic
+# personal-trend bands (WHOOP/Welltory-style relative read, not a norm).
+HRV_DROP_ATTENTION_PCT = 8.0
+HRV_DROP_WARNING_PCT = 15.0
+
+# RHR uptrend: 7d mean above baseline. A few bpm of sustained elevation is a
+# classic early marker of stress / incipient illness / overreaching.
+RHR_RISE_ATTENTION_BPM = 3.0
+RHR_RISE_WARNING_BPM = 6.0
+
+# Recovery "red" zone matches the dashboard's col()/word() helper (< 34).
+RECOVERY_RED_MAX = 34
+RED_STREAK_DAYS = 3                 # >= 3 red days in a row -> warning
+
+# Strain/recovery mismatch: a hard day stacked on a depleted body.
+STRAIN_HIGH = 14.0                  # WHOOP strain 0-21; >= 14 is a hard day
+RECOVERY_LOW_FOR_STRAIN = 50        # recovery below this = body not ready
+MISMATCH_WINDOW_DAYS = 14
+MISMATCH_ATTENTION_COUNT = 2        # repeated twice in 14d = a pattern
+MISMATCH_WARNING_COUNT = 3
+
+# Weekday vs weekend systematic gap (recovery). Capped at C2 by spec.
+WEEKEND_DIFF_POINTS = 5.0
+
+# Sleep consistency: regularity matters more than hitting an ideal once.
+SLEEP_CONSISTENCY_STDEV_H = 1.2
+
+# Window sizes for trend detectors.
+RECENT_WINDOW = 7
+BASELINE_LO = 7                     # baseline excludes the most recent 7 days
+BASELINE_HI = 28                    # ...and reaches back to 28 days
+MIN_RECENT_POINTS = 5
+MIN_BASELINE_POINTS = 7
+
+
+# --- Insight record ----------------------------------------------------------
+
+@dataclass
+class Insight:
+    """One cautious finding. Phrased as a prompt for review, never a verdict."""
+
+    id: str
+    title_ru: str
+    severity: str                       # info | attention | warning
+    confidence: evidence.Confidence     # capped at C2 for personal patterns
+    evidence_text: str                  # the numbers, in plain Russian
+    question_ru: str                    # "what to ask yourself"
+    action_ru: str                      # one concrete next step
+    metric: str = ""                    # primary metric this is about
+    data: Dict[str, Any] = field(default_factory=dict)  # structured numbers
+    refs: List[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        # Every warning carries the see-a-clinician disclaimer exactly once.
+        if self.severity == WARNING and WARNING_DISCLAIMER not in self.action_ru:
+            self.action_ru = "%s %s" % (self.action_ru.rstrip(), WARNING_DISCLAIMER)
+
+    def to_dict(self) -> Dict[str, Any]:
+        meta = evidence.CONFIDENCE_META[self.confidence]
+        return {
+            "id": self.id,
+            "title_ru": self.title_ru,
+            "severity": self.severity,
+            "confidence": self.confidence.value,
+            "confidence_label": meta["label"],
+            "evidence_text": self.evidence_text,
+            "question_ru": self.question_ru,
+            "action_ru": self.action_ru,
+            "metric": self.metric,
+            "data": self.data,
+            "refs": list(self.refs),
+        }
+
+
+# --- helpers -----------------------------------------------------------------
+
+def _series(daily: Dict[str, Dict[str, Any]], key: str) -> List[Tuple[str, float]]:
+    """Ascending [(date, value)] for one metric, skipping missing/None days."""
+    out: List[Tuple[str, float]] = []
+    for d in sorted(daily):
+        row = daily.get(d) or {}
+        v = row.get(key)
+        if v is None:
+            continue
+        try:
+            out.append((d, float(v)))
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
+def _recent_and_baseline(
+    values: List[float],
+) -> Tuple[List[float], List[float]]:
+    """Split a chronological series into (recent 7d, 14-28d baseline)."""
+    recent = values[-RECENT_WINDOW:]
+    baseline = values[-BASELINE_HI:-BASELINE_LO] if len(values) > BASELINE_LO else []
+    return recent, baseline
+
+
+def _grade(strong: bool) -> evidence.Confidence:
+    """Confidence for a personal pattern: C2 with ample data, else C1.
+
+    Both run through ``cap_personal_pattern`` so the C2 ceiling for un-validated
+    personal patterns is enforced in one place (canon).
+    """
+    raw = evidence.Confidence.C2 if strong else evidence.Confidence.C1
+    return evidence.cap_personal_pattern(raw, validated_switches=0)
+
+
+def _fmt(x: float, nd: int = 0) -> str:
+    return ("%.*f" % (nd, x)).rstrip("0").rstrip(".") if nd else "%.0f" % x
+
+
+# --- detectors ---------------------------------------------------------------
+
+def detect_sleep_debt(
+    daily: Dict[str, Dict[str, Any]], goals: Dict[str, Any]
+) -> Optional[Insight]:
+    series = _series(daily, "sleep_h")
+    if len(series) < MIN_RECENT_POINTS:
+        return None
+    goal = float(goals.get("sleep_h", DEFAULT_SLEEP_GOAL_H))
+    last7 = [v for _, v in series[-7:]]
+    last14 = [v for _, v in series[-14:]]
+    debt7 = sum(max(0.0, goal - v) for v in last7)
+    debt14 = sum(max(0.0, goal - v) for v in last14)
+    if debt7 < SLEEP_DEBT_WEEK_ATTENTION_H:
+        return None
+    severity = WARNING if debt7 >= SLEEP_DEBT_WEEK_WARNING_H else ATTENTION
+    mean7 = statistics.mean(last7)
+    return Insight(
+        id="insight-sleep_debt",
+        title_ru="Накопленный недосып",
+        severity=severity,
+        confidence=_grade(len(last7) >= 6),
+        evidence_text=(
+            "За последние %d ночей с данными недобор сна к цели %sч составил %sч "
+            "(в среднем %sч за ночь). За 14 дней - %sч."
+            % (len(last7), _fmt(goal, 1), _fmt(debt7, 1), _fmt(mean7, 1), _fmt(debt14, 1))
+        ),
+        question_ru="Что мешает ложиться вовремя на этой неделе - поздние экраны, работа, стресс?",
+        action_ru="Сегодня начните подготовку ко сну на 30-45 минут раньше обычного.",
+        metric="sleep_h",
+        data={
+            "kind": "sleep_debt",
+            "goal_h": round(goal, 1),
+            "debt7_h": round(debt7, 1),
+            "debt14_h": round(debt14, 1),
+            "mean7_h": round(mean7, 1),
+        },
+        refs=["Дефицит сна снижает парасимпатический тонус и восстановление "
+              "(литература по ограничению сна)."],
+    )
+
+
+def detect_hrv_downtrend(daily: Dict[str, Dict[str, Any]], goals: Dict[str, Any]) -> Optional[Insight]:
+    series = _series(daily, "hrv")
+    values = [v for _, v in series]
+    recent, baseline = _recent_and_baseline(values)
+    if len(recent) < MIN_RECENT_POINTS or len(baseline) < MIN_BASELINE_POINTS:
+        return None
+    base_mean = statistics.mean(baseline)
+    if base_mean <= 0:
+        return None
+    recent_mean = statistics.mean(recent)
+    drop_pct = (base_mean - recent_mean) / base_mean * 100.0
+    if drop_pct < HRV_DROP_ATTENTION_PCT:
+        return None
+    severity = WARNING if drop_pct >= HRV_DROP_WARNING_PCT else ATTENTION
+    return Insight(
+        id="insight-hrv_downtrend",
+        title_ru="HRV ниже личного baseline",
+        severity=severity,
+        confidence=_grade(len(baseline) >= 14),
+        evidence_text=(
+            "7-дневное среднее HRV %s мс против вашего baseline %s мс (14-28 дней) - "
+            "ниже на %s%%." % (_fmt(recent_mean), _fmt(base_mean), _fmt(drop_pct))
+        ),
+        question_ru="Что изменилось за 1-2 недели - нагрузки, сон, алкоголь, болезнь или стресс?",
+        action_ru="Возьмите 2-3 дня лёгкого режима и проследите, вернётся ли HRV к baseline.",
+        metric="hrv",
+        data={
+            "kind": "hrv_downtrend",
+            "recent_mean": round(recent_mean, 1),
+            "baseline_mean": round(base_mean, 1),
+            "drop_pct": round(drop_pct, 1),
+        },
+        refs=["Снижение тренда HRV отражает рост нагрузки и недовосстановление "
+              "(HRV-мониторинг)."],
+    )
+
+
+def detect_rhr_uptrend(daily: Dict[str, Dict[str, Any]], goals: Dict[str, Any]) -> Optional[Insight]:
+    series = _series(daily, "rhr")
+    values = [v for _, v in series]
+    recent, baseline = _recent_and_baseline(values)
+    if len(recent) < MIN_RECENT_POINTS or len(baseline) < MIN_BASELINE_POINTS:
+        return None
+    base_mean = statistics.mean(baseline)
+    recent_mean = statistics.mean(recent)
+    rise = recent_mean - base_mean
+    if rise < RHR_RISE_ATTENTION_BPM:
+        return None
+    severity = WARNING if rise >= RHR_RISE_WARNING_BPM else ATTENTION
+    return Insight(
+        id="insight-rhr_uptrend",
+        title_ru="Пульс покоя выше baseline",
+        severity=severity,
+        confidence=_grade(len(baseline) >= 14),
+        evidence_text=(
+            "7-дневный пульс покоя %s уд/мин против baseline %s уд/мин - "
+            "выше на %s уд." % (_fmt(recent_mean), _fmt(base_mean), _fmt(rise, 1))
+        ),
+        question_ru="Не было ли недосыпа, алкоголя, начала болезни или скачка нагрузки в эти дни?",
+        action_ru="Понаблюдайте 3-4 дня и добавьте восстановление; если пульс держится высоким - снизьте нагрузку.",
+        metric="rhr",
+        data={
+            "kind": "rhr_uptrend",
+            "recent_mean": round(recent_mean, 1),
+            "baseline_mean": round(base_mean, 1),
+            "rise_bpm": round(rise, 1),
+        },
+        refs=["Устойчивый рост пульса покоя - ранний маркер стресса, болезни или "
+              "перетренированности."],
+    )
+
+
+def detect_recovery_red_streak(daily: Dict[str, Dict[str, Any]], goals: Dict[str, Any]) -> Optional[Insight]:
+    series = _series(daily, "recovery")
+    if len(series) < RED_STREAK_DAYS:
+        return None
+    # Longest run of consecutive (by available points) red days, recent-weighted.
+    best_len = 0
+    best_end = 0
+    cur = 0
+    for i, (_, v) in enumerate(series):
+        if v < RECOVERY_RED_MAX:
+            cur += 1
+            if cur >= best_len:
+                best_len = cur
+                best_end = i
+        else:
+            cur = 0
+    if best_len < RED_STREAK_DAYS:
+        return None
+    streak = series[best_end - best_len + 1: best_end + 1]
+    vals = ", ".join(_fmt(v) for _, v in streak)
+    span = "%s - %s" % (streak[0][0], streak[-1][0])
+    return Insight(
+        id="insight-recovery_red_streak",
+        title_ru="Серия красных дней восстановления",
+        severity=WARNING,
+        confidence=_grade(True),
+        evidence_text=(
+            "%d дня подряд recovery в красной зоне (<%d): %s (%s)."
+            % (best_len, RECOVERY_RED_MAX, vals, span)
+        ),
+        question_ru="Это совпадает с болезнью, сильным стрессом или резким ростом нагрузки?",
+        action_ru="Сегодня приоритет - сон и покой, без интенсивных тренировок.",
+        metric="recovery",
+        data={
+            "kind": "recovery_red_streak",
+            "streak_len": best_len,
+            "values": [v for _, v in streak],
+            "span": span,
+        },
+    )
+
+
+def detect_strain_recovery_mismatch(daily: Dict[str, Dict[str, Any]], goals: Dict[str, Any]) -> Optional[Insight]:
+    dates = sorted(daily)[-MISMATCH_WINDOW_DAYS:]
+    hits: List[str] = []
+    for d in dates:
+        row = daily.get(d) or {}
+        strain = row.get("strain")
+        recovery = row.get("recovery")
+        if strain is None or recovery is None:
+            continue
+        if float(strain) >= STRAIN_HIGH and float(recovery) < RECOVERY_LOW_FOR_STRAIN:
+            hits.append(d)
+    if len(hits) < MISMATCH_ATTENTION_COUNT:
+        return None
+    severity = WARNING if len(hits) >= MISMATCH_WARNING_COUNT else ATTENTION
+    return Insight(
+        id="insight-strain_recovery_mismatch",
+        title_ru="Нагрузка на фоне низкого восстановления",
+        severity=severity,
+        confidence=_grade(len(hits) >= MISMATCH_WARNING_COUNT),
+        evidence_text=(
+            "За %d дней %d раз высокая нагрузка (strain >= %s) пришлась на день "
+            "низкого восстановления (recovery < %d): %s."
+            % (MISMATCH_WINDOW_DAYS, len(hits), _fmt(STRAIN_HIGH),
+               RECOVERY_LOW_FOR_STRAIN, ", ".join(hits))
+        ),
+        question_ru="Тренировки идут под состояние организма или по графику независимо от него?",
+        action_ru="В дни с recovery < 50 заменяйте интенсив на лёгкую активность; решайте утром по recovery.",
+        metric="recovery",
+        data={
+            "kind": "strain_recovery_mismatch",
+            "count": len(hits),
+            "dates": hits,
+            "strain_high": STRAIN_HIGH,
+            "recovery_low": RECOVERY_LOW_FOR_STRAIN,
+        },
+    )
+
+
+def detect_weekend_pattern(daily: Dict[str, Dict[str, Any]], goals: Dict[str, Any]) -> Optional[Insight]:
+    weekday_vals: List[float] = []
+    weekend_vals: List[float] = []
+    for d, row in daily.items():
+        v = (row or {}).get("recovery")
+        if v is None:
+            continue
+        try:
+            wd = _date.fromisoformat(d).weekday()
+        except ValueError:
+            continue
+        (weekend_vals if wd >= 5 else weekday_vals).append(float(v))
+    if len(weekday_vals) < 2 or len(weekend_vals) < 2:
+        return None
+    wkday = statistics.mean(weekday_vals)
+    wkend = statistics.mean(weekend_vals)
+    diff = wkday - wkend  # positive => weekends dip
+    if abs(diff) < WEEKEND_DIFF_POINTS:
+        return None
+    dip = diff > 0
+    # Capped at C2 by spec; this is a coarse calendar split.
+    conf = _grade(len(weekend_vals) >= 4 and len(weekday_vals) >= 4)
+    return Insight(
+        id="insight-weekend_pattern",
+        title_ru="Восстановление проседает в выходные" if dip else "Восстановление в выходные выше",
+        severity=ATTENTION if dip else INFO,
+        confidence=conf,
+        evidence_text=(
+            "Recovery в выходные в среднем %s против %s в будни (разница %s пунктов)."
+            % (_fmt(wkend), _fmt(wkday), _fmt(abs(diff)))
+        ),
+        question_ru="Что в выходные иначе - алкоголь, поздний отбой, сбитый режим?"
+        if dip else "Что в будни мешает восстановлению по сравнению с выходными?",
+        action_ru="Попробуйте держать в выходные то же время отбоя, что в будни, и сравните recovery."
+        if dip else "Перенесите то, что работает в выходные (сон, темп дня), на будни.",
+        metric="recovery",
+        data={
+            "kind": "weekend_pattern",
+            "weekday_mean": round(wkday, 1),
+            "weekend_mean": round(wkend, 1),
+            "diff": round(diff, 1),
+            "dip": dip,
+        },
+    )
+
+
+def detect_sleep_consistency(daily: Dict[str, Dict[str, Any]], goals: Dict[str, Any]) -> Optional[Insight]:
+    series = _series(daily, "sleep_h")
+    values = [v for _, v in series[-14:]]
+    if len(values) < MIN_RECENT_POINTS:
+        return None
+    sd = statistics.pstdev(values)
+    if sd <= SLEEP_CONSISTENCY_STDEV_H:
+        return None
+    return Insight(
+        id="insight-sleep_consistency",
+        title_ru="Нестабильная длительность сна",
+        severity=ATTENTION,
+        confidence=_grade(len(values) >= 10),
+        evidence_text=(
+            "Разброс длительности сна за %d ночей большой - стандартное отклонение "
+            "%sч (от %s до %sч). Консистентность важнее одной идеальной ночи."
+            % (len(values), _fmt(sd, 1), _fmt(min(values), 1), _fmt(max(values), 1))
+        ),
+        question_ru="Можно ли сузить разброс отбоя и подъёма, даже если общая длительность не идеальна?",
+        action_ru="Зафиксируйте время подъёма на 14 дней (в пределах 30 минут), включая выходные.",
+        metric="sleep_h",
+        data={
+            "kind": "sleep_consistency",
+            "stdev_h": round(sd, 2),
+            "min_h": round(min(values), 1),
+            "max_h": round(max(values), 1),
+            "n": len(values),
+        },
+        refs=["Регулярность сна связана со здоровьем сильнее, чем разовая "
+              "длительность (sleep regularity)."],
+    )
+
+
+# Ordered: trend/medical-leaning detectors first, calendar pattern last.
+_DETECTORS = (
+    detect_sleep_debt,
+    detect_hrv_downtrend,
+    detect_rhr_uptrend,
+    detect_recovery_red_streak,
+    detect_strain_recovery_mismatch,
+    detect_weekend_pattern,
+    detect_sleep_consistency,
+)
+
+
+def detect_insights(
+    daily: Dict[str, Dict[str, Any]], goals: Optional[Dict[str, Any]] = None
+) -> List[Insight]:
+    """Run all detectors over the daily series.
+
+    ``daily`` maps ISO date -> {recovery, hrv, rhr, sleep_h, strain} (any
+    subset). ``goals`` is optional (e.g. {"sleep_h": 7.5}). Returns insights
+    sorted by severity (warning first), then by confidence. Empty / malformed
+    input yields an empty list, never an exception.
+    """
+    if not daily:
+        return []
+    g = goals or {}
+    found: List[Insight] = []
+    for det in _DETECTORS:
+        try:
+            ins = det(daily, g)
+        except Exception:
+            # A single bad detector must never sink the whole pass.
+            ins = None
+        if ins is not None:
+            found.append(ins)
+    found.sort(
+        key=lambda i: (
+            _SEVERITY_RANK.get(i.severity, 9),
+            -evidence.confidence_to_numeric(i.confidence),
+        )
+    )
+    return found
+
+
+def insights_to_dicts(insights: List[Insight]) -> List[Dict[str, Any]]:
+    """Convenience: serialize a list of insights for JSON / the dashboard."""
+    return [i.to_dict() for i in insights]

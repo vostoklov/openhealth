@@ -77,6 +77,36 @@ class PulseModuleTests(unittest.TestCase):
         # framed as a question.
         self.assertLessEqual(ins["confidence"], 0.35)
         self.assertIn("?", ins["summary"])
+        # Readiness now uses the ln-rMSSD normal-range method, not a raw ratio.
+        self.assertEqual(ins["metadata"]["method"], "ln_rmssd_sd")
+
+    def test_readiness_normal_range_within_band(self):
+        # RMSSD ~100 ms vs a 100 ms baseline => within +/-1 SD => "normal day".
+        m = modules.get_module("pulse")
+        res = m.compute({
+            "date": "2024-06-02",
+            "rr_intervals_ms": [800, 900, 800, 900],  # RMSSD = 100
+            "baseline_rmssd_ms": 100.0,
+        })
+        ins = res.insights[0]
+        self.assertGreaterEqual(ins["metadata"]["z_sd"], -1.0)
+        self.assertIn("normal day", ins["statement"])
+
+    def test_readiness_personal_ln_sd_widens_band(self):
+        # A large personal ln-SD keeps a mild dip inside the normal range, where
+        # a fixed 0.7/0.9 ratio would have flagged it.
+        m = modules.get_module("pulse")
+        res = m.compute({
+            "date": "2024-06-03",
+            "rr_intervals_ms": [800, 870, 800, 870],  # RMSSD = 70
+            "baseline_rmssd_ms": 100.0,
+            "baseline_ln_sd": 0.6,  # wide personal spread
+        })
+        ins = res.insights[0]
+        self.assertFalse(ins["metadata"]["ln_sd_is_default"])
+        self.assertEqual(ins["metadata"]["ln_sd_used"], 0.6)
+        self.assertGreaterEqual(ins["metadata"]["z_sd"], -1.0)
+        self.assertIn("normal day", ins["statement"])
 
 
 if __name__ == "__main__":

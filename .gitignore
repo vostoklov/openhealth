@@ -25,6 +25,11 @@ Thumbs.db
 *.health-export
 data/personal/
 
+# Local workspace created by `openhealth init` / setup.sh (real personal data)
+/data/
+/contexts/timeline/
+/contexts/interventions/
+
 # Dashboard real-data bridge output (real personal health data — local only)
 ui/web/data.local.json
 

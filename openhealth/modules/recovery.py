@@ -46,6 +46,7 @@ import math
 from statistics import pstdev
 from typing import Any, Dict, List, Optional
 
+from .. import params
 from .base import ModuleResult, register
 
 # --- algorithm versions (bump on any formula change) -----------------------
@@ -102,6 +103,25 @@ DEFAULT_SLEEP_NEED_H = 8.0
 # a single night vs a constant.
 DEFAULT_SLEEP_DEBT_WINDOW_NIGHTS = 14
 
+# User-tunable params (openhealth.params). The constants above stay as the
+# canonical defaults; the registry lets the person override them, and any
+# record computed under an override is stamped (params_overrides + "+custom").
+_SCORE_PARAM_IDS = (
+    "recovery.weights.hrv",
+    "recovery.weights.rhr",
+    "recovery.weights.respiratory",
+    "recovery.weights.sleep",
+    "recovery.hrv_full_swing_sd",
+)
+
+
+def _param(param_id: str, fallback: float) -> float:
+    """Effective tunable value; any registry problem falls back to the constant."""
+    try:
+        return params.get(param_id)
+    except Exception:
+        return fallback
+
 
 def _clamp(value: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, value))
@@ -133,7 +153,8 @@ def hrv_component(
     ln_sd = baseline_ln_sd if (baseline_ln_sd and baseline_ln_sd > 0) else _HRV_DEFAULT_LN_SD
     ln_dev = math.log(hrv_ms) - math.log(baseline_hrv_ms)
     z = ln_dev / ln_sd  # deviation in personal standard deviations
-    return _clamp(50.0 + 50.0 * (z / _HRV_FULL_SWING_SD), 0.0, 100.0)
+    full_swing_sd = _param("recovery.hrv_full_swing_sd", _HRV_FULL_SWING_SD)
+    return _clamp(50.0 + 50.0 * (z / full_swing_sd), 0.0, 100.0)
 
 
 def rhr_component(rhr_bpm: float, baseline_rhr_bpm: float) -> float:
@@ -191,25 +212,32 @@ def recovery_score(
     if hrv_ms is None or baseline_hrv_ms is None:
         raise ValueError("HRV and its baseline are required for a recovery score")
 
+    # Effective (possibly user-tuned) weights. Normalization rule: weights are
+    # relative — dividing by the sum of present weights keeps shares at 1.0.
+    effective_weights = {
+        key: _param("recovery.weights.%s" % key, RECOVERY_WEIGHTS[key]) for key in RECOVERY_WEIGHTS
+    }
+
     components: Dict[str, float] = {
         "hrv": hrv_component(hrv_ms, baseline_hrv_ms, baseline_hrv_ln_sd)
     }
-    weights: Dict[str, float] = {"hrv": RECOVERY_WEIGHTS["hrv"]}
+    weights: Dict[str, float] = {"hrv": effective_weights["hrv"]}
 
     if rhr_bpm is not None and baseline_rhr_bpm is not None:
         components["rhr"] = rhr_component(rhr_bpm, baseline_rhr_bpm)
-        weights["rhr"] = RECOVERY_WEIGHTS["rhr"]
+        weights["rhr"] = effective_weights["rhr"]
     if respiratory_rate is not None and baseline_respiratory_rate is not None:
         components["respiratory"] = respiratory_component(respiratory_rate, baseline_respiratory_rate)
-        weights["respiratory"] = RECOVERY_WEIGHTS["respiratory"]
+        weights["respiratory"] = effective_weights["respiratory"]
     if sleep_performance_pct is not None:
         components["sleep"] = sleep_component(sleep_performance_pct)
-        weights["sleep"] = RECOVERY_WEIGHTS["sleep"]
+        weights["sleep"] = effective_weights["sleep"]
 
     total_w = sum(weights.values())
     score = sum(components[k] * weights[k] for k in components) / total_w
 
-    return {
+    overrides = params.overrides_for(_SCORE_PARAM_IDS)
+    out: Dict[str, Any] = {
         "score": round(score, 1),
         "components": {k: round(v, 1) for k, v in components.items()},
         "weights_used": {k: round(weights[k] / total_w, 4) for k in weights},
@@ -220,8 +248,11 @@ def recovery_score(
             4,
         ),
         "hrv_ln_sd_is_default": not (baseline_hrv_ln_sd and baseline_hrv_ln_sd > 0),
-        "algo_version": ALGO_VERSIONS["recovery_score"],
+        "algo_version": params.stamp(ALGO_VERSIONS["recovery_score"], overrides),
     }
+    if overrides:
+        out["params_overrides"] = overrides
+    return out
 
 
 def normalize_strain(raw_strain: float) -> Dict[str, Any]:
@@ -395,8 +426,8 @@ def _nightly_sleep_hours(records: List[Dict[str, Any]], day: str, window_days: i
 def from_index(
     db_path,
     day: str,
-    baseline_window_days: int = DEFAULT_BASELINE_WINDOW_DAYS,
-    sleep_need_h: float = DEFAULT_SLEEP_NEED_H,
+    baseline_window_days: Optional[int] = None,
+    sleep_need_h: Optional[float] = None,
     sleep_debt_window_nights: int = DEFAULT_SLEEP_DEBT_WINDOW_NIGHTS,
 ) -> Dict[str, Any]:
     """Assemble a recovery-module payload for ``day`` from indexed WHOOP records.
@@ -404,10 +435,21 @@ def from_index(
     Reads only through the index API (never the raw files). Returns a payload
     dict ready for ``RecoveryModule.compute``; raises if no HRV is available.
 
-    ``baseline_window_days`` defaults to ~28d (was 60d) — configurable per call,
-    backward-compatible. HRV baseline + ln-SD are computed in ln-space.
+    ``baseline_window_days`` defaults to ~28d (was 60d) and ``sleep_need_h`` to
+    8.0h — both resolved through ``openhealth.params`` (user-tunable), still
+    overridable per call. HRV baseline + ln-SD are computed in ln-space. When a
+    user override was used, the payload carries ``params_overrides`` so the
+    computed records stay reproducible.
     """
     from .. import index
+
+    payload_overrides: Dict[str, float] = {}
+    if baseline_window_days is None:
+        baseline_window_days = int(_param("recovery.baseline_window_days", DEFAULT_BASELINE_WINDOW_DAYS))
+        payload_overrides.update(params.overrides_for(("recovery.baseline_window_days",)))
+    if sleep_need_h is None:
+        sleep_need_h = _param("recovery.sleep_need_h", DEFAULT_SLEEP_NEED_H)
+        payload_overrides.update(params.overrides_for(("recovery.sleep_need_h",)))
 
     records = index.list_records(db_path, "Observation")
 
@@ -431,7 +473,7 @@ def from_index(
 
     recent_nights_h = _nightly_sleep_hours(records, day, sleep_debt_window_nights)
 
-    return {
+    payload: Dict[str, Any] = {
         "date": day,
         "hrv_ms": hrv,
         "baseline_hrv_ms": baseline_hrv,
@@ -448,6 +490,9 @@ def from_index(
         "sleep_debt_window_nights": sleep_debt_window_nights,
         "baseline_window_days": baseline_window_days,
     }
+    if payload_overrides:
+        payload["params_overrides"] = payload_overrides
+    return payload
 
 
 # --- module ----------------------------------------------------------------
@@ -508,6 +553,16 @@ class RecoveryModule:
             baseline_hrv_ln_sd=payload.get("baseline_hrv_ln_sd"),
         )
 
+        # Upstream (from_index) overrides — e.g. a custom baseline window —
+        # must also land in the stored metadata for reproducibility.
+        upstream = payload.get("params_overrides") or {}
+        window_ov = {k: v for k, v in upstream.items() if k == "recovery.baseline_window_days"}
+        if window_ov:
+            merged = dict(window_ov)
+            merged.update(rec.get("params_overrides") or {})
+            rec["params_overrides"] = merged
+            rec["algo_version"] = params.stamp(rec["algo_version"], merged)
+
         metrics: List[Dict[str, Any]] = [{
             "id": "obs-recovery-score-%s" % (day or "session"),
             "record_type": "Observation",
@@ -555,12 +610,22 @@ class RecoveryModule:
 
         actual_sleep_h = payload.get("actual_sleep_h")
         if actual_sleep_h is not None:
+            need_h = payload.get("sleep_need_h")
+            need_overrides: Dict[str, float] = {}
+            if need_h is None:
+                need_h = _param("recovery.sleep_need_h", DEFAULT_SLEEP_NEED_H)
+                need_overrides = params.overrides_for(("recovery.sleep_need_h",))
+            elif upstream.get("recovery.sleep_need_h") == need_h:
+                need_overrides = {"recovery.sleep_need_h": need_h}
             sd = sleep_debt(
-                actual_sleep_h,
-                payload.get("sleep_need_h", DEFAULT_SLEEP_NEED_H),
+                need_h=need_h,
+                actual_sleep_h=actual_sleep_h,
                 recent_nights_h=payload.get("recent_nights_h"),
                 window_nights=payload.get("sleep_debt_window_nights", DEFAULT_SLEEP_DEBT_WINDOW_NIGHTS),
             )
+            if need_overrides:
+                sd["params_overrides"] = need_overrides
+                sd["algo_version"] = params.stamp(sd["algo_version"], need_overrides)
             acc = sd.get("accumulated_debt_h")
             summary = "Sleep debt %.1f h (slept %.1f of %.1f h need) on %s." % (
                 sd["sleep_debt_h"], sd["actual_sleep_h"], sd["need_h"], day or "session"

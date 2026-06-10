@@ -26,8 +26,30 @@
     --warn-glow: rgba(234, 179, 8, 0.15);
     --bad: #f43f5e;
     --bad-glow: rgba(244, 63, 94, 0.15);
-    
+
+    /* Текстовые версии семантических цветов: на тёмном совпадают с заливками,
+       на светлых темах темнее (жёлтый #eab308 на белом — 1.9:1, нечитаем). */
+    --ok-text: var(--ok);
+    --warn-text: var(--warn);
+    --bad-text: var(--bad);
+
+    /* Цвета квадрантов эмоций (How We Feel) для текста — та же логика. */
+    --mood-hu: #f43f5e;
+    --mood-hp: #fbbf24;
+    --mood-lu: #60a5fa;
+    --mood-lp: #34d399;
+
     --sb: 260px;
+  }
+
+  [data-theme="light"], [data-theme="brutalist"] {
+    --ok-text: #047857;
+    --warn-text: #a16207;
+    --bad-text: #be123c;
+    --mood-hu: #be123c;
+    --mood-hp: #b45309;
+    --mood-lu: #1d4ed8;
+    --mood-lp: #047857;
   }
 
   /* Темы оформления */
@@ -40,7 +62,7 @@
     --line2: #2a303d;
     --ink: #f3f4f6;
     --mut: #8e96a3;
-    --dim: #5c6470;
+    --dim: #768093; /* >=4.5:1 на карточках: dim-подписи читаемы, не только декоративны */
     --accent: #10b981;
     --accent-glow: rgba(16, 185, 129, 0.15);
     --radius-outer: 22px;
@@ -57,7 +79,7 @@
     --line2: #d1d5db;
     --ink: #111827;
     --mut: #4b5563;
-    --dim: #9ca3af;
+    --dim: #6f7683; /* был gray-400 (~2.5:1) — подписи на светлом стали читаемыми */
     --accent: #10b981;
     --accent-glow: rgba(16, 185, 129, 0.1);
     --radius-outer: 22px;
@@ -705,6 +727,8 @@
     font-size: 13px;
     line-height: 1.3;
     color: var(--ink);
+    overflow-wrap: break-word;
+    hyphens: auto; /* «Контрастный душ утром» не вылезает из узкой карточки */
   }
 
   .habit-impact {
@@ -717,8 +741,18 @@
     color: var(--mut);
   }
 
-  .habit-impact.up { color: var(--ok); }
-  .habit-impact.down { color: var(--bad); }
+  .habit-impact.up { color: var(--ok-text); }
+  .habit-impact.down { color: var(--bad-text); }
+
+  /* Брутал: var(--line) — это чёрный, чип превращался в чёрную плашку
+     с тёмным текстом. Возвращаем белый фон с жёсткой рамкой. */
+  [data-theme="brutalist"] .habit-impact {
+    background: #ffffff;
+    border: 1px solid #000000;
+    color: #000000;
+  }
+  [data-theme="brutalist"] .habit-impact.up { color: var(--ok-text); }
+  [data-theme="brutalist"] .habit-impact.down { color: var(--bad-text); }
 
   .habit-icon {
     flex-shrink: 0;
@@ -1116,8 +1150,8 @@
     font: 600 13px var(--mono);
   }
 
-  .corr-delta.up { color: var(--ok); }
-  .corr-delta.down { color: var(--bad); }
+  .corr-delta.up { color: var(--ok-text); }
+  .corr-delta.down { color: var(--bad-text); }
 
   /* Sparklines / Graphs */
   .spark-container {
@@ -1270,7 +1304,7 @@
     margin-bottom: 6px;
   }
 
-  .form-group input[type="text"], .form-group textarea {
+  .form-group input[type="text"], .form-group input[type="date"], .form-group textarea {
     width: 100%;
     background: var(--card-outer);
     border: 1px solid var(--line);
@@ -1282,9 +1316,73 @@
     transition: border-color 0.2s ease;
   }
 
-  .form-group input[type="text"]:focus, .form-group textarea:focus {
+  .form-group input[type="date"] { color-scheme: dark; }
+  [data-theme="light"] .form-group input[type="date"],
+  [data-theme="brutalist"] .form-group input[type="date"] { color-scheme: light; }
+
+  .form-group input[type="text"]:focus, .form-group input[type="date"]:focus, .form-group textarea:focus {
     outline: none;
     border-color: var(--line2);
+  }
+
+  /* Vaccination screen */
+  .vacc-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .vacc-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--card-outer);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+
+  .vacc-row.overdue { border-color: var(--warn); background: var(--warn-glow); }
+
+  .vacc-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .vacc-name { font-weight: 600; font-size: 13px; overflow-wrap: anywhere; }
+  .vacc-meta { font-size: 11px; color: var(--mut); }
+
+  .vacc-side { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+  .vacc-due {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font: 600 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--mut);
+    white-space: nowrap;
+  }
+  .vacc-due.late { color: var(--warn); }
+
+  .vacc-del {
+    background: none;
+    border: none;
+    color: var(--dim);
+    font-size: 15px;
+    padding: 6px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .vacc-del:hover { color: var(--bad); background: var(--bad-glow); }
+  .vacc-del:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .vacc-note {
+    margin: 14px 0 0;
+    font-size: 11px;
+    color: var(--mut);
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+  }
+
+  @media (max-width: 640px) {
+    .vacc-row { flex-wrap: wrap; }
+    .vacc-side { width: 100%; justify-content: space-between; }
   }
 
   /* Sync Connections screen */
@@ -1826,6 +1924,7 @@
     display: grid;
     place-items: center;
     font-size: 26px;
+    line-height: 1; /* глиф иконки не распирает кольцо */
     color: var(--mut);
     margin-bottom: 22px;
     position: relative;
@@ -3512,6 +3611,12 @@
 
   .proto-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
 
+  /* Карточки протоколов одной высоты, кнопки на одной линии по низу. */
+  #protocolsContent { align-items: stretch; }
+  #protocolsContent .card-outer { display: flex; }
+  #protocolsContent .card-inner { display: flex; flex-direction: column; flex: 1; }
+  #protocolsContent .proto-actions { margin-top: auto; padding-top: 16px; }
+
   /* строка активного протокола в чек-ине дня */
   .habit-proto-row {
     display: flex;
@@ -3679,6 +3784,10 @@
       <a data-z="dna" data-icon="ph-dna" onclick="go('dna')">
         <i class="ph-light ph-dna"></i>
         <span>ДНК</span>
+      </a>
+      <a data-z="vaccination" data-icon="ph-syringe" onclick="go('vaccination')">
+        <i class="ph-light ph-syringe"></i>
+        <span>Вакцинация</span>
       </a>
     </nav>
 
@@ -4643,6 +4752,11 @@
         <div class="bento-grid" id="dnaContent"></div>
       </section>
 
+      <!-- SCREEN 11c: VACCINATION — прививки (локальный список в браузере) -->
+      <section class="zone" id="z-vaccination">
+        <div class="bento-grid" id="vaccinationContent"></div>
+      </section>
+
       <!-- SCREEN 12: PROTOCOLS — n-of-1 карточки из движка (или empty-state) -->
       <section class="zone" id="z-protocols">
         <div class="bento-grid" id="protocolsContent">
@@ -5201,6 +5315,8 @@ function onSelectedDayChange() {
   const z = a ? a.dataset.z : null;
   if (z === 'timeline') renderTimeline();
   if (z === 'pulse') renderPulseMoodRing();
+  // Зеркало с диска: применяется только если в браузере этот день пуст.
+  hydrateDayFromDisk(selectedDayKey(), () => { initHabitsState(); updateTodayScreen(); });
 }
 
 // Свайп влево/вправо на тач листает дни (threshold 60px, только зоны
@@ -5231,6 +5347,8 @@ function bindDaySwipe() {
 }
 
 const col = v => v >= 67 ? "var(--ok)" : v >= 34 ? "var(--warn)" : "var(--bad)";
+// Для ТЕКСТА — читаемые на любой теме версии тех же зон (см. --ok-text и компанию).
+const colText = v => v >= 67 ? "var(--ok-text)" : v >= 34 ? "var(--warn-text)" : "var(--bad-text)";
 const word = v => v >= 67 ? "Зелёная зона — организм готов к нагрузкам" : v >= 34 ? "Жёлтая зона — умеренный режим" : "Красная зона — необходим глубокий покой";
 const mood = v => v >= 67 ? "😎" : v >= 34 ? "🙂" : "😴";
 const say = v => v >= 67 ? "Отличное восстановление. Хороший день для активности." : v >= 34 ? "Умеренно. Избегайте пиковых перегрузок." : "Низкие ресурсы. Фокус на цене сна.";
@@ -5240,11 +5358,12 @@ const safeIcon = name => name === 'ph-activity' ? 'ph-pulse' : (name || 'ph-circ
 
 // Статус биомаркера: текст, статус-строка детали (паттерн Ultrahuman), css-цвет.
 const BIO_STATUS = {
-  optimal:   { text: 'Оптимально', line: 'В оптимальном диапазоне', color: 'var(--ok)' },
-  normal:    { text: 'Норма', line: 'В норме · вне оптимума', color: 'var(--warn)' },
-  low:       { text: 'Снижен', line: 'Ниже референса', color: 'var(--bad)' },
-  high:      { text: 'Повышен', line: 'Выше референса', color: 'var(--bad)' },
-  deficient: { text: 'Дефицит', line: 'Ниже референса и оптимума', color: 'var(--bad)' }
+  // color красит ТЕКСТ и иконки детали — поэтому *-text токены (читаемы в light)
+  optimal:   { text: 'Оптимально', line: 'В оптимальном диапазоне', color: 'var(--ok-text)' },
+  normal:    { text: 'Норма', line: 'В норме · вне оптимума', color: 'var(--warn-text)' },
+  low:       { text: 'Снижен', line: 'Ниже референса', color: 'var(--bad-text)' },
+  high:      { text: 'Повышен', line: 'Выше референса', color: 'var(--bad-text)' },
+  deficient: { text: 'Дефицит', line: 'Ниже референса и оптимума', color: 'var(--bad-text)' }
 };
 
 // Уровни доверия C1-C5 (та же шкала, что в Корреляциях).
@@ -5310,12 +5429,12 @@ function updateTodayScreen() {
   document.getElementById('pillDot').style.background = has(v) ? col(v) : 'var(--mut)';
   document.getElementById('pillTxt').textContent = 'recovery ' + (has(v) ? v + '%' : '—') + (m.isToday ? '' : ' · ' + dayLabelText().toLowerCase());
   document.getElementById('navRec').textContent = DATA.recovery + "%";
-  document.getElementById('navRec').style.color = col(DATA.recovery);
+  document.getElementById('navRec').style.color = colText(DATA.recovery);
 
   document.getElementById('recNum').textContent = has(v) ? v : '—';
-  document.getElementById('recNum').style.color = has(v) ? col(v) : 'var(--mut)';
+  document.getElementById('recNum').style.color = has(v) ? colText(v) : 'var(--mut)';
   document.getElementById('recState').textContent = has(v) ? word(v) : 'Нет данных за этот день';
-  document.getElementById('recState').style.color = has(v) ? col(v) : 'var(--mut)';
+  document.getElementById('recState').style.color = has(v) ? colText(v) : 'var(--mut)';
   const blurbParts = [];
   if (has(m.hrv)) blurbParts.push(`HRV ${m.hrv} мс`);
   if (has(m.rhr)) blurbParts.push(`RHR ${m.rhr} уд/мин`);
@@ -5458,6 +5577,7 @@ function persistHabits() {
       DATA.habits.map(h => ({ id: h.id, label: h.label, delta: h.delta, icon: h.icon, type: h.type || 'boolean', unit: h.unit || '' }))
     ));
   } catch (e) { /* private mode / квота — чек-ин просто не переживёт перезагрузку */ }
+  scheduleJournalSync(selectedDayKey()); // тихое зеркало дня на диск через bridge
 }
 
 function habitItemHTML(h) {
@@ -5476,7 +5596,7 @@ function habitItemHTML(h) {
         <div class="habit-details">
           <span class="habit-label">${escapeHtml(h.label)}</span>
           ${mood && q
-            ? `<span class="mood-chip" style="color:${q.color}; border-color:${q.color}66;" onclick="openMoodCheckin()" title="${escapeHtml(q.label)} · изменить">
+            ? `<span class="mood-chip" style="color:${q.textColor}; border-color:${q.color}66;" onclick="openMoodCheckin()" title="${escapeHtml(q.label)} · изменить">
                  <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${q.color};"></span>${escapeHtml(mood.word)} · ${mood.energy || '—'}/5
                </span>`
             : `<button type="button" class="btn-secondary" style="margin-top:4px; font-size:11px; padding:4px 11px; align-self:flex-start;" onclick="openMoodCheckin()">
@@ -7038,6 +7158,7 @@ function saveJournalEntry() {
     if (notes) localStorage.setItem(key, notes);
     else localStorage.removeItem(key);
   } catch (e) { /* ignore */ }
+  scheduleJournalSync(todayKey()); // notes пишутся за сегодня
 
   persistHabits();
   status.textContent = 'Сохранено локально · ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
@@ -8049,21 +8170,22 @@ function attachCrosshair(svgOrId, cfg) {
 // ============================================================
 
 const MOOD_DAY_KEY = k => 'openhealth.mood.' + k;
+// color — заливки (точки, дуги); textColor — текст, в светлых темах темнее (см. --mood-*).
 const MOOD_QUADRANTS = {
   hu: {
-    label: 'Высокая энергия · неприятно', short: 'Напряжение', color: '#f43f5e', energy: 4,
+    label: 'Высокая энергия · неприятно', short: 'Напряжение', color: '#f43f5e', textColor: 'var(--mood-hu)', energy: 4,
     words: ['Злость', 'Тревога', 'Паника', 'Раздражение', 'Стресс', 'Напряжение', 'Испуг', 'Возмущение', 'Обида']
   },
   hp: {
-    label: 'Высокая энергия · приятно', short: 'Подъём', color: '#fbbf24', energy: 4,
+    label: 'Высокая энергия · приятно', short: 'Подъём', color: '#fbbf24', textColor: 'var(--mood-hp)', energy: 4,
     words: ['Радость', 'Восторг', 'Азарт', 'Воодушевление', 'Энергичность', 'Гордость', 'Интерес', 'Игривость', 'Оптимизм']
   },
   lu: {
-    label: 'Низкая энергия · неприятно', short: 'Упадок', color: '#60a5fa', energy: 2,
+    label: 'Низкая энергия · неприятно', short: 'Упадок', color: '#60a5fa', textColor: 'var(--mood-lu)', energy: 2,
     words: ['Грусть', 'Усталость', 'Апатия', 'Скука', 'Одиночество', 'Разочарование', 'Опустошённость', 'Уныние', 'Вина']
   },
   lp: {
-    label: 'Низкая энергия · приятно', short: 'Покой', color: '#34d399', energy: 2,
+    label: 'Низкая энергия · приятно', short: 'Покой', color: '#34d399', textColor: 'var(--mood-lp)', energy: 2,
     words: ['Спокойствие', 'Умиротворение', 'Благодарность', 'Расслабленность', 'Удовлетворённость', 'Принятие', 'Безмятежность', 'Уют', 'Нежность']
   }
 };
@@ -8126,7 +8248,7 @@ function renderMoodStep() {
     <div class="mood-words-grid">
       ${m.words.map(w => `
         <button type="button" class="mood-word ${moodFlow.word === w ? 'on' : ''}"
-                style="${moodFlow.word === w ? `background:${m.color}22; border-color:${m.color}; color:${m.color};` : ''}"
+                style="${moodFlow.word === w ? `background:${m.color}22; border-color:${m.color}; color:${m.textColor};` : ''}"
                 onclick="moodFlow.word='${w}'; renderMoodStep();">${w}</button>`).join('')}
     </div>
     <div class="mood-energy-row">
@@ -8155,6 +8277,7 @@ function saveMood() {
   if (!moodFlow || !moodFlow.quadrant || !moodFlow.word) return;
   const rec = { quadrant: moodFlow.quadrant, word: moodFlow.word, energy: moodFlow.energy || MOOD_QUADRANTS[moodFlow.quadrant].energy };
   try { localStorage.setItem(MOOD_DAY_KEY(selectedDayKey()), JSON.stringify(rec)); } catch (e) { /* private mode */ }
+  scheduleJournalSync(selectedDayKey());
   // Синхронизируем параметр «Настроение / энергия» в чек-ине (шкала = энергия).
   const h = DATA.habits.find(x => x.id === MOOD_HABIT_ID);
   if (h) { h.value = rec.energy; h.done = true; persistHabits(); }
@@ -8166,6 +8289,7 @@ function saveMood() {
 
 function clearMood() {
   try { localStorage.removeItem(MOOD_DAY_KEY(selectedDayKey())); } catch (e) { /* ignore */ }
+  scheduleJournalSync(selectedDayKey());
   const h = DATA.habits.find(x => x.id === MOOD_HABIT_ID);
   if (h) { h.value = null; h.done = false; persistHabits(); }
   closeModal();
@@ -8215,7 +8339,7 @@ function renderPulseMoodRing() {
       </div>
       <div class="mood-ring-stats">
         ${todayMood ? `
-          <div class="big" style="color:${MOOD_QUADRANTS[todayMood.quadrant].color};">${escapeHtml(todayMood.word)}</div>
+          <div class="big" style="color:${MOOD_QUADRANTS[todayMood.quadrant].textColor};">${escapeHtml(todayMood.word)}</div>
           <div class="sub">сегодняшняя эмоция · энергия ${todayMood.energy || '—'}/5</div>`
         : `
           <div class="big" style="font-size:16px;">Сегодня без отметки</div>
@@ -8682,6 +8806,8 @@ function renderProtocolsScreen() {
 
         ${protocolCheckpointHTML(p, act)}
 
+        ${p.safety_note_ru ? `<p class="rdc-note" style="margin-top:12px;">${escapeHtml(p.safety_note_ru)}</p>` : ''}
+
         <div class="proto-actions">
           ${mine
             ? '<button class="btn-secondary" onclick="stopProtocol()"><i class="ph-light ph-stop"></i> Остановить</button>'
@@ -8691,8 +8817,6 @@ function renderProtocolsScreen() {
           </button>
         </div>
         <div class="agent-box" id="protoAgentBox${idx}" style="margin-top:12px; display:none;"></div>
-
-        ${p.safety_note_ru ? `<p class="rdc-note" style="margin-top:12px;">${escapeHtml(p.safety_note_ru)}</p>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -8876,6 +9000,7 @@ const titles = {
   body: "Состав тела",
   workouts: "Тренировки",
   dna: "ДНК",
+  vaccination: "Вакцинация",
   protocols: "Protocols",
   research: "Research",
   reports: "Отчёты",
@@ -8982,6 +9107,78 @@ function fallbackCopy(text) {
 // === Bridge: локальный агент (server.py на 127.0.0.1) ======================
 
 const BRIDGE = { checked: false, ok: false, agents: {} };
+
+// === Синк журнала: localStorage -> bridge (/api/journal/day) ================
+// localStorage остаётся источником истины для UI; диск — зеркало для агента,
+// бэкап и мост между браузерами. Оффлайн — молчим, данные никуда не деваются.
+
+const JOURNAL_SYNC_DELAY = 800;
+const journalSyncTimers = {};
+
+function collectDayPayload(key) {
+  const readJson = k => {
+    try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; }
+  };
+  const payload = {};
+  const habits = readJson('openhealth.habits.' + key);
+  if (habits && typeof habits === 'object') payload.habits = habits;
+  const mood = readJson('openhealth.mood.' + key);
+  if (mood && typeof mood === 'object') payload.mood = mood;
+  const survey = readJson('openhealth.survey.' + key);
+  if (survey && typeof survey === 'object') payload.survey = survey;
+  let notes = null;
+  try { notes = localStorage.getItem('openhealth.journal.notes.' + key); } catch (e) { /* ignore */ }
+  if (notes) payload.notes = notes;
+  return payload;
+}
+
+function scheduleJournalSync(key) {
+  key = key || selectedDayKey();
+  clearTimeout(journalSyncTimers[key]);
+  journalSyncTimers[key] = setTimeout(() => {
+    delete journalSyncTimers[key];
+    pushJournalDay(key);
+  }, JOURNAL_SYNC_DELAY);
+}
+
+function pushJournalDay(key) {
+  try {
+    fetch('/api/journal/day', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: key, payload: collectDayPayload(key) })
+    }).catch(() => { /* bridge офлайн — localStorage уже всё хранит */ });
+  } catch (e) { /* file:// без fetch — тоже молчим */ }
+}
+
+// При входе в день подтягиваем зеркало с диска. Диск выигрывает только там,
+// где в браузере пусто (новый браузер / очищенный localStorage) — текущая
+// браузерная запись никогда не затирается.
+function hydrateDayFromDisk(key, onApplied) {
+  try {
+    fetch('/api/journal/day?date=' + key, { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => {
+        const p = j && j.payload;
+        if (!p) return;
+        let applied = false;
+        const setIfEmpty = (lsKey, value) => {
+          if (value == null) return;
+          try {
+            if (localStorage.getItem(lsKey) != null) return;
+            localStorage.setItem(lsKey, typeof value === 'string' ? value : JSON.stringify(value));
+            applied = true;
+          } catch (e) { /* private mode */ }
+        };
+        setIfEmpty('openhealth.habits.' + key, p.habits);
+        setIfEmpty('openhealth.mood.' + key, p.mood);
+        setIfEmpty('openhealth.survey.' + key, p.survey);
+        setIfEmpty('openhealth.journal.notes.' + key, p.notes);
+        if (applied && typeof onApplied === 'function') onApplied();
+      })
+      .catch(() => { /* bridge офлайн — работаем из localStorage */ });
+  } catch (e) { /* ignore */ }
+}
 
 async function checkBridge() {
   const ctrl = new AbortController();
@@ -9220,6 +9417,139 @@ function updateSourceBadges() {
   });
 }
 
+// === Вакцинация: локальный список прививок (localStorage) ==================
+// Никакой бутафории: только то, что внёс сам. Хранится в браузере,
+// openhealth.vaccinations = [{name, date, dose, next_due}].
+
+const VACC_KEY = 'openhealth.vaccinations';
+
+function getVaccinations() {
+  try {
+    const v = JSON.parse(localStorage.getItem(VACC_KEY) || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch (e) { return []; }
+}
+
+function saveVaccinations(list) {
+  try { localStorage.setItem(VACC_KEY, JSON.stringify(list)); } catch (e) { /* private mode */ }
+}
+
+function vaccRowHTML(v, i) {
+  const overdue = v.next_due && v.next_due < todayKey();
+  return `
+    <div class="vacc-row${overdue ? ' overdue' : ''}">
+      <div class="vacc-main">
+        <span class="vacc-name">${escapeHtml(v.name)}</span>
+        <span class="vacc-meta">
+          <span class="mono">${escapeHtml(v.date || '—')}</span>${v.dose ? ' · ' + escapeHtml(v.dose) : ''}
+        </span>
+      </div>
+      <div class="vacc-side">
+        ${v.next_due ? `<span class="vacc-due${overdue ? ' late' : ''}" title="Плановая ревакцинация">
+            <i class="ph-light ${overdue ? 'ph-warning' : 'ph-clock'}"></i>
+            ${overdue ? 'срок прошёл · ' : 'до '}<span class="mono">${escapeHtml(v.next_due)}</span>
+          </span>` : ''}
+        <button type="button" class="vacc-del" aria-label="Удалить запись «${escapeHtml(v.name)}»"
+                onclick="deleteVaccination(${i})"><i class="ph-light ph-trash"></i></button>
+      </div>
+    </div>`;
+}
+
+function renderVaccinationScreen() {
+  const host = document.getElementById('vaccinationContent');
+  if (!host) return;
+  // _i — индекс в хранимом массиве: удаление работает и после сортировки по дате.
+  const list = getVaccinations().map((v, i) => ({ ...v, _i: i }))
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  const overdueCount = list.filter(v => v.next_due && v.next_due < todayKey()).length;
+
+  const listCard = `
+    <div class="card-outer col-7">
+      <div class="card-inner">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h3>Прививки</h3>
+            <div class="sub">${list.length
+              ? list.length + ' зап.' + (overdueCount ? ' · ' + overdueCount + ' с прошедшим сроком' : '')
+              : 'записей пока нет'}</div>
+          </div>
+          <i class="ph-light ph-syringe card-header-icon"></i>
+        </div>
+        ${list.length
+          ? `<div class="vacc-list">${list.map(v => vaccRowHTML(v, v._i)).join('')}</div>`
+          : `<div class="empty-state" style="padding: 28px 0;">
+               <div class="empty-icon-ring"><i class="ph-light ph-syringe"></i></div>
+               <h4>Список пуст</h4>
+               <p class="what">Внеси прививки из сертификата — получишь напоминание, когда подойдёт срок ревакцинации.</p>
+             </div>`}
+        <p class="vacc-note">Данные хранятся локально в этом браузере. Сроки ревакцинации обсуждай с врачом.</p>
+      </div>
+    </div>`;
+
+  const formCard = `
+    <div class="card-outer col-5">
+      <div class="card-inner">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h3>Добавить запись</h3>
+            <div class="sub">название и дата — обязательные</div>
+          </div>
+          <i class="ph-light ph-plus-circle card-header-icon"></i>
+        </div>
+        <div class="form-group">
+          <label for="vaccName">Вакцина *</label>
+          <input type="text" id="vaccName" maxlength="80" placeholder="Например: АДС-М, гепатит B, грипп"
+                 onkeydown="if(event.key==='Enter'){addVaccination();}">
+        </div>
+        <div class="form-group">
+          <label for="vaccDate">Дата прививки *</label>
+          <input type="date" id="vaccDate" max="${todayKey()}">
+        </div>
+        <div class="form-group">
+          <label for="vaccDose">Доза / серия</label>
+          <input type="text" id="vaccDose" maxlength="40" placeholder="Например: 2-я доза, бустер">
+        </div>
+        <div class="form-group">
+          <label for="vaccNextDue">Следующая ревакцинация</label>
+          <input type="date" id="vaccNextDue">
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+          <button class="btn-primary" onclick="addVaccination()">
+            <i class="ph-light ph-plus"></i> Добавить
+          </button>
+        </div>
+      </div>
+    </div>`;
+
+  host.innerHTML = listCard + formCard;
+}
+
+function addVaccination() {
+  const nameEl = document.getElementById('vaccName');
+  const dateEl = document.getElementById('vaccDate');
+  const name = (nameEl ? nameEl.value : '').trim();
+  const date = (dateEl ? dateEl.value : '').trim();
+  if (!name) { showToast('Укажи название вакцины', false); if (nameEl) nameEl.focus(); return; }
+  if (!date) { showToast('Укажи дату прививки', false); if (dateEl) dateEl.focus(); return; }
+  const dose = (document.getElementById('vaccDose')?.value || '').trim().slice(0, 40);
+  const next_due = (document.getElementById('vaccNextDue')?.value || '').trim();
+  const list = getVaccinations();
+  list.push({ name: name.slice(0, 80), date, dose, next_due });
+  saveVaccinations(list);
+  renderVaccinationScreen();
+  showToast('Прививка записана: ' + name);
+}
+
+function deleteVaccination(i) {
+  const list = getVaccinations();
+  const v = list[i];
+  if (!v) return;
+  list.splice(i, 1);
+  saveVaccinations(list);
+  renderVaccinationScreen();
+  showToast('Удалено: ' + (v.name || 'запись'));
+}
+
 // === Настройка меню: скрытие разделов (localStorage) =======================
 
 const NAV_HIDDEN_KEY = 'openhealth.nav.hidden';
@@ -9234,6 +9564,7 @@ const NAV_HIDEABLE = [
   { z: 'body', label: 'Состав тела', icon: 'ph-chart-pie' },
   { z: 'workouts', label: 'Тренировки', icon: 'ph-barbell' },
   { z: 'dna', label: 'ДНК', icon: 'ph-dna' },
+  { z: 'vaccination', label: 'Вакцинация', icon: 'ph-syringe' },
   { z: 'protocols', label: 'Protocols', icon: 'ph-book-open' },
   { z: 'research', label: 'Research', icon: 'ph-microscope' },
   { z: 'reports', label: 'Отчёты', icon: 'ph-file-text' },
@@ -9327,19 +9658,18 @@ function go(z) {
         gsap.set(s, { clearProps: 'opacity,transform' });
       });
       targetSection.classList.add('on');
-      
-      gsap.set(targetSection.querySelectorAll('.card-outer'), {
-        opacity: 0,
-        y: 20
-      });
-      
+
+      // Пустой NodeList (зона рендерится ниже) — GSAP спамит warning, обходим.
+      const cards = Array.from(targetSection.querySelectorAll('.card-outer'));
+      if (cards.length) gsap.set(cards, { opacity: 0, y: 20 });
+
       gsap.to(targetSection, {
         opacity: 1,
         y: 0,
         duration: 0.1
       });
-      
-      gsap.to(targetSection.querySelectorAll('.card-outer'), {
+
+      if (cards.length) gsap.to(cards, {
         opacity: 1,
         y: 0,
         duration: 0.5,
@@ -9371,6 +9701,8 @@ function go(z) {
         renderSyncScreen();
       } else if (z === 'dna') {
         renderDnaScreen();
+      } else if (z === 'vaccination') {
+        renderVaccinationScreen();
       } else if (z === 'protocols') {
         renderProtocolsScreen();
       } else if (z === 'workouts') {
@@ -9524,6 +9856,8 @@ window.addEventListener('DOMContentLoaded', () => {
   renderDashboard();
   // Один тихий запрос к /api/health с таймаутом 1.5 с — без спама.
   checkBridge();
+  // Зеркало журнала с диска (другой браузер / восстановленный localStorage).
+  hydrateDayFromDisk(selectedDayKey(), () => { initHabitsState(); updateTodayScreen(); });
 });
 
 function exploreCorrelations() {
@@ -9756,7 +10090,7 @@ function renderTimeline() {
           <b>${d.getDate()} ${RU_MONTHS_SHORT[d.getMonth()]}</b>
           <span>${RU_WEEKDAYS_SHORT[d.getDay()]}${key === realToday ? ' · <span class="tl-today-badge">сегодня</span>' : ''}</span>
         </div>
-        <span class="tl-rec" style="background:${zoneRgba(v, 0.14)}; color:${col(v)};">${v}</span>
+        <span class="tl-rec" style="background:${zoneRgba(v, 0.14)}; color:${colText(v)};">${v}</span>
         <div class="tl-events">${ev.html || '<span class="tl-none">— без отметок</span>'}</div>
       </div>`);
   }
@@ -10281,6 +10615,7 @@ function answerSurvey(v) {
   // Финал: сохранить и показать сводку.
   const payload = { ...SURVEY_STATE.answers, ts: new Date().toISOString() };
   try { localStorage.setItem(SURVEY_PREFIX + todayKey(), JSON.stringify(payload)); } catch (e) { /* private mode */ }
+  scheduleJournalSync(todayKey());
   SURVEY_STATE = null;
   updateSurveyReminder();
   renderSurveyStatus();

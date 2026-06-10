@@ -31,6 +31,15 @@ Endpoints:
                           to ~/.openhealth/calendar.json (0600). The URL is a
                           secret: never logged, never echoed back.
     DELETE /api/calendar -> disable the subscription (URL kept for re-enable)
+    POST /api/journal/day -> {"date": "YYYY-MM-DD", "payload": {...}}; mirrors
+                          the dashboard journal day to ~/.openhealth/journal/
+                          and, when the engine index (<dir|parent>/data/index/
+                          *.sqlite3) exists, upserts records there
+                          ("indexed": true/false in the reply, honestly).
+    GET  /api/journal/day?date=   -> stored day payload (or payload: null)
+    GET  /api/journal/range?start=&end= -> {"days": {date: payload}}
+    GET|POST /api/journal/focus   -> week-focus items (max 3)
+    GET  /api/journal/export      -> whole journal mirror (backup)
     POST /api/agent   -> run a local agent CLI for a whitelisted task.
                          body: {"task": "insight" | "correlations" | "research"
                                         | "transcript",
@@ -91,10 +100,12 @@ from urllib.parse import parse_qs
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 try:
     from openhealth import agent_memory
+    from openhealth import journal_store
     from openhealth.connectors import ics_calendar
 except ImportError:  # running from a checkout without `pip install -e .`
     sys.path.insert(0, str(_REPO_ROOT))
     from openhealth import agent_memory
+    from openhealth import journal_store
     from openhealth.connectors import ics_calendar
 
 HOST = "127.0.0.1"
@@ -926,6 +937,106 @@ def handle_calendar_delete() -> "tuple":
     return 200, {"status": "ok", "configured": False, "was_configured": was_configured}
 
 
+# --- journal bridge: localStorage mirror -> disk (+ SQLite index) ------------
+
+_JOURNAL_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _journal_date(value) -> str:
+    """Strict YYYY-MM-DD or ValueError (no invented dates, core rule)."""
+    if not isinstance(value, str) or not _JOURNAL_DATE_RE.match(value):
+        raise ValueError("date must be YYYY-MM-DD")
+    time.strptime(value, "%Y-%m-%d")  # rejects 2026-13-99 etc.
+    return value
+
+
+def find_journal_db(base_dir: Path) -> "Path | None":
+    """SQLite index near the runtime dir: <dir|parent>/data/index/*.sqlite3.
+
+    The dashboard usually runs from <health-os>/dashboard while the engine
+    index lives at <health-os>/data/index/health_os.sqlite3 — hence the
+    parent lookup. None when no index exists (journal still mirrors to disk).
+    """
+    for directory in _context_dirs(base_dir):
+        idx_dir = directory / "data" / "index"
+        if idx_dir.is_dir():
+            candidates = sorted(idx_dir.glob("*.sqlite3"))
+            if candidates:
+                return candidates[0]
+    return None
+
+
+def handle_journal_day_post(payload, base_dir: Path) -> "tuple":
+    """POST /api/journal/day {"date": "YYYY-MM-DD", "payload": {...}}.
+
+    Mirrors one day to <home>/journal/days/<date>.json; when the engine index
+    is found, the records are also upserted there ("indexed": true).
+    """
+    if not isinstance(payload, dict):
+        return 400, {"status": "error", "message": "body must be a JSON object"}
+    try:
+        date = _journal_date(payload.get("date"))
+        day_payload = payload.get("payload")
+        db_path = find_journal_db(base_dir)
+        if db_path is not None:
+            written = journal_store.persist_day(date, day_payload, db_path)
+            return 200, {"status": "ok", "date": date, "indexed": True, "records": written}
+        journal_store.save_day(date, day_payload)
+        return 200, {
+            "status": "ok", "date": date, "indexed": False, "records": 0,
+            "message": "индекс не найден — день сохранён только на диск (journal/days)",
+        }
+    except ValueError as exc:
+        return 400, {"status": "error", "message": str(exc)}
+    except OSError as exc:
+        return 500, {"status": "error", "message": "cannot write journal: {}".format(exc.__class__.__name__)}
+
+
+def handle_journal_day_get(date_str) -> "tuple":
+    """GET /api/journal/day?date=YYYY-MM-DD -> stored payload or payload: null."""
+    if not date_str:
+        return 400, {"status": "error", "message": "missing ?date=YYYY-MM-DD"}
+    try:
+        date = _journal_date(date_str)
+    except ValueError as exc:
+        return 400, {"status": "error", "message": str(exc)}
+    payload = journal_store.load_day(date)
+    return 200, {"status": "ok", "date": date, "found": payload is not None, "payload": payload}
+
+
+def handle_journal_range_get(start, end) -> "tuple":
+    """GET /api/journal/range?start=&end= -> {"days": {date: payload}}."""
+    try:
+        start = _journal_date(start)
+        end = _journal_date(end)
+        days = journal_store.load_range(start, end)
+    except ValueError as exc:
+        return 400, {"status": "error", "message": str(exc)}
+    return 200, {"status": "ok", "start": start, "end": end, "count": len(days), "days": days}
+
+
+def handle_journal_focus_post(payload) -> "tuple":
+    """POST /api/journal/focus {"items": [...], "week_start": "YYYY-MM-DD"|null}."""
+    if not isinstance(payload, dict):
+        return 400, {"status": "error", "message": "body must be a JSON object"}
+    try:
+        journal_store.save_week_focus(payload.get("items"), week_start=payload.get("week_start"))
+    except ValueError as exc:
+        return 400, {"status": "error", "message": str(exc)}
+    except OSError as exc:
+        return 500, {"status": "error", "message": "cannot write focus: {}".format(exc.__class__.__name__)}
+    return 200, {"status": "ok", "focus": journal_store.load_week_focus()}
+
+
+def handle_journal_focus_get() -> "tuple":
+    return 200, {"status": "ok", "focus": journal_store.load_week_focus()}
+
+
+def handle_journal_export_get() -> "tuple":
+    """GET /api/journal/export -> whole journal mirror (backup/transfer)."""
+    return 200, journal_store.export_all()
+
+
 # --- HTTP handler ------------------------------------------------------------
 
 
@@ -985,6 +1096,22 @@ class BridgeHandler(SimpleHTTPRequestHandler):
             status, body = handle_todos_get(query.get("date", [None])[0])
             self._send_json(body, status=status)
             return
+        if path.startswith("/api/journal/"):
+            query = parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}
+            if path == "/api/journal/day":
+                status, body = handle_journal_day_get(query.get("date", [None])[0])
+            elif path == "/api/journal/range":
+                status, body = handle_journal_range_get(
+                    query.get("start", [None])[0], query.get("end", [None])[0]
+                )
+            elif path == "/api/journal/focus":
+                status, body = handle_journal_focus_get()
+            elif path == "/api/journal/export":
+                status, body = handle_journal_export_get()
+            else:
+                status, body = 404, {"status": "error", "message": "not found"}
+            self._send_json(body, status=status)
+            return
         super().do_GET()  # static files; index.html for directories
 
     def _read_json_body(self) -> "tuple":
@@ -1007,13 +1134,28 @@ class BridgeHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802 (http.server API)
         path = self.path.split("?", 1)[0]
-        if path not in ("/api/agent", "/api/config", "/api/calendar"):
+        if path not in ("/api/agent", "/api/config", "/api/calendar",
+                        "/api/journal/day", "/api/journal/focus"):
             self._send_json({"status": "error", "message": "not found"}, status=404)
             return
 
         payload, error = self._read_json_body()
         if error is not None:
             self._send_json(error[1], status=error[0])
+            return
+
+        if path == "/api/journal/day":
+            status, body = handle_journal_day_post(payload, self.base_dir)
+            # date + outcome only — journal contents are personal data
+            log("POST /api/journal/day {} -> {} (indexed={})".format(
+                body.get("date", "?"), body.get("status"), body.get("indexed", "-")))
+            self._send_json(body, status=status)
+            return
+
+        if path == "/api/journal/focus":
+            status, body = handle_journal_focus_post(payload)
+            log("POST /api/journal/focus -> {}".format(body.get("status")))
+            self._send_json(body, status=status)
             return
 
         if path == "/api/calendar":

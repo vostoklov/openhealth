@@ -848,7 +848,9 @@ def handle_agent_request(payload: dict, base_dir: Path) -> "tuple":
             # становится контекстом следующих разборов (контур замыкается).
             saved = save_research_result(base_dir, param, result)
             if saved:
-                result["saved_as"] = saved
+                # необязательное поле: имя сохранённого файла (контракт ответа
+                # /api/agent не меняется, UI его игнорирует, если не нужно)
+                result["saved"] = saved
     return 200, result
 
 
@@ -1461,6 +1463,8 @@ def save_research_result(base_dir: Path, param: str, result: dict) -> "str | Non
             "{text}\n"
         ).format(topic=topic, agent=result.get("agent") or "?", date=date, text=text)
         (research_dir / name).write_text(body, encoding="utf-8")
+        # лог только статус + имя файла, без содержимого (нет персональных данных)
+        log("saved research {}".format(name))
         return name
     except OSError as exc:
         log("research save failed: {}".format(exc.__class__.__name__))

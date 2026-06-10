@@ -23,6 +23,14 @@ AUTHORIZATION_URL = "https://api.prod.whoop.com/oauth/oauth2/auth"
 TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token"
 API_BASE_URL = "https://api.prod.whoop.com/developer/v2"
 WHOOP_SOURCE_ID = "whoop-live"
+# WHOOP sits behind Cloudflare, which bans the default urllib User-Agent
+# (Error 1010 "browser_signature_banned"). Send a browser-like UA so OAuth
+# token exchange and API calls are not blocked at the WAF.
+USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/123.0.0.0 Safari/537.36"
+)
 DEFAULT_SCOPES = (
     "read:profile",
     "read:recovery",
@@ -86,6 +94,17 @@ class WhoopApiError(RuntimeError):
     """Raised when WHOOP returns an unexpected response."""
 
 
+def parse_scopes(raw: Optional[str]) -> Tuple[str, ...]:
+    """Parse a comma- or space-separated scope string into a tuple.
+
+    Empty / missing input yields an empty tuple so callers can fall back to
+    ``DEFAULT_SCOPES``.
+    """
+    if not raw:
+        return ()
+    return tuple(token for token in raw.replace(",", " ").split() if token)
+
+
 def load_credentials_from_env() -> WhoopCredentials:
     client_id = os.getenv("OPENHEALTH_WHOOP_CLIENT_ID")
     client_secret = os.getenv("OPENHEALTH_WHOOP_CLIENT_SECRET")
@@ -101,7 +120,17 @@ def load_credentials_from_env() -> WhoopCredentials:
     ]
     if missing:
         raise WhoopApiError("Missing WHOOP credentials in environment: %s" % ", ".join(missing))
-    return WhoopCredentials(client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri)
+    # Not every WHOOP app is granted the full default scope set (e.g. apps
+    # without read:profile / read:body_measurement). OPENHEALTH_WHOOP_SCOPES
+    # lets the user request exactly the scopes their app allows and avoid an
+    # invalid_scope error at the authorize step.
+    scopes = parse_scopes(os.getenv("OPENHEALTH_WHOOP_SCOPES")) or DEFAULT_SCOPES
+    return WhoopCredentials(
+        client_id=client_id,
+        client_secret=client_secret,
+        redirect_uri=redirect_uri,
+        scopes=scopes,
+    )
 
 
 def build_authorization_url(credentials: WhoopCredentials, state: str) -> str:
@@ -932,7 +961,8 @@ def _request_json(
     data: Optional[bytes] = None,
     path_hint: str = "",
 ) -> Dict[str, Any]:
-    headers = headers or {}
+    headers = dict(headers or {})
+    headers.setdefault("User-Agent", USER_AGENT)
     request = Request(url, data=data, headers=headers, method=method)
     try:
         with urlopen(request, timeout=30) as response:

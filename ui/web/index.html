@@ -305,6 +305,16 @@
     border-bottom: 1px solid var(--line);
   }
 
+  /* Десктоп: жёсткое центрирование переключателя дней — grid 1fr|auto|1fr,
+     средний столбец всегда по центру независимо от ширины заголовка/лейбла
+     (раньше space-between заставлял его прыгать влево-вправо). */
+  @media (min-width: 601px) {
+    .topbar { display: grid; grid-template-columns: 1fr auto 1fr; }
+    .topbar-left { justify-self: start; min-width: 0; }
+    .topbar-left h1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #topPill { justify-self: end; white-space: nowrap; }
+  }
+
   [data-theme="light"] .topbar {
     background: rgba(249, 250, 251, 0.75);
   }

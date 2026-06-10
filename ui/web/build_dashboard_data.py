@@ -335,7 +335,7 @@ def build_insights_block(con: sqlite3.Connection) -> dict:
 
     daily = _daily_from_whoop(_load_whoop_by_date(con))
     try:
-        found = _insights.detect_insights(daily, {"sleep_h": 8.0})
+        found = _insights.detect_insights(daily, {"sleep_h": _sleep_goal_h()})
         protos = _protocols.build_protocols(found, correlations=[])
         return {
             "insights": _insights.insights_to_dicts(found),
@@ -623,6 +623,16 @@ def build_weather_block() -> dict:
         }
     except Exception:
         return {}
+
+
+def _sleep_goal_h() -> float:
+    """Цель сна для детекторов: настраиваемый параметр, фолбэк 8.0."""
+    try:
+        from openhealth import params
+
+        return float(params.get("insights.sleep_goal_h"))
+    except Exception:
+        return 8.0
 
 
 def build_payload(db_path: Path) -> dict:

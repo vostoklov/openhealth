@@ -40,6 +40,35 @@ Endpoints:
     GET  /api/journal/range?start=&end= -> {"days": {date: payload}}
     GET|POST /api/journal/focus   -> week-focus items (max 3)
     GET  /api/journal/export      -> whole journal mirror (backup)
+    GET  /api/params  -> {"params": [...]} from openhealth.params.list_all()
+    POST /api/params  -> {"id": "...", "value": N}; unknown id -> 404,
+                          out-of-range / non-numeric -> 400. Persists to
+                          ~/.openhealth/params.json.
+    POST /api/params/reset -> {"id": "<param>"|"all"}; drops override(s).
+    GET  /api/methodology -> [{"id","title","version","path","content"}]
+                          from docs/methodology/*.md (README first, cached
+                          by mtime).
+    POST /api/methodology/save -> {"id", "content"}; writes ONLY inside
+                          docs/methodology/<id>.md (existing files only,
+                          path-traversal safe), .bak backup alongside.
+    GET  /api/profile -> body profile from <data-dir>/profile.json
+                          (or {"found": false}).
+    POST /api/profile -> {"age","sex","height_cm","weight_kg",
+                          "weight_history":[{"date","kg"}]}; writes
+                          <data-dir>/profile.json + a human-readable
+                          <data-dir>/about-me-profile.md (the agent context
+                          preamble picks about-me* up automatically).
+    GET  /api/weather/location -> {"configured": bool, "label": "..."}
+    POST /api/weather/location -> {"city": "..."}; geocodes via Open-Meteo
+                          and saves ~/.openhealth/weather.json. Geocoder
+                          miss -> 404 with an honest message.
+    GET  /api/weather/today -> today's weather for the configured location
+                          (fallback: yesterday) + context flags + daylight
+                          and UV. Without a location: 503 {"configured":
+                          false}. 10-min in-memory cache.
+    GET  /api/research/list?param= -> research/ files (optionally filtered
+                          by slug prefix of ?param=).
+    GET  /api/research/file?name=  -> one research file's content.
     POST /api/agent   -> run a local agent CLI for a whitelisted task.
                          body: {"task": "insight" | "correlations" | "research"
                                         | "transcript",
@@ -101,12 +130,16 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 try:
     from openhealth import agent_memory
     from openhealth import journal_store
+    from openhealth import params as calc_params
     from openhealth.connectors import ics_calendar
+    from openhealth.connectors import weather as weather_conn
 except ImportError:  # running from a checkout without `pip install -e .`
     sys.path.insert(0, str(_REPO_ROOT))
     from openhealth import agent_memory
     from openhealth import journal_store
+    from openhealth import params as calc_params
     from openhealth.connectors import ics_calendar
+    from openhealth.connectors import weather as weather_conn
 
 HOST = "127.0.0.1"
 DEFAULT_PORT = 8770
@@ -810,6 +843,12 @@ def handle_agent_request(payload: dict, base_dir: Path) -> "tuple":
             agent_memory.remember(task, result["result"], tags=[param] if param else [])
         except OSError as exc:
             log("memory write failed: {}".format(exc.__class__.__name__))
+        if task == "research":
+            # research/ читается преамбулой агента — сохранённый файл сразу
+            # становится контекстом следующих разборов (контур замыкается).
+            saved = save_research_result(base_dir, param, result)
+            if saved:
+                result["saved_as"] = saved
     return 200, result
 
 
@@ -871,10 +910,14 @@ def handle_calendar_get(date_str: "str | None" = None) -> "tuple":
     except ics_calendar.IcsCalendarError as exc:
         # exc messages never contain the secret URL (see ics_calendar)
         return 200, {"configured": True, "status": "error", "message": str(exc)}
+    with _calendar_cache_lock:
+        fetched_at = _calendar_cache["fetched_at"]
+    cache_age_s = int(max(0.0, time.monotonic() - fetched_at)) if fetched_at else 0
     return 200, {
         "configured": True,
         "status": "ok",
         "cached": cached,
+        "cache_age_s": cache_age_s,
         "events_total": len(parsed.get("events", [])),
         "warnings": parsed.get("warnings", [])[:10],
         "day": ics_calendar.day_load(parsed.get("events", []), day),
@@ -1037,6 +1080,442 @@ def handle_journal_export_get() -> "tuple":
     return 200, journal_store.export_all()
 
 
+# --- params: user-tunable calculation parameters (openhealth.params) ---------
+
+
+def handle_params_get() -> "tuple":
+    return 200, {"status": "ok", "params": calc_params.list_all()}
+
+
+def handle_params_post(payload) -> "tuple":
+    """POST /api/params {"id": "...", "value": N}. Unknown id -> 404."""
+    if not isinstance(payload, dict):
+        return 400, {"status": "error", "message": "body must be a JSON object"}
+    param_id = payload.get("id")
+    if not isinstance(param_id, str) or not param_id:
+        return 400, {"status": "error", "message": "missing param id"}
+    try:
+        value = calc_params.set(param_id, payload.get("value"))
+    except KeyError:
+        return 404, {"status": "error", "message": "unknown param id: {}".format(param_id)}
+    except ValueError as exc:
+        return 400, {"status": "error", "message": str(exc)}
+    except OSError as exc:
+        return 500, {"status": "error", "message": "cannot write params: {}".format(exc.__class__.__name__)}
+    return 200, {"status": "ok", "id": param_id, "value": value, "params": calc_params.list_all()}
+
+
+def handle_params_reset(payload) -> "tuple":
+    """POST /api/params/reset {"id": "<param>" | "all"} -> drop override(s)."""
+    if not isinstance(payload, dict):
+        return 400, {"status": "error", "message": "body must be a JSON object"}
+    param_id = payload.get("id")
+    if not isinstance(param_id, str) or not param_id:
+        return 400, {"status": "error", "message": "missing param id (or \"all\")"}
+    try:
+        removed = calc_params.reset(None if param_id == "all" else param_id)
+    except KeyError:
+        return 404, {"status": "error", "message": "unknown param id: {}".format(param_id)}
+    except OSError as exc:
+        return 500, {"status": "error", "message": "cannot write params: {}".format(exc.__class__.__name__)}
+    return 200, {"status": "ok", "reset": removed, "params": calc_params.list_all()}
+
+
+# --- methodology pages: docs/methodology/*.md ---------------------------------
+
+METHODOLOGY_DIR = _REPO_ROOT / "docs" / "methodology"
+MAX_METHODOLOGY_CHARS = 60_000  # one md page; body cap (64 KB) is the hard wall
+_methodology_cache = {"stamp": None, "items": None}
+_methodology_lock = threading.Lock()
+
+
+def _methodology_stamp() -> "tuple":
+    """Cheap change detector: sorted (name, mtime, size) of every md file."""
+    try:
+        return tuple(
+            (p.name, p.stat().st_mtime_ns, p.stat().st_size)
+            for p in sorted(METHODOLOGY_DIR.glob("*.md"))
+        )
+    except OSError:
+        return ()
+
+
+def _methodology_parse(path: Path) -> dict:
+    """One md file -> {"id","title","version","path","content"}."""
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError:
+        content = ""
+    title = path.stem
+    version = ""
+    for line in content.splitlines():
+        stripped = line.strip()
+        if not title or title == path.stem:
+            if stripped.startswith("# "):
+                title = stripped[2:].strip()
+        if not version and stripped.startswith(">") and "algo_version" in stripped:
+            m = re.search(r"algo_version:\s*([^\s·]+)", stripped)
+            if m:
+                version = m.group(1).strip()
+        if version and title != path.stem:
+            break
+    return {
+        "id": path.stem,
+        "title": title,
+        "version": version,
+        "path": "docs/methodology/" + path.name,
+        "content": content,
+    }
+
+
+def handle_methodology_get() -> "tuple":
+    """GET /api/methodology -> list of parsed pages, README (index) first."""
+    if not METHODOLOGY_DIR.is_dir():
+        return 404, {"status": "error", "message": "docs/methodology not found in this checkout"}
+    stamp = _methodology_stamp()
+    with _methodology_lock:
+        if _methodology_cache["items"] is not None and _methodology_cache["stamp"] == stamp:
+            return 200, {"status": "ok", "pages": _methodology_cache["items"]}
+    files = sorted(METHODOLOGY_DIR.glob("*.md"), key=lambda p: (p.name.lower() != "readme.md", p.name))
+    items = [_methodology_parse(p) for p in files]
+    with _methodology_lock:
+        _methodology_cache.update({"stamp": stamp, "items": items})
+    return 200, {"status": "ok", "pages": items}
+
+
+def handle_methodology_save(payload) -> "tuple":
+    """POST /api/methodology/save {"id", "content"}.
+
+    Writes ONLY inside docs/methodology/, only over an existing .md file
+    (no file creation through the bridge), with a .bak copy alongside.
+    """
+    if not isinstance(payload, dict):
+        return 400, {"status": "error", "message": "body must be a JSON object"}
+    page_id = payload.get("id")
+    content = payload.get("content")
+    # ids are md stems like "recovery" / "weather-flags"; dots/slashes smell like traversal
+    if not isinstance(page_id, str) or not re.match(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,80}$", page_id):
+        return 400, {"status": "error", "message": "bad page id"}
+    if not isinstance(content, str) or not content.strip():
+        return 400, {"status": "error", "message": "content must be a non-empty string"}
+    if len(content) > MAX_METHODOLOGY_CHARS:
+        return 413, {"status": "error", "message": "content too large (max {} chars)".format(MAX_METHODOLOGY_CHARS)}
+
+    target = (METHODOLOGY_DIR / (page_id + ".md")).resolve()
+    try:
+        target.relative_to(METHODOLOGY_DIR.resolve())
+    except ValueError:
+        return 400, {"status": "error", "message": "bad page id (escapes methodology dir)"}
+    if not target.is_file():
+        return 404, {"status": "error", "message": "unknown methodology page: {}".format(page_id)}
+
+    try:
+        backup = target.with_name(target.name + ".bak")
+        backup.write_text(target.read_text(encoding="utf-8"), encoding="utf-8")
+        tmp = target.with_name(target.name + ".tmp")
+        tmp.write_text(content if content.endswith("\n") else content + "\n", encoding="utf-8")
+        os.replace(tmp, target)
+    except OSError as exc:
+        return 500, {"status": "error", "message": "cannot write page: {}".format(exc.__class__.__name__)}
+    with _methodology_lock:
+        _methodology_cache.update({"stamp": None, "items": None})
+    return 200, {"status": "ok", "id": page_id, "backup": backup.name}
+
+
+# --- body profile: <data-dir>/profile.json + about-me-profile.md --------------
+
+PROFILE_FILE = "profile.json"
+PROFILE_MD = "about-me-profile.md"  # about-me* -> build_user_context picks it up
+PROFILE_SEX = ("m", "f", "na")
+MAX_WEIGHT_HISTORY = 200
+
+PROFILE_SEX_RU = {"m": "мужской", "f": "женский", "na": "не указан"}
+
+
+def _profile_number(value, lo, hi, label):
+    """None passes through; otherwise a finite number in [lo, hi] or ValueError."""
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError("{} must be a number".format(label))
+    out = float(value)
+    if out != out or not (lo <= out <= hi):
+        raise ValueError("{} out of range [{}, {}]".format(label, lo, hi))
+    return round(out, 1)
+
+
+def _validate_profile(payload) -> dict:
+    age = _profile_number(payload.get("age"), 5, 120, "age")
+    height = _profile_number(payload.get("height_cm"), 80, 250, "height_cm")
+    weight = _profile_number(payload.get("weight_kg"), 20, 350, "weight_kg")
+    sex = payload.get("sex")
+    if sex is not None and sex not in PROFILE_SEX:
+        raise ValueError("sex must be one of: {}".format(", ".join(PROFILE_SEX)))
+    history = []
+    raw_history = payload.get("weight_history")
+    if isinstance(raw_history, list):
+        for entry in raw_history[-MAX_WEIGHT_HISTORY:]:
+            if not isinstance(entry, dict):
+                continue
+            date = entry.get("date")
+            if not isinstance(date, str) or not _JOURNAL_DATE_RE.match(date):
+                continue
+            try:
+                kg = _profile_number(entry.get("kg"), 20, 350, "weight_history.kg")
+            except ValueError:
+                continue
+            if kg is not None:
+                history.append({"date": date, "kg": kg})
+    history.sort(key=lambda e: e["date"])
+    return {
+        "age": int(age) if age is not None else None,
+        "sex": sex,
+        "height_cm": height,
+        "weight_kg": weight,
+        "weight_history": history,
+        "updated_at": time.strftime("%Y-%m-%d %H:%M"),
+    }
+
+
+def _profile_md_text(profile: dict) -> str:
+    lines = ["# Обо мне — профиль тела", ""]
+    if profile.get("age") is not None:
+        lines.append("Возраст: {}".format(profile["age"]))
+    if profile.get("sex"):
+        lines.append("Пол: {}".format(PROFILE_SEX_RU.get(profile["sex"], profile["sex"])))
+    if profile.get("height_cm") is not None:
+        lines.append("Рост: {} см".format(_fmt_num(profile["height_cm"])))
+    if profile.get("weight_kg") is not None:
+        lines.append("Вес: {} кг".format(_fmt_num(profile["weight_kg"])))
+    history = profile.get("weight_history") or []
+    if history:
+        lines.append("")
+        lines.append("История веса (последние {}):".format(min(5, len(history))))
+        for entry in history[-5:]:
+            lines.append("- {}: {} кг".format(entry["date"], _fmt_num(entry["kg"])))
+    lines.append("")
+    lines.append("_Файл сгенерирован дашбордом OpenHealth (Настройки → Профиль); агент читает его автоматически._")
+    return "\n".join(lines) + "\n"
+
+
+def handle_profile_get(base_dir: Path) -> "tuple":
+    path = base_dir / PROFILE_FILE
+    if not path.is_file():
+        return 200, {"status": "ok", "found": False, "profile": None}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return 200, {"status": "ok", "found": False, "profile": None}
+    return 200, {"status": "ok", "found": True, "profile": raw if isinstance(raw, dict) else None}
+
+
+def handle_profile_post(payload, base_dir: Path) -> "tuple":
+    if not isinstance(payload, dict):
+        return 400, {"status": "error", "message": "body must be a JSON object"}
+    try:
+        profile = _validate_profile(payload)
+    except ValueError as exc:
+        return 400, {"status": "error", "message": str(exc)}
+    try:
+        path = base_dir / PROFILE_FILE
+        tmp = path.with_name(path.name + ".tmp")
+        tmp.write_text(json.dumps(profile, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        os.replace(tmp, path)
+        (base_dir / PROFILE_MD).write_text(_profile_md_text(profile), encoding="utf-8")
+    except OSError as exc:
+        return 500, {"status": "error", "message": "cannot write profile: {}".format(exc.__class__.__name__)}
+    return 200, {"status": "ok", "profile": profile, "md": PROFILE_MD}
+
+
+# --- weather: home location + today's context ---------------------------------
+
+WEATHER_CACHE_TTL_S = 600
+_weather_cache = {"key": None, "fetched_at": 0.0, "body": None}
+_weather_cache_lock = threading.Lock()
+
+
+def handle_weather_location_get() -> "tuple":
+    config = weather_conn.load_location()
+    if not config:
+        return 200, {"configured": False}
+    return 200, {"configured": True, "label": config.get("label") or ""}
+
+
+def handle_weather_location_post(payload) -> "tuple":
+    """POST /api/weather/location {"city": "Lisbon"} -> geocode + persist."""
+    if not isinstance(payload, dict):
+        return 400, {"status": "error", "message": "body must be a JSON object"}
+    city = payload.get("city")
+    if not isinstance(city, str) or not city.strip():
+        return 400, {"status": "error", "message": "missing city"}
+    geo = weather_conn.geocode_city(city.strip())
+    if geo is None:
+        return 404, {
+            "status": "error",
+            "message": "город не найден (или геокодер Open-Meteo недоступен) — проверь написание",
+        }
+    try:
+        weather_conn.set_location(geo["lat"], geo["lon"], geo["label"])
+    except weather_conn.WeatherError as exc:
+        return 400, {"status": "error", "message": str(exc)}
+    except OSError as exc:
+        return 500, {"status": "error", "message": "cannot write location: {}".format(exc.__class__.__name__)}
+    with _weather_cache_lock:
+        _weather_cache.update({"key": None, "fetched_at": 0.0, "body": None})
+    return 200, {"status": "ok", "configured": True, "label": geo["label"]}
+
+
+def handle_weather_today_get() -> "tuple":
+    """GET /api/weather/today -> today's day dict + flags (fallback: yesterday)."""
+    config = weather_conn.load_location()
+    if not config:
+        return 503, {
+            "configured": False,
+            "message": "локация не настроена — укажи город в Настройках → Профиль",
+        }
+    today = time.strftime("%Y-%m-%d")
+    cache_key = "{}|{:.3f}|{:.3f}".format(today, config["lat"], config["lon"])
+    now = time.monotonic()
+    with _weather_cache_lock:
+        fresh = (
+            _weather_cache["body"] is not None
+            and _weather_cache["key"] == cache_key
+            and now - _weather_cache["fetched_at"] < WEATHER_CACHE_TTL_S
+        )
+        if fresh:
+            body = dict(_weather_cache["body"])
+            body["cached"] = True
+            return 200, body
+
+    fallback = False
+    try:
+        day = weather_conn.fetch_day(today)
+        if day is None:
+            yesterday = time.strftime(
+                "%Y-%m-%d", time.localtime(time.time() - 86400)
+            )
+            day = weather_conn.fetch_day(yesterday)
+            fallback = day is not None
+        if day is None:
+            return 200, {
+                "configured": True,
+                "status": "error",
+                "message": "Open-Meteo не отдал данных ни за сегодня, ни за вчера",
+            }
+        flags = weather_conn.weather_context(day)
+        body = {
+            "configured": True,
+            "status": "ok",
+            "label": config.get("label") or "",
+            "fallback_yesterday": fallback,
+            "day": day,
+            "flags": flags,
+            "summary_ru": weather_conn.day_summary_ru(day),
+            "cached": False,
+        }
+    except weather_conn.WeatherError as exc:
+        return 200, {"configured": True, "status": "error", "message": str(exc)}
+    except Exception as exc:  # сеть/таймаут — честная ошибка без падения сервера
+        return 200, {"configured": True, "status": "error", "message": exc.__class__.__name__}
+    with _weather_cache_lock:
+        _weather_cache.update({"key": cache_key, "fetched_at": time.monotonic(), "body": body})
+    return 200, body
+
+
+# --- research archive: <data-dir>/research/ ------------------------------------
+
+MAX_RESEARCH_FILE_CHARS = 200_000
+_RESEARCH_NAME_RE = re.compile(r"^[A-Za-z0-9а-яА-ЯёЁ][A-Za-z0-9а-яА-ЯёЁ._ -]{0,120}$")
+
+
+def research_slug(text: str) -> str:
+    """Topic -> filename slug (lowercase, dashes); shared by save and list."""
+    slug = re.sub(r"[^a-z0-9а-яё]+", "-", (text or "").lower()).strip("-")
+    return slug[:60] or "topic"
+
+
+def save_research_result(base_dir: Path, param: str, result: dict) -> "str | None":
+    """Persist a successful research run to <data-dir>/research/<slug>-<date>.md.
+
+    The research/ folder is already part of the agent context preamble
+    (build_user_context), so saved researches close the loop automatically.
+    Returns the file name, or None when writing failed (never raises).
+    """
+    text = (result.get("result") or "").strip()
+    if not text:
+        return None
+    research_dir = _find_research_dir(base_dir) or (base_dir / "research")
+    try:
+        research_dir.mkdir(parents=True, exist_ok=True)
+        topic = param or "HRV"
+        date = time.strftime("%Y-%m-%d")
+        base_name = "{}-{}".format(research_slug(topic), date)
+        name = base_name + ".md"
+        counter = 2
+        while (research_dir / name).exists():
+            name = "{}-{}.md".format(base_name, counter)
+            counter += 1
+        body = (
+            "# Research: {topic}\n\n"
+            "> агент: {agent} · дата: {date} · источник: дашборд OpenHealth (/api/agent task=research)\n\n"
+            "{text}\n"
+        ).format(topic=topic, agent=result.get("agent") or "?", date=date, text=text)
+        (research_dir / name).write_text(body, encoding="utf-8")
+        return name
+    except OSError as exc:
+        log("research save failed: {}".format(exc.__class__.__name__))
+        return None
+
+
+def handle_research_list(base_dir: Path, param: "str | None") -> "tuple":
+    """GET /api/research/list?param= -> research files, newest first."""
+    research_dir = _find_research_dir(base_dir)
+    if research_dir is None:
+        return 200, {"status": "ok", "configured": False, "files": []}
+    prefix = research_slug(param) if param else None
+    files = []
+    try:
+        for p in research_dir.iterdir():
+            if not p.is_file() or p.name.startswith(".") or p.suffix.lower() not in (".md", ".txt"):
+                continue
+            if prefix and not p.name.lower().startswith(prefix):
+                continue
+            stat = p.stat()
+            files.append({
+                "name": p.name,
+                "size": stat.st_size,
+                "modified": time.strftime("%Y-%m-%d %H:%M", time.localtime(stat.st_mtime)),
+                "mtime": stat.st_mtime,
+            })
+    except OSError:
+        return 200, {"status": "ok", "configured": False, "files": []}
+    files.sort(key=lambda f: f["mtime"], reverse=True)
+    for f in files:
+        f.pop("mtime", None)
+    return 200, {"status": "ok", "configured": True, "count": len(files), "files": files}
+
+
+def handle_research_file(base_dir: Path, name: "str | None") -> "tuple":
+    """GET /api/research/file?name= -> one file's content (traversal-safe)."""
+    if not name or not _RESEARCH_NAME_RE.match(name) or "/" in name or "\\" in name or ".." in name:
+        return 400, {"status": "error", "message": "bad file name"}
+    research_dir = _find_research_dir(base_dir)
+    if research_dir is None:
+        return 404, {"status": "error", "message": "research/ folder not found"}
+    target = (research_dir / name).resolve()
+    try:
+        target.relative_to(research_dir.resolve())
+    except ValueError:
+        return 400, {"status": "error", "message": "bad file name"}
+    if not target.is_file() or target.suffix.lower() not in (".md", ".txt"):
+        return 404, {"status": "error", "message": "file not found"}
+    try:
+        content = target.read_text(encoding="utf-8", errors="replace")[:MAX_RESEARCH_FILE_CHARS]
+    except OSError:
+        return 500, {"status": "error", "message": "cannot read file"}
+    return 200, {"status": "ok", "name": name, "content": content}
+
+
 # --- HTTP handler ------------------------------------------------------------
 
 
@@ -1085,6 +1564,36 @@ class BridgeHandler(SimpleHTTPRequestHandler):
                 )
                 return
             self._send_json(catalog)
+            return
+        if path == "/api/params":
+            status, body = handle_params_get()
+            self._send_json(body, status=status)
+            return
+        if path == "/api/methodology":
+            status, body = handle_methodology_get()
+            self._send_json(body, status=status)
+            return
+        if path == "/api/profile":
+            status, body = handle_profile_get(self.base_dir)
+            self._send_json(body, status=status)
+            return
+        if path == "/api/weather/location":
+            status, body = handle_weather_location_get()
+            self._send_json(body, status=status)
+            return
+        if path == "/api/weather/today":
+            status, body = handle_weather_today_get()
+            self._send_json(body, status=status)
+            return
+        if path == "/api/research/list":
+            query = parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}
+            status, body = handle_research_list(self.base_dir, query.get("param", [None])[0])
+            self._send_json(body, status=status)
+            return
+        if path == "/api/research/file":
+            query = parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}
+            status, body = handle_research_file(self.base_dir, query.get("name", [None])[0])
+            self._send_json(body, status=status)
             return
         if path == "/api/calendar":
             query = parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}
@@ -1135,13 +1644,49 @@ class BridgeHandler(SimpleHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802 (http.server API)
         path = self.path.split("?", 1)[0]
         if path not in ("/api/agent", "/api/config", "/api/calendar",
-                        "/api/journal/day", "/api/journal/focus"):
+                        "/api/journal/day", "/api/journal/focus",
+                        "/api/params", "/api/params/reset",
+                        "/api/methodology/save", "/api/profile",
+                        "/api/weather/location"):
             self._send_json({"status": "error", "message": "not found"}, status=404)
             return
 
         payload, error = self._read_json_body()
         if error is not None:
             self._send_json(error[1], status=error[0])
+            return
+
+        if path == "/api/params":
+            status, body = handle_params_post(payload)
+            log("POST /api/params {} -> {}".format(
+                payload.get("id", "?") if isinstance(payload, dict) else "?", body.get("status")))
+            self._send_json(body, status=status)
+            return
+
+        if path == "/api/params/reset":
+            status, body = handle_params_reset(payload)
+            log("POST /api/params/reset -> {} (reset={})".format(body.get("status"), body.get("reset", "-")))
+            self._send_json(body, status=status)
+            return
+
+        if path == "/api/methodology/save":
+            status, body = handle_methodology_save(payload)
+            log("POST /api/methodology/save {} -> {}".format(
+                payload.get("id", "?") if isinstance(payload, dict) else "?", body.get("status")))
+            self._send_json(body, status=status)
+            return
+
+        if path == "/api/profile":
+            status, body = handle_profile_post(payload, self.base_dir)
+            # only the outcome — profile contents are personal data
+            log("POST /api/profile -> {}".format(body.get("status")))
+            self._send_json(body, status=status)
+            return
+
+        if path == "/api/weather/location":
+            status, body = handle_weather_location_post(payload)
+            log("POST /api/weather/location -> {}".format(body.get("status")))
+            self._send_json(body, status=status)
             return
 
         if path == "/api/journal/day":

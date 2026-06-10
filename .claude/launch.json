@@ -2,13 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "openhealth-web",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8770", "--directory", "ui/web"],
-      "port": 8770
-    },
-    {
-      "name": "openhealth-real-8779",
+      "name": "openhealth-bridge-8779",
       "runtimeExecutable": "python3",
       "runtimeArgs": ["ui/web/server.py", "--port", "8779", "--dir", "/Users/ilya/health-os/dashboard"],
       "port": 8779

@@ -32,6 +32,7 @@
     --ok-text: var(--ok);
     --warn-text: var(--warn);
     --bad-text: var(--bad);
+    --accent-text: var(--accent); /* акцентный ТЕКСТ: на светлых темах темнее заливки */
 
     /* Цвета квадрантов эмоций (How We Feel) для текста — та же логика. */
     --mood-hu: #f43f5e;
@@ -43,9 +44,10 @@
   }
 
   [data-theme="light"], [data-theme="brutalist"] {
-    --ok-text: #047857;
-    --warn-text: #a16207;
+    --ok-text: #065f46;
+    --warn-text: #854d0e;
     --bad-text: #be123c;
+    --accent-text: #047857;
     --mood-hu: #be123c;
     --mood-hp: #b45309;
     --mood-lu: #1d4ed8;
@@ -79,7 +81,7 @@
     --line2: #d1d5db;
     --ink: #111827;
     --mut: #4b5563;
-    --dim: #6f7683; /* был gray-400 (~2.5:1) — подписи на светлом стали читаемыми */
+    --dim: #6b7280; /* gray-500: ≥4.5:1 и на белой карточке, и на #f9fafb */
     --accent: #10b981;
     --accent-glow: rgba(16, 185, 129, 0.1);
     --radius-outer: 22px;
@@ -620,7 +622,7 @@
   }
 
   .metric-tile .u {
-    font-size: 10px;
+    font: 500 10px var(--mono);
     color: var(--dim);
     margin-top: 2px;
   }
@@ -658,7 +660,7 @@
 
   .habit-progress-text {
     font: 600 11px var(--mono);
-    color: var(--accent);
+    color: var(--accent-text);
   }
 
   .habit-list {
@@ -717,18 +719,18 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    gap: 6px 10px;
+    flex-wrap: wrap; /* тесно — контролы уходят строкой ниже, слово не рвётся */
   }
 
   .habit-label {
-    flex: 1;
+    flex: 1 1 110px;
     min-width: 0;
     font-weight: 500;
     font-size: 13px;
     line-height: 1.3;
     color: var(--ink);
-    overflow-wrap: break-word;
-    hyphens: auto; /* «Контрастный душ утром» не вылезает из узкой карточки */
+    overflow-wrap: break-word; /* страховка от вылета, но без переносов «по-сле» */
   }
 
   .habit-impact {
@@ -794,7 +796,7 @@
     letter-spacing: 0.05em;
     padding: 3px 6px;
     background: var(--accent-glow);
-    color: var(--accent);
+    color: var(--accent-text);
     border-radius: 4px;
     align-self: flex-start;
   }
@@ -1103,7 +1105,9 @@
     transform: none;
   }
 
-  button:focus-visible, a:focus-visible, .file-drop:focus-within {
+  button:focus-visible, a:focus-visible, [role="button"]:focus-visible,
+  [tabindex]:focus-visible, input:focus-visible, select:focus-visible,
+  textarea:focus-visible, summary:focus-visible, .file-drop:focus-within {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
@@ -1167,6 +1171,8 @@
     margin-bottom: 6px;
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap; /* узкий экран: подписи друг под другом, а не внахлёст */
+    gap: 2px 12px;
   }
 
   .spark-svg {
@@ -1224,9 +1230,12 @@
   .zone-label-row {
     display: flex;
     justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
     font-size: 11px;
     font-weight: 500;
   }
+  .zone-label-row .mono { flex-shrink: 0; white-space: nowrap; }
 
   .zone-range {
     font-family: var(--mono);
@@ -1620,7 +1629,7 @@
     align-items: center;
     gap: 4px;
     margin-top: 6px;
-    color: var(--accent);
+    color: var(--accent-text);
     font: 500 12px var(--mono);
     text-decoration: none;
   }
@@ -1733,7 +1742,7 @@
     font: 600 10px var(--mono);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--accent);
+    color: var(--accent-text);
     background: var(--accent-glow);
     border-radius: 5px;
     padding: 3px 8px;
@@ -2204,7 +2213,7 @@
     font: 600 9px var(--mono);
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--accent);
+    color: var(--accent-text);
   }
 
   /* ---- Settings hub (вертикальные секции, паттерн Linear Settings) ---- */
@@ -2376,7 +2385,7 @@
   .agent-radio-hint {
     margin-left: auto;
     font: 500 10px var(--mono);
-    color: var(--dim);
+    color: var(--mut); /* и на подсвеченной (accent-glow) строке остаётся ≥4.5:1 */
     text-align: right;
   }
 
@@ -3018,7 +3027,7 @@
     font: 600 8.5px var(--mono);
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--dim);
+    color: var(--mut);
     background: var(--line);
     border-radius: 4px;
     padding: 1px 5px;
@@ -3051,12 +3060,12 @@
   details.beh-acc summary i.cat { font-size: 16px; color: var(--mut); }
   details.beh-acc summary .cnt {
     font: 600 10px var(--mono);
-    color: var(--dim);
+    color: var(--mut);
     background: var(--line);
     border-radius: 999px;
     padding: 2px 8px;
   }
-  details.beh-acc summary .sel-cnt { font: 600 10px var(--mono); color: var(--accent); }
+  details.beh-acc summary .sel-cnt { font: 600 10px var(--mono); color: var(--accent-text); }
   details.beh-acc summary i.chev {
     margin-left: auto;
     font-size: 13px;
@@ -3098,7 +3107,8 @@
   }
 
   .scale-dot:hover { border-color: var(--accent); color: var(--ink); }
-  .scale-dot.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .scale-dot.on { background: var(--accent); border-color: var(--accent); color: #04140d; }
+  [data-theme="brutalist"] .scale-dot.on { color: #fff; }
 
   .habit-num-wrap { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
 
@@ -3331,6 +3341,20 @@
   }
 
   [data-theme="brutalist"] .day-selector button { border-width: 2px; border-radius: 0; }
+
+  /* Тач-экраны: тап-зоны ключевых контролов ≥40px (визуал почти не растёт) */
+  @media (max-width: 600px) {
+    .day-selector button { width: 40px; height: 40px; }
+    .scale-dots { gap: 6px; }
+    .scale-dot { width: 32px; height: 32px; position: relative; }
+    .scale-dot::after { content: ''; position: absolute; inset: -4px; }
+    .btn-primary, .btn-secondary { min-height: 40px; }
+    /* Узкая карточка: лейбл привычки на всю ширину, бейдж — строкой ниже,
+       чтобы русские слова не ломались посреди («Настр/оение»). */
+    .habit-details { flex-wrap: wrap; row-gap: 6px; }
+    .habit-label { flex: 1 1 100%; }
+    .beh-chip { min-height: 36px; }
+  }
 
   .past-day-banner {
     display: flex;
@@ -3736,7 +3760,7 @@
     <nav>
       <a data-z="today" data-icon="ph-pulse" class="active" onclick="go('today')">
         <i class="ph-duotone ph-pulse"></i>
-        <span>Overview / Сегодня</span>
+        <span>Сегодня</span>
         <span class="tag mono" id="navRec">—</span>
       </a>
       <a data-z="pulse" data-icon="ph-heart" onclick="go('pulse')">
@@ -3789,19 +3813,27 @@
         <i class="ph-light ph-syringe"></i>
         <span>Вакцинация</span>
       </a>
+      <a data-z="medications" data-icon="ph-pill" onclick="go('medications')">
+        <i class="ph-light ph-pill"></i>
+        <span>Препараты и БАДы</span>
+      </a>
     </nav>
 
     <div class="navsec">Знание</div>
     <nav>
       <a data-z="protocols" data-icon="ph-book-open" onclick="go('protocols')">
         <i class="ph-light ph-book-open"></i>
-        <span>Protocols</span>
+        <span>Протоколы</span>
         <span class="navdot" aria-hidden="true"></span>
       </a>
       <a data-z="research" data-icon="ph-microscope" onclick="go('research')">
         <i class="ph-light ph-microscope"></i>
         <span>Research</span>
         <span class="navdot" aria-hidden="true"></span>
+      </a>
+      <a data-z="methodology" data-icon="ph-function" onclick="go('methodology')">
+        <i class="ph-light ph-function"></i>
+        <span>Методологии</span>
       </a>
     </nav>
 
@@ -3842,9 +3874,9 @@
       </div>
     </div>
 
-    <button class="nav-config-btn" id="navConfigBtn" onclick="openNavConfig()">
-      <i class="ph-light ph-sliders"></i>
-      <span>Настроить меню</span>
+    <button class="nav-config-btn" id="navConfigBtn" onclick="go('settings')">
+      <i class="ph-light ph-gear-six"></i>
+      <span>Настройки</span>
     </button>
   </div>
 </aside>
@@ -3856,7 +3888,7 @@
     <div class="topbar-left">
       <button class="nav-toggle" id="navToggle" aria-label="Открыть меню" onclick="toggleDrawer()"><i class="ph-light ph-list"></i></button>
       <div>
-        <h1 id="zoneTitle">Overview / Сегодня</h1>
+        <h1 id="zoneTitle">Сегодня</h1>
       </div>
     </div>
     <div class="day-selector" id="daySelector" role="group" aria-label="Выбор дня">
@@ -4039,7 +4071,7 @@
               
               <div class="spark-container">
                 <div class="spark-label">
-                  <span>Пульс в течение дня (уд/мин)</span>
+                  <span>Демо-кривая суток (реальная ЧСС появится с интрадей-данными)</span>
                   <span class="mono">52 - 168 уд/мин</span>
                 </div>
                 <svg id="pulseChart" class="spark-svg" style="height: 220px;" viewBox="0 0 600 220" preserveAspectRatio="none">
@@ -4084,6 +4116,20 @@
                 <i class="ph-light ph-calendar-check card-header-icon"></i>
               </div>
               <div id="pulseCalBody"></div>
+            </div>
+          </div>
+
+          <!-- Погода сегодня (Open-Meteo через bridge, контекст — не диагноз) -->
+          <div class="card-outer col-6">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Погода сегодня</h3>
+                  <div class="sub" id="pulseWeatherSub">контекст дня: давление, жара, свет, UV</div>
+                </div>
+                <i class="ph-light ph-cloud-sun card-header-icon"></i>
+              </div>
+              <div id="pulseWeatherBody"></div>
             </div>
           </div>
 
@@ -4757,6 +4803,11 @@
         <div class="bento-grid" id="vaccinationContent"></div>
       </section>
 
+      <!-- SCREEN 11d: MEDICATIONS — препараты и БАДы (локальный список в браузере) -->
+      <section class="zone" id="z-medications">
+        <div class="bento-grid" id="medicationsContent"></div>
+      </section>
+
       <!-- SCREEN 12: PROTOCOLS — n-of-1 карточки из движка (или empty-state) -->
       <section class="zone" id="z-protocols">
         <div class="bento-grid" id="protocolsContent">
@@ -4789,6 +4840,31 @@
                 <button class="btn-primary" onclick="go('biomarkers')">
                   <i class="ph-light ph-flask"></i> К биомаркерам
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 13b: METHODOLOGY — страницы методологий расчётов (docs/methodology/*.md) -->
+      <section class="zone" id="z-methodology">
+        <div class="bento-grid">
+          <div class="card-outer col-12">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Методологии расчётов</h3>
+                  <div class="sub">как считается каждый показатель — из реального кода, по файлу на параметр</div>
+                </div>
+                <i class="ph-light ph-function card-header-icon"></i>
+              </div>
+              <div class="settings-info-row" style="margin-bottom:14px;">
+                <i class="ph-light ph-info"></i>
+                <span>Это файлы твоего проекта (<span class="mono">docs/methodology/*.md</span>). Правки параметров делай в коде или в «Настройках → Параметры расчётов» — md только описывает методику.</span>
+              </div>
+              <div class="meth-layout" id="methLayout">
+                <div class="meth-list" id="methList"></div>
+                <div class="meth-view" id="methView"></div>
               </div>
             </div>
           </div>
@@ -4951,6 +5027,51 @@
                   <i class="ph-light ph-lock-simple"></i>
                   <span>Тексты хранятся локально в браузере. Кнопка выгрузит <span class="mono">goal.md</span> и <span class="mono">about-me.md</span> — положи их в свою health-папку рядом с <span class="mono">data.local.json</span>: bridge подмешает их в контекст агента при каждом разборе.</span>
                 </p>
+              </div>
+            </div>
+
+            <!-- Профиль тела: возраст / пол / рост / вес + история веса -->
+            <div class="card-outer" style="margin-top:16px;">
+              <div class="card-inner">
+                <div class="card-header">
+                  <div class="card-title-group">
+                    <h3>Профиль тела</h3>
+                    <div class="sub">возраст, пол, рост, вес — контекст для расчётов и агента</div>
+                  </div>
+                  <i class="ph-light ph-person card-header-icon"></i>
+                </div>
+                <div id="bodyProfileBox"></div>
+              </div>
+            </div>
+
+            <!-- Город и локации: погода + travel-контекст -->
+            <div class="card-outer" style="margin-top:16px;">
+              <div class="card-inner">
+                <div class="card-header">
+                  <div class="card-title-group">
+                    <h3>Город и локации</h3>
+                    <div class="sub">домашний город для погоды · переезды как travel-контекст для агента</div>
+                  </div>
+                  <i class="ph-light ph-map-pin card-header-icon"></i>
+                </div>
+                <div id="locationBox"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Параметры расчётов -->
+          <div class="settings-sec">
+            <h2 class="settings-sec-head">Параметры расчётов</h2>
+            <div class="card-outer">
+              <div class="card-inner">
+                <div class="card-header">
+                  <div class="card-title-group">
+                    <h3>Числа за каждым показателем</h3>
+                    <div class="sub">пороги и веса движка — меняй в допустимых пределах · хранится в ~/.openhealth/params.json</div>
+                  </div>
+                  <i class="ph-light ph-sliders-horizontal card-header-icon"></i>
+                </div>
+                <div id="paramsBox"></div>
               </div>
             </div>
           </div>
@@ -6484,17 +6605,31 @@ function renderPulseEnergy() {
     phases.push({ type: 'melatonin', start: c.melatonin_window.start, end: c.melatonin_window.end });
   }
 
+  const placed = []; // занятые прямоугольники бейджей — коллизии разводим по вертикали
   const badges = phases.map(p => {
     const meta = PHASE_META[String(p.type || '').toLowerCase()] || { label: p.label || p.type || 'фаза', color: 'var(--mut)', icon: 'ph-clock' };
     const px = hourX(p.start);
     if (px == null) return '';
     const idx = Math.max(0, Math.min(curve.length - 1, Math.round((px - L) / iw * (curve.length - 1))));
-    const py = y(curve[idx]) - 14;
+    let py = y(curve[idx]) - 14;
     const txt = meta.label + (p.start ? ' · ' + p.start : '');
+    // Кламп бейджа в границы SVG, чтобы поздние фазы не вылезали за правый край.
+    const bw = txt.length * 5.6 + 14;
+    let bx = px - 4;
+    if (bx + bw > W - 2) bx = W - 2 - bw;
+    if (bx < 2) bx = 2;
+    // Наслоение на уже размещённый бейдж — поднимаем выше (до 3 шагов).
+    for (let k = 0; k < 3; k++) {
+      const hit = placed.some(r => bx < r.x + r.w && bx + bw > r.x && (py - 11) < r.y + 17 && (py + 6) > r.y);
+      if (!hit) break;
+      py -= 20;
+    }
+    if (py - 11 < 2) py = 13;
+    placed.push({ x: bx, y: py - 11, w: bw });
     return `
       <g>
-        <rect x="${(px - 4).toFixed(1)}" y="${(py - 11).toFixed(1)}" rx="7" ry="7" width="${txt.length * 5.6 + 14}" height="17" fill="${meta.color}" opacity="0.16"></rect>
-        <text x="${(px + 3).toFixed(1)}" y="${(py + 1).toFixed(1)}" class="energy-badge" fill="${meta.color}">${escapeHtml(txt)}</text>
+        <rect x="${bx.toFixed(1)}" y="${(py - 11).toFixed(1)}" rx="7" ry="7" width="${bw}" height="17" fill="${meta.color}" opacity="0.16"></rect>
+        <text x="${(bx + 7).toFixed(1)}" y="${(py + 1).toFixed(1)}" class="energy-badge" fill="${meta.color}">${escapeHtml(txt)}</text>
         <line x1="${px.toFixed(1)}" y1="${(py + 6).toFixed(1)}" x2="${px.toFixed(1)}" y2="${y(curve[idx]).toFixed(1)}" stroke="${meta.color}" stroke-width="1" stroke-dasharray="2 3" opacity="0.7"></line>
         <circle cx="${px.toFixed(1)}" cy="${y(curve[idx]).toFixed(1)}" r="3" fill="${meta.color}" stroke="var(--card-inner)" stroke-width="1.2"></circle>
       </g>`;
@@ -8988,7 +9123,7 @@ function showStarToast() {
 }
 
 const titles = {
-  today: "Overview / Сегодня",
+  today: "Сегодня",
   pulse: "Пульс дня",
   biomarkers: "Biomarkers (Анализы)",
   'whoop-overview': "Обзор показателей",
@@ -9001,7 +9136,7 @@ const titles = {
   workouts: "Тренировки",
   dna: "ДНК",
   vaccination: "Вакцинация",
-  protocols: "Protocols",
+  protocols: "Протоколы",
   research: "Research",
   reports: "Отчёты",
   digests: "Дайджесты",
@@ -9565,7 +9700,7 @@ const NAV_HIDEABLE = [
   { z: 'workouts', label: 'Тренировки', icon: 'ph-barbell' },
   { z: 'dna', label: 'ДНК', icon: 'ph-dna' },
   { z: 'vaccination', label: 'Вакцинация', icon: 'ph-syringe' },
-  { z: 'protocols', label: 'Protocols', icon: 'ph-book-open' },
+  { z: 'protocols', label: 'Протоколы', icon: 'ph-book-open' },
   { z: 'research', label: 'Research', icon: 'ph-microscope' },
   { z: 'reports', label: 'Отчёты', icon: 'ph-file-text' },
   { z: 'digests', label: 'Дайджесты', icon: 'ph-bell' },

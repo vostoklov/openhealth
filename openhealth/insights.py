@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 from datetime import date as _date
 from typing import Any, Dict, List, Optional, Tuple
 
-from . import evidence
+from . import evidence, params
 
 # --- severity ----------------------------------------------------------------
 
@@ -171,6 +171,41 @@ def _fmt(x: float, nd: int = 0) -> str:
     return ("%.*f" % (nd, x)).rstrip("0").rstrip(".") if nd else "%.0f" % x
 
 
+def _param(param_id: str, fallback: float) -> float:
+    """Effective (user-tunable) threshold; falls back to the module constant."""
+    try:
+        return params.get(param_id)
+    except Exception:
+        return fallback
+
+
+def _with_trace(
+    data: Dict[str, Any],
+    threshold_used: float,
+    observed_value: float,
+    window: str,
+    param_ids: Tuple[str, ...] = (),
+) -> Dict[str, Any]:
+    """Attach the "how was this computed" trace (UI tooltip food).
+
+    ``trace`` carries the threshold that fired, the observed value it was
+    compared against and the data window. When any of the detector's params is
+    user-overridden, ``params_overrides`` makes that visible on the record.
+    """
+    data["trace"] = {
+        "threshold_used": threshold_used,
+        "observed_value": observed_value,
+        "window": window,
+    }
+    try:
+        overrides = params.overrides_for(param_ids) if param_ids else {}
+    except Exception:
+        overrides = {}
+    if overrides:
+        data["params_overrides"] = overrides
+    return data
+
+
 # --- detectors ---------------------------------------------------------------
 
 def detect_sleep_debt(
@@ -179,14 +214,16 @@ def detect_sleep_debt(
     series = _series(daily, "sleep_h")
     if len(series) < MIN_RECENT_POINTS:
         return None
-    goal = float(goals.get("sleep_h", DEFAULT_SLEEP_GOAL_H))
+    goal = float(goals.get("sleep_h", _param("insights.sleep_goal_h", DEFAULT_SLEEP_GOAL_H)))
+    attention_h = _param("insights.sleep_debt_week_attention_h", SLEEP_DEBT_WEEK_ATTENTION_H)
+    warning_h = _param("insights.sleep_debt_week_warning_h", SLEEP_DEBT_WEEK_WARNING_H)
     last7 = [v for _, v in series[-7:]]
     last14 = [v for _, v in series[-14:]]
     debt7 = sum(max(0.0, goal - v) for v in last7)
     debt14 = sum(max(0.0, goal - v) for v in last14)
-    if debt7 < SLEEP_DEBT_WEEK_ATTENTION_H:
+    if debt7 < attention_h:
         return None
-    severity = WARNING if debt7 >= SLEEP_DEBT_WEEK_WARNING_H else ATTENTION
+    severity = WARNING if debt7 >= warning_h else ATTENTION
     mean7 = statistics.mean(last7)
     return Insight(
         id="insight-sleep_debt",
@@ -201,13 +238,23 @@ def detect_sleep_debt(
         question_ru="Что мешает ложиться вовремя на этой неделе - поздние экраны, работа, стресс?",
         action_ru="Сегодня начните подготовку ко сну на 30-45 минут раньше обычного.",
         metric="sleep_h",
-        data={
-            "kind": "sleep_debt",
-            "goal_h": round(goal, 1),
-            "debt7_h": round(debt7, 1),
-            "debt14_h": round(debt14, 1),
-            "mean7_h": round(mean7, 1),
-        },
+        data=_with_trace(
+            {
+                "kind": "sleep_debt",
+                "goal_h": round(goal, 1),
+                "debt7_h": round(debt7, 1),
+                "debt14_h": round(debt14, 1),
+                "mean7_h": round(mean7, 1),
+            },
+            threshold_used=warning_h if severity == WARNING else attention_h,
+            observed_value=round(debt7, 1),
+            window="7d",
+            param_ids=(
+                "insights.sleep_goal_h",
+                "insights.sleep_debt_week_attention_h",
+                "insights.sleep_debt_week_warning_h",
+            ),
+        ),
         refs=["Дефицит сна снижает парасимпатический тонус и восстановление "
               "(литература по ограничению сна)."],
     )
@@ -223,10 +270,12 @@ def detect_hrv_downtrend(daily: Dict[str, Dict[str, Any]], goals: Dict[str, Any]
     if base_mean <= 0:
         return None
     recent_mean = statistics.mean(recent)
+    attention_pct = _param("insights.hrv_drop_attention_pct", HRV_DROP_ATTENTION_PCT)
+    warning_pct = _param("insights.hrv_drop_warning_pct", HRV_DROP_WARNING_PCT)
     drop_pct = (base_mean - recent_mean) / base_mean * 100.0
-    if drop_pct < HRV_DROP_ATTENTION_PCT:
+    if drop_pct < attention_pct:
         return None
-    severity = WARNING if drop_pct >= HRV_DROP_WARNING_PCT else ATTENTION
+    severity = WARNING if drop_pct >= warning_pct else ATTENTION
     return Insight(
         id="insight-hrv_downtrend",
         title_ru="HRV ниже личного baseline",
@@ -239,12 +288,18 @@ def detect_hrv_downtrend(daily: Dict[str, Dict[str, Any]], goals: Dict[str, Any]
         question_ru="Что изменилось за 1-2 недели - нагрузки, сон, алкоголь, болезнь или стресс?",
         action_ru="Возьмите 2-3 дня лёгкого режима и проследите, вернётся ли HRV к baseline.",
         metric="hrv",
-        data={
-            "kind": "hrv_downtrend",
-            "recent_mean": round(recent_mean, 1),
-            "baseline_mean": round(base_mean, 1),
-            "drop_pct": round(drop_pct, 1),
-        },
+        data=_with_trace(
+            {
+                "kind": "hrv_downtrend",
+                "recent_mean": round(recent_mean, 1),
+                "baseline_mean": round(base_mean, 1),
+                "drop_pct": round(drop_pct, 1),
+            },
+            threshold_used=warning_pct if severity == WARNING else attention_pct,
+            observed_value=round(drop_pct, 1),
+            window="7d vs 14-28d",
+            param_ids=("insights.hrv_drop_attention_pct", "insights.hrv_drop_warning_pct"),
+        ),
         refs=["Снижение тренда HRV отражает рост нагрузки и недовосстановление "
               "(HRV-мониторинг)."],
     )
@@ -258,10 +313,12 @@ def detect_rhr_uptrend(daily: Dict[str, Dict[str, Any]], goals: Dict[str, Any]) 
         return None
     base_mean = statistics.mean(baseline)
     recent_mean = statistics.mean(recent)
+    attention_bpm = _param("insights.rhr_rise_attention_bpm", RHR_RISE_ATTENTION_BPM)
+    warning_bpm = _param("insights.rhr_rise_warning_bpm", RHR_RISE_WARNING_BPM)
     rise = recent_mean - base_mean
-    if rise < RHR_RISE_ATTENTION_BPM:
+    if rise < attention_bpm:
         return None
-    severity = WARNING if rise >= RHR_RISE_WARNING_BPM else ATTENTION
+    severity = WARNING if rise >= warning_bpm else ATTENTION
     return Insight(
         id="insight-rhr_uptrend",
         title_ru="Пульс покоя выше baseline",
@@ -274,12 +331,18 @@ def detect_rhr_uptrend(daily: Dict[str, Dict[str, Any]], goals: Dict[str, Any]) 
         question_ru="Не было ли недосыпа, алкоголя, начала болезни или скачка нагрузки в эти дни?",
         action_ru="Понаблюдайте 3-4 дня и добавьте восстановление; если пульс держится высоким - снизьте нагрузку.",
         metric="rhr",
-        data={
-            "kind": "rhr_uptrend",
-            "recent_mean": round(recent_mean, 1),
-            "baseline_mean": round(base_mean, 1),
-            "rise_bpm": round(rise, 1),
-        },
+        data=_with_trace(
+            {
+                "kind": "rhr_uptrend",
+                "recent_mean": round(recent_mean, 1),
+                "baseline_mean": round(base_mean, 1),
+                "rise_bpm": round(rise, 1),
+            },
+            threshold_used=warning_bpm if severity == WARNING else attention_bpm,
+            observed_value=round(rise, 1),
+            window="7d vs 14-28d",
+            param_ids=("insights.rhr_rise_attention_bpm", "insights.rhr_rise_warning_bpm"),
+        ),
         refs=["Устойчивый рост пульса покоя - ранний маркер стресса, болезни или "
               "перетренированности."],
     )
@@ -287,7 +350,8 @@ def detect_rhr_uptrend(daily: Dict[str, Dict[str, Any]], goals: Dict[str, Any]) 
 
 def detect_recovery_red_streak(daily: Dict[str, Dict[str, Any]], goals: Dict[str, Any]) -> Optional[Insight]:
     series = _series(daily, "recovery")
-    if len(series) < RED_STREAK_DAYS:
+    streak_days = int(_param("insights.red_streak_days", RED_STREAK_DAYS))
+    if len(series) < streak_days:
         return None
     # Longest run of consecutive (by available points) red days, recent-weighted.
     best_len = 0
@@ -301,7 +365,7 @@ def detect_recovery_red_streak(daily: Dict[str, Dict[str, Any]], goals: Dict[str
                 best_end = i
         else:
             cur = 0
-    if best_len < RED_STREAK_DAYS:
+    if best_len < streak_days:
         return None
     streak = series[best_end - best_len + 1: best_end + 1]
     vals = ", ".join(_fmt(v) for _, v in streak)
@@ -318,12 +382,18 @@ def detect_recovery_red_streak(daily: Dict[str, Dict[str, Any]], goals: Dict[str
         question_ru="Это совпадает с болезнью, сильным стрессом или резким ростом нагрузки?",
         action_ru="Сегодня приоритет - сон и покой, без интенсивных тренировок.",
         metric="recovery",
-        data={
-            "kind": "recovery_red_streak",
-            "streak_len": best_len,
-            "values": [v for _, v in streak],
-            "span": span,
-        },
+        data=_with_trace(
+            {
+                "kind": "recovery_red_streak",
+                "streak_len": best_len,
+                "values": [v for _, v in streak],
+                "span": span,
+            },
+            threshold_used=streak_days,
+            observed_value=best_len,
+            window="%dd series" % len(series),
+            param_ids=("insights.red_streak_days",),
+        ),
     )
 
 
@@ -355,13 +425,18 @@ def detect_strain_recovery_mismatch(daily: Dict[str, Dict[str, Any]], goals: Dic
         question_ru="Тренировки идут под состояние организма или по графику независимо от него?",
         action_ru="В дни с recovery < 50 заменяйте интенсив на лёгкую активность; решайте утром по recovery.",
         metric="recovery",
-        data={
-            "kind": "strain_recovery_mismatch",
-            "count": len(hits),
-            "dates": hits,
-            "strain_high": STRAIN_HIGH,
-            "recovery_low": RECOVERY_LOW_FOR_STRAIN,
-        },
+        data=_with_trace(
+            {
+                "kind": "strain_recovery_mismatch",
+                "count": len(hits),
+                "dates": hits,
+                "strain_high": STRAIN_HIGH,
+                "recovery_low": RECOVERY_LOW_FOR_STRAIN,
+            },
+            threshold_used=MISMATCH_WARNING_COUNT if severity == WARNING else MISMATCH_ATTENTION_COUNT,
+            observed_value=len(hits),
+            window="%dd" % MISMATCH_WINDOW_DAYS,
+        ),
     )
 
 
@@ -381,8 +456,9 @@ def detect_weekend_pattern(daily: Dict[str, Dict[str, Any]], goals: Dict[str, An
         return None
     wkday = statistics.mean(weekday_vals)
     wkend = statistics.mean(weekend_vals)
+    diff_points = _param("insights.weekend_diff_points", WEEKEND_DIFF_POINTS)
     diff = wkday - wkend  # positive => weekends dip
-    if abs(diff) < WEEKEND_DIFF_POINTS:
+    if abs(diff) < diff_points:
         return None
     dip = diff > 0
     # Capped at C2 by spec; this is a coarse calendar split.
@@ -401,13 +477,19 @@ def detect_weekend_pattern(daily: Dict[str, Dict[str, Any]], goals: Dict[str, An
         action_ru="Попробуйте держать в выходные то же время отбоя, что в будни, и сравните recovery."
         if dip else "Перенесите то, что работает в выходные (сон, темп дня), на будни.",
         metric="recovery",
-        data={
-            "kind": "weekend_pattern",
-            "weekday_mean": round(wkday, 1),
-            "weekend_mean": round(wkend, 1),
-            "diff": round(diff, 1),
-            "dip": dip,
-        },
+        data=_with_trace(
+            {
+                "kind": "weekend_pattern",
+                "weekday_mean": round(wkday, 1),
+                "weekend_mean": round(wkend, 1),
+                "diff": round(diff, 1),
+                "dip": dip,
+            },
+            threshold_used=diff_points,
+            observed_value=round(abs(diff), 1),
+            window="weekdays vs weekends",
+            param_ids=("insights.weekend_diff_points",),
+        ),
     )
 
 
@@ -417,7 +499,8 @@ def detect_sleep_consistency(daily: Dict[str, Dict[str, Any]], goals: Dict[str, 
     if len(values) < MIN_RECENT_POINTS:
         return None
     sd = statistics.pstdev(values)
-    if sd <= SLEEP_CONSISTENCY_STDEV_H:
+    stdev_threshold = _param("insights.sleep_consistency_stdev_h", SLEEP_CONSISTENCY_STDEV_H)
+    if sd <= stdev_threshold:
         return None
     return Insight(
         id="insight-sleep_consistency",
@@ -432,13 +515,19 @@ def detect_sleep_consistency(daily: Dict[str, Dict[str, Any]], goals: Dict[str, 
         question_ru="Можно ли сузить разброс отбоя и подъёма, даже если общая длительность не идеальна?",
         action_ru="Зафиксируйте время подъёма на 14 дней (в пределах 30 минут), включая выходные.",
         metric="sleep_h",
-        data={
-            "kind": "sleep_consistency",
-            "stdev_h": round(sd, 2),
-            "min_h": round(min(values), 1),
-            "max_h": round(max(values), 1),
-            "n": len(values),
-        },
+        data=_with_trace(
+            {
+                "kind": "sleep_consistency",
+                "stdev_h": round(sd, 2),
+                "min_h": round(min(values), 1),
+                "max_h": round(max(values), 1),
+                "n": len(values),
+            },
+            threshold_used=stdev_threshold,
+            observed_value=round(sd, 2),
+            window="14 nights",
+            param_ids=("insights.sleep_consistency_stdev_h",),
+        ),
         refs=["Регулярность сна связана со здоровьем сильнее, чем разовая "
               "длительность (sleep regularity)."],
     )

@@ -22,12 +22,16 @@ def load_builtin() -> None:
         correlations,  # noqa: F401
         cycle,  # noqa: F401
         journal,  # noqa: F401
+        medications,  # noqa: F401
         metabolic,  # noqa: F401
+        nutrition,  # noqa: F401
         pulse,  # noqa: F401  (import side-effect: registration)
         recovery,  # noqa: F401
         skin,  # noqa: F401
         sleep,  # noqa: F401
         travel,  # noqa: F401  (import side-effect: registration)
+        vaccination,  # noqa: F401
+        vo2max,  # noqa: F401
     )
 
 

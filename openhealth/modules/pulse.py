@@ -6,16 +6,31 @@ frequency-domain estimate (LF/HF) is computed from a linearly-interpolated RR
 tachogram via a naive DFT — good enough to surface a trend, explicitly low
 confidence, refine later (see good-first task `pulse-freq-welch`).
 
+Readiness (v2): rMSSD is log-normally distributed, so the day's rMSSD is
+compared to the personal baseline on the ``ln`` scale and judged against a
+personal *normal range* (baseline ln ± k·SD) rather than fixed 0.9 / 0.7
+ratios. When the caller supplies the SD of their recent ln(rMSSD), the band is
+truly personal (smallest-worthwhile-change logic); without it a conservative
+default ln-SD is used. This removes the magic thresholds while staying honest.
+
 Nothing here diagnoses. Personal readings are capped at C3 and framed as
 prompts, per openhealth.evidence.
 """
 
 import cmath
 import math
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-from .base import HealthModule, ModuleResult, register
 from .. import evidence
+from .base import ModuleResult, register
+
+# Readiness normal-range band: today's ln(rMSSD) vs baseline ln(rMSSD), judged
+# in standard deviations of the person's recent ln(rMSSD). Within +/-1 SD is a
+# normal day; below -1 SD warrants a note; below -2 SD is well outside the band.
+_READINESS_NORMAL_SD = 1.0
+_READINESS_LOW_SD = 2.0
+# Fallback ln-SD when the caller has no personal spread (matches recovery@v3).
+_READINESS_DEFAULT_LN_SD = 0.15
 
 
 # --- time-domain HRV (exact, golden-tested) -------------------------------
@@ -178,6 +193,10 @@ class PulseModule:
                     "type": "number",
                     "description": "Optional personal baseline RMSSD for a relative readiness read",
                 },
+                "baseline_ln_sd": {
+                    "type": "number",
+                    "description": "Optional SD of recent ln(rMSSD) for a personal normal-range band",
+                },
                 "source": {"type": "string"},
             },
         }
@@ -208,14 +227,27 @@ class PulseModule:
 
         insights: List[Dict[str, Any]] = []
         baseline = payload.get("baseline_rmssd_ms")
-        if baseline:
+        if baseline and float(baseline) > 0:
+            # Compare on the ln scale and judge against a personal normal range
+            # (baseline ln +/- k * SD) instead of fixed 0.9 / 0.7 ratios.
+            baseline_ln_sd = payload.get("baseline_ln_sd")
+            ln_sd = (
+                float(baseline_ln_sd)
+                if (baseline_ln_sd and float(baseline_ln_sd) > 0)
+                else _READINESS_DEFAULT_LN_SD
+            )
             ratio = summary["rmssd_ms"] / float(baseline)
-            if ratio >= 0.9:
-                read = "HRV is around your usual baseline — a normal day."
-            elif ratio >= 0.7:
-                read = "HRV is a bit below your baseline. An easier day may feel better — worth noting, not alarming."
+            ln_dev = math.log(summary["rmssd_ms"]) - math.log(float(baseline))
+            z = ln_dev / ln_sd  # deviation in personal standard deviations
+            if z >= -_READINESS_NORMAL_SD:
+                read = "HRV is within your usual range — a normal day."
+            elif z >= -_READINESS_LOW_SD:
+                read = "HRV is below your usual range. An easier day may feel better — worth noting, not alarming."
             else:
-                read = "HRV is well below your baseline today. Common after poor sleep, alcohol or illness; consider lighter activity."
+                read = (
+                    "HRV is well outside your usual range today. Common after poor "
+                    "sleep, alcohol or illness; consider lighter activity."
+                )
             # Personal single-day reading: capped at C2 until validated (n-of-1).
             conf = evidence.cap_personal_pattern(evidence.Confidence.C3, validated_switches=0)
             insights.append({
@@ -229,7 +261,15 @@ class PulseModule:
                 "confidence": evidence.confidence_to_numeric(conf),
                 "date": date,
                 "tags": ["pulse", "readiness", "review-needed"],
-                "metadata": {"baseline_rmssd_ms": baseline, "ratio": round(ratio, 3)},
+                "metadata": {
+                    "baseline_rmssd_ms": baseline,
+                    "ratio": round(ratio, 3),
+                    "ln_dev": round(ln_dev, 4),
+                    "ln_sd_used": round(ln_sd, 4),
+                    "z_sd": round(z, 3),
+                    "method": "ln_rmssd_sd",
+                    "ln_sd_is_default": not (baseline_ln_sd and float(baseline_ln_sd) > 0),
+                },
                 "statement": read,
                 "evidence_record_ids": [metric["id"]],
                 "open_questions": [

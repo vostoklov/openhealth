@@ -1,7 +1,7 @@
 // OpenHealth PWA service worker: офлайн-оболочка.
 // Статика — cache-first; данные (data.local.json, /api/) — network-first,
 // чтобы реальные значения не залипали в кэше.
-const CACHE = 'openhealth-shell-v1';
+const CACHE = 'openhealth-shell-v2';
 const SHELL = [
   './',
   './index.html',
@@ -32,6 +32,24 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
+  // HTML — network-first: обновления дашборда видны сразу, кэш только как офлайн-фолбэк.
+  const isHTML = e.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/');
+  if (isHTML) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          if (res.ok && url.origin === location.origin) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(e.request, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Прочая статика (шрифты/иконки/картинки) — cache-first с фоновым обновлением.
   e.respondWith(
     caches.match(e.request).then((hit) => {
       const net = fetch(e.request)

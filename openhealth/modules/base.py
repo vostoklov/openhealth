@@ -44,6 +44,9 @@ KNOWN_DOMAINS = (
     "journal",       # daily behavior check-ins (WHOOP-style journal)
     "recovery",      # versioned recovery / strain / sleep-debt scoring
     "correlations",  # behavior <-> recovery personal impact analysis
+    "medications",   # medication / supplement / habit intervention ledger
+    "nutrition",     # eating-style profile + meal journal
+    "vaccination",   # immunization ledger + next-due attention prompts
 )
 
 

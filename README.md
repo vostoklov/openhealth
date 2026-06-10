@@ -6,6 +6,23 @@
 
 ---
 
+## Start in 60 seconds
+
+No terminal, no install:
+
+1. Green **Code** button above → **Download ZIP** → unpack.
+2. Open the `ui/web` folder.
+3. **macOS:** double-click `OpenHealth.command` (if blocked: right-click → Open).
+   **Windows / Linux:** double-click `index.html`.
+
+The dashboard opens with demo data. Your own data is one command away: `bash setup.sh`.
+
+**Beginner guide, step by step:** [docs/START-HERE.md](./docs/START-HERE.md) (RU) · [docs/START-HERE.en.md](./docs/START-HERE.en.md) (EN)
+
+If OpenHealth ends up useful to you, starring the repo is the single best way to help others find it. ⭐
+
+---
+
 ## What is this?
 
 OpenHealth turns your scattered health data into one local knowledge base you can
@@ -63,6 +80,20 @@ Two months of quiet work turned OpenHealth from a manifest into a working system
 - **Agent-native interface** — the `health-agent` skill plus slash commands
   (`/checkin`, `/log`, `/pulse`, `/insights`, `/trends`, `/protocol`, …) so a
   non-technical person can use the whole thing by chatting.
+- **Web dashboard with a live agent bridge** — a premium dark dashboard
+  (`ui/web/`, single file, GSAP) that renders your real local data and can
+  *run an agent over it*: "generate insight", "re-run correlations" and
+  per-marker deep-research buttons call a local bridge (`ui/web/server.py`,
+  stdlib, 127.0.0.1 only) which executes Claude Code or Codex CLI on your
+  machine and streams the answer back into the UI. Demo data out of the box;
+  your data never leaves the device. Launch: `ui/web/OpenHealth.command`
+  (background server + opens the dashboard), or see `ui/web/DESKTOP.md` for
+  an always-on launchd setup and PWA install.
+- **Telegram intake channel** — a stdlib-only bot (`python -m
+  openhealth.telegram_bot run`): text/voice/photo become structured
+  `IntakeEnvelope` records in your local folders, `/checkin` walks the daily
+  questions, `/today` answers from your local summary, `/ask` runs a local
+  agent. Allowlist-first, token stays in your env. See `docs/TELEGRAM.md`.
 
 ## Install
 

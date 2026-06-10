@@ -818,7 +818,7 @@
       "label_ru": "ночёвка/время на природе",
       "category": "lifestyle",
       "category_label_ru": "Образ жизни",
-      "answer_type": "boolean",
+      "answer_type": "quantity", "unit": "мин",
       "auto_apple_health": false
     },
     {
@@ -917,7 +917,7 @@
       "label_ru": "время на улице",
       "category": "lifestyle",
       "category_label_ru": "Образ жизни",
-      "answer_type": "boolean",
+      "answer_type": "quantity", "unit": "мин",
       "auto_apple_health": false
     },
     {
@@ -1034,7 +1034,7 @@
       "label_ru": "время на рабочих видеозвонках",
       "category": "lifestyle",
       "category_label_ru": "Образ жизни",
-      "answer_type": "boolean",
+      "answer_type": "quantity", "unit": "мин",
       "auto_apple_health": false
     },
     {

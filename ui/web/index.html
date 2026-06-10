@@ -3813,6 +3813,10 @@
         <i class="ph-light ph-syringe"></i>
         <span>Вакцинация</span>
       </a>
+      <a data-z="medications" data-icon="ph-pill" onclick="go('medications')">
+        <i class="ph-light ph-pill"></i>
+        <span>Препараты и БАДы</span>
+      </a>
     </nav>
 
     <div class="navsec">Знание</div>
@@ -3826,6 +3830,10 @@
         <i class="ph-light ph-microscope"></i>
         <span>Research</span>
         <span class="navdot" aria-hidden="true"></span>
+      </a>
+      <a data-z="methodology" data-icon="ph-function" onclick="go('methodology')">
+        <i class="ph-light ph-function"></i>
+        <span>Методологии</span>
       </a>
     </nav>
 
@@ -3866,9 +3874,9 @@
       </div>
     </div>
 
-    <button class="nav-config-btn" id="navConfigBtn" onclick="openNavConfig()">
-      <i class="ph-light ph-sliders"></i>
-      <span>Настроить меню</span>
+    <button class="nav-config-btn" id="navConfigBtn" onclick="go('settings')">
+      <i class="ph-light ph-gear-six"></i>
+      <span>Настройки</span>
     </button>
   </div>
 </aside>
@@ -4063,7 +4071,7 @@
               
               <div class="spark-container">
                 <div class="spark-label">
-                  <span>Пульс в течение дня (уд/мин)</span>
+                  <span>Демо-кривая суток (реальная ЧСС появится с интрадей-данными)</span>
                   <span class="mono">52 - 168 уд/мин</span>
                 </div>
                 <svg id="pulseChart" class="spark-svg" style="height: 220px;" viewBox="0 0 600 220" preserveAspectRatio="none">
@@ -4108,6 +4116,20 @@
                 <i class="ph-light ph-calendar-check card-header-icon"></i>
               </div>
               <div id="pulseCalBody"></div>
+            </div>
+          </div>
+
+          <!-- Погода сегодня (Open-Meteo через bridge, контекст — не диагноз) -->
+          <div class="card-outer col-6">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Погода сегодня</h3>
+                  <div class="sub" id="pulseWeatherSub">контекст дня: давление, жара, свет, UV</div>
+                </div>
+                <i class="ph-light ph-cloud-sun card-header-icon"></i>
+              </div>
+              <div id="pulseWeatherBody"></div>
             </div>
           </div>
 
@@ -4781,6 +4803,11 @@
         <div class="bento-grid" id="vaccinationContent"></div>
       </section>
 
+      <!-- SCREEN 11d: MEDICATIONS — препараты и БАДы (локальный список в браузере) -->
+      <section class="zone" id="z-medications">
+        <div class="bento-grid" id="medicationsContent"></div>
+      </section>
+
       <!-- SCREEN 12: PROTOCOLS — n-of-1 карточки из движка (или empty-state) -->
       <section class="zone" id="z-protocols">
         <div class="bento-grid" id="protocolsContent">
@@ -4813,6 +4840,31 @@
                 <button class="btn-primary" onclick="go('biomarkers')">
                   <i class="ph-light ph-flask"></i> К биомаркерам
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 13b: METHODOLOGY — страницы методологий расчётов (docs/methodology/*.md) -->
+      <section class="zone" id="z-methodology">
+        <div class="bento-grid">
+          <div class="card-outer col-12">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Методологии расчётов</h3>
+                  <div class="sub">как считается каждый показатель — из реального кода, по файлу на параметр</div>
+                </div>
+                <i class="ph-light ph-function card-header-icon"></i>
+              </div>
+              <div class="settings-info-row" style="margin-bottom:14px;">
+                <i class="ph-light ph-info"></i>
+                <span>Это файлы твоего проекта (<span class="mono">docs/methodology/*.md</span>). Правки параметров делай в коде или в «Настройках → Параметры расчётов» — md только описывает методику.</span>
+              </div>
+              <div class="meth-layout" id="methLayout">
+                <div class="meth-list" id="methList"></div>
+                <div class="meth-view" id="methView"></div>
               </div>
             </div>
           </div>
@@ -4975,6 +5027,51 @@
                   <i class="ph-light ph-lock-simple"></i>
                   <span>Тексты хранятся локально в браузере. Кнопка выгрузит <span class="mono">goal.md</span> и <span class="mono">about-me.md</span> — положи их в свою health-папку рядом с <span class="mono">data.local.json</span>: bridge подмешает их в контекст агента при каждом разборе.</span>
                 </p>
+              </div>
+            </div>
+
+            <!-- Профиль тела: возраст / пол / рост / вес + история веса -->
+            <div class="card-outer" style="margin-top:16px;">
+              <div class="card-inner">
+                <div class="card-header">
+                  <div class="card-title-group">
+                    <h3>Профиль тела</h3>
+                    <div class="sub">возраст, пол, рост, вес — контекст для расчётов и агента</div>
+                  </div>
+                  <i class="ph-light ph-person card-header-icon"></i>
+                </div>
+                <div id="bodyProfileBox"></div>
+              </div>
+            </div>
+
+            <!-- Город и локации: погода + travel-контекст -->
+            <div class="card-outer" style="margin-top:16px;">
+              <div class="card-inner">
+                <div class="card-header">
+                  <div class="card-title-group">
+                    <h3>Город и локации</h3>
+                    <div class="sub">домашний город для погоды · переезды как travel-контекст для агента</div>
+                  </div>
+                  <i class="ph-light ph-map-pin card-header-icon"></i>
+                </div>
+                <div id="locationBox"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Параметры расчётов -->
+          <div class="settings-sec">
+            <h2 class="settings-sec-head">Параметры расчётов</h2>
+            <div class="card-outer">
+              <div class="card-inner">
+                <div class="card-header">
+                  <div class="card-title-group">
+                    <h3>Числа за каждым показателем</h3>
+                    <div class="sub">пороги и веса движка — меняй в допустимых пределах · хранится в ~/.openhealth/params.json</div>
+                  </div>
+                  <i class="ph-light ph-sliders-horizontal card-header-icon"></i>
+                </div>
+                <div id="paramsBox"></div>
               </div>
             </div>
           </div>

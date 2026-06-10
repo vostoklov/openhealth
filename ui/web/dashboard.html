@@ -4690,9 +4690,9 @@
               </div>
               
               <div class="spark-container">
-                <div class="spark-label">
-                  <span>Демо-кривая суток (реальная ЧСС появится с интрадей-данными)</span>
-                  <span class="mono">52 - 168 уд/мин</span>
+                <div class="spark-label" id="pulseSparkLabel" style="display:none;">
+                  <span id="pulseSparkTitle">Поминутный пульс за сутки</span>
+                  <span class="mono" id="pulseSparkRange"></span>
                 </div>
                 <svg id="pulseChart" class="spark-svg" style="height: 220px;" viewBox="0 0 600 220" preserveAspectRatio="none">
                   <defs>
@@ -7037,6 +7037,7 @@ function initPulseScreen() {
     if (svg) svg.style.display = 'none';
     if (axisEl) axisEl.innerHTML = '';
     if (sub) sub.textContent = 'поминутного пульса нет в данных';
+    const lblE = document.getElementById('pulseSparkLabel'); if (lblE) lblE.style.display = 'none';
     if (cont) {
       const ph = document.createElement('div');
       ph.className = 'pulse-empty';
@@ -7047,6 +7048,9 @@ function initPulseScreen() {
   } else {
     if (svg) svg.style.display = '';
     if (sub) sub.textContent = 'данные за последние 24 часа';
+    const lblR = document.getElementById('pulseSparkLabel'); if (lblR) lblR.style.display = '';
+    const rngR = document.getElementById('pulseSparkRange');
+    if (rngR) { const lo = Math.round(Math.min.apply(null, points)), hi = Math.round(Math.max.apply(null, points)); rngR.textContent = lo + ' - ' + hi + ' уд/мин'; }
     const gPulse = renderAreaChart('pulseChart', 'pulseLine', 'pulseArea', points);
     if (gPulse) {
       if (axisEl) {

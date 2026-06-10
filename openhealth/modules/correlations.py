@@ -23,9 +23,11 @@ personal data is not causation; nothing here diagnoses. Pure stdlib.
 
 from typing import Any, Dict, List, Optional
 
-from .. import evidence
+from .. import evidence, params
 from .. import journal_behaviors as catalog
 from .base import ModuleResult, register
+
+ALGO_VERSION = "behavior_impact@v1"
 
 DEFAULT_WINDOW_DAYS = 90
 MIN_YES_DAYS = 5
@@ -34,6 +36,21 @@ MIN_NO_DAYS = 5
 # Impact magnitude (recovery points) -> qualitative size label.
 SMALL_IMPACT = 3.0
 MODERATE_IMPACT = 7.0
+
+# User-tunable params (openhealth.params); constants above stay the defaults.
+_PARAM_IDS = (
+    "correlations.min_yes_days",
+    "correlations.min_no_days",
+    "correlations.window_days",
+)
+
+
+def _param(param_id: str, fallback: float) -> float:
+    """Effective tunable value; any registry problem falls back to the constant."""
+    try:
+        return params.get(param_id)
+    except Exception:
+        return fallback
 
 
 def _switch_count(flags_by_day: List[bool]) -> int:
@@ -56,12 +73,14 @@ def behavior_impact(pairs: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
 
     ``pairs`` is a list of ``{"date", "recovery", "yes": bool}`` for the days
     this behavior was logged *and* a recovery score exists. Returns None when
-    the 5-yes / 5-no threshold is not met.
+    the 5-yes / 5-no threshold (tunable via ``openhealth.params``) is not met.
     """
+    min_yes = int(_param("correlations.min_yes_days", MIN_YES_DAYS))
+    min_no = int(_param("correlations.min_no_days", MIN_NO_DAYS))
     ordered = sorted((p for p in pairs if p.get("recovery") is not None), key=lambda p: p["date"])
     yes = [p["recovery"] for p in ordered if p["yes"]]
     no = [p["recovery"] for p in ordered if not p["yes"]]
-    if len(yes) < MIN_YES_DAYS or len(no) < MIN_NO_DAYS:
+    if len(yes) < min_yes or len(no) < min_no:
         return None
 
     mean_yes = sum(yes) / len(yes)
@@ -79,6 +98,8 @@ def behavior_impact(pairs: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     return {
         "n_yes": len(yes),
         "n_no": len(no),
+        "min_yes_required": min_yes,
+        "min_no_required": min_no,
         "mean_recovery_yes": round(mean_yes, 1),
         "mean_recovery_no": round(mean_no, 1),
         "impact": round(impact, 1),
@@ -126,6 +147,7 @@ def analyze(behaviors: List[Dict[str, Any]], window_days: int = DEFAULT_WINDOW_D
     behaviors that clear the 5/5 threshold and are non-negligible.
     """
     insights: List[Dict[str, Any]] = []
+    overrides = params.overrides_for(_PARAM_IDS)
     for entry in behaviors:
         stats = behavior_impact(entry.get("pairs", []))
         if stats is None:
@@ -141,6 +163,28 @@ def analyze(behaviors: List[Dict[str, Any]], window_days: int = DEFAULT_WINDOW_D
             continue
 
         action = _action_text(name, stats)
+        # "How was this computed" trace — UI tooltip food. Same numbers as the
+        # stats block, under stable names, plus the thresholds actually used.
+        compute_trace = {
+            "yes_days": stats["n_yes"],
+            "no_days": stats["n_no"],
+            "avg_yes": stats["mean_recovery_yes"],
+            "avg_no": stats["mean_recovery_no"],
+            "window_days": window_days,
+            "min_yes_required": stats["min_yes_required"],
+            "min_no_required": stats["min_no_required"],
+        }
+        metadata: Dict[str, Any] = {
+            **stats,
+            "behavior_id": bid,
+            "category": category,
+            "window_days": window_days,
+            "confidence_grade": conf.value,
+            "compute_trace": compute_trace,
+            "algo_version": params.stamp(ALGO_VERSION, overrides),
+        }
+        if overrides:
+            metadata["params_overrides"] = overrides
         insights.append({
             "id": "insight-correlation-%s" % bid,
             "record_type": "InsightHypothesis",
@@ -151,13 +195,7 @@ def analyze(behaviors: List[Dict[str, Any]], window_days: int = DEFAULT_WINDOW_D
             "evidence_class": "derived-hypothesis",
             "confidence": evidence.confidence_to_numeric(conf),
             "tags": ["correlations", category, "review-needed", stats["direction"]],
-            "metadata": {
-                **stats,
-                "behavior_id": bid,
-                "category": category,
-                "window_days": window_days,
-                "confidence_grade": conf.value,
-            },
+            "metadata": metadata,
             "statement": action,
             "evidence_record_ids": [],
             "open_questions": [
@@ -172,16 +210,20 @@ def analyze(behaviors: List[Dict[str, Any]], window_days: int = DEFAULT_WINDOW_D
 
 # --- index reader: build behavior/recovery pairs from indexed records ------
 
-def from_index(db_path, window_days: int = DEFAULT_WINDOW_DAYS, as_of: Optional[str] = None) -> List[Dict[str, Any]]:
+def from_index(db_path, window_days: Optional[int] = None, as_of: Optional[str] = None) -> List[Dict[str, Any]]:
     """Assemble per-behavior recovery pairs from indexed journal + recovery data.
 
     Reads only through the index API. Pairs each journal day (boolean entries)
     with that day's recovery score. Days without a recovery score are dropped.
+    ``window_days`` defaults to the (user-tunable) ``correlations.window_days``.
     """
     from datetime import date as _d
     from datetime import datetime, timezone
 
     from .. import index
+
+    if window_days is None:
+        window_days = int(_param("correlations.window_days", DEFAULT_WINDOW_DAYS))
 
     end = _d.fromisoformat(as_of) if as_of else datetime.now(timezone.utc).date()
 
@@ -273,13 +315,18 @@ class CorrelationsModule:
 
     def compute(self, payload: Dict[str, Any]) -> ModuleResult:
         behaviors = payload.get("behaviors") or []
-        window_days = int(payload.get("window_days", DEFAULT_WINDOW_DAYS))
+        window_days = payload.get("window_days")
+        if window_days is None:
+            window_days = _param("correlations.window_days", DEFAULT_WINDOW_DAYS)
+        window_days = int(window_days)
         insights = analyze(behaviors, window_days=window_days)
 
+        min_yes = int(_param("correlations.min_yes_days", MIN_YES_DAYS))
+        min_no = int(_param("correlations.min_no_days", MIN_NO_DAYS))
         analyzed = sum(1 for b in behaviors if behavior_impact(b.get("pairs", [])) is not None)
         notes = [
             "analyzed %d/%d behaviors meeting the %d-yes/%d-no threshold; %d actionable impact(s)"
-            % (analyzed, len(behaviors), MIN_YES_DAYS, MIN_NO_DAYS, len(insights))
+            % (analyzed, len(behaviors), min_yes, min_no, len(insights))
         ]
         return ModuleResult(metrics=[], insights=insights, notes=notes)
 

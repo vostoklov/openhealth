@@ -1,0 +1,38 @@
+{
+  "greeting_name": "Demo",
+  "measurements": [
+    { "metric": "recovery", "title": "Recovery", "value": "70%", "caption": "demo" },
+    { "metric": "strain", "title": "Strain", "value": "12.0", "caption": "of 21" },
+    { "metric": "hrv", "title": "HRV", "value": "50 ms", "caption": "demo" },
+    { "metric": "resting_hr", "title": "Resting HR", "value": "60 bpm", "caption": "demo" },
+    { "metric": "sleep", "title": "Sleep", "value": "8.0 h", "caption": "demo" },
+    { "metric": "weight", "title": "Weight", "value": "70.0 kg", "caption": "demo" }
+  ],
+  "panels": [
+    {
+      "id": "lab-demo",
+      "date": "2024-01-01",
+      "title": "Blood panel (demo data)",
+      "markers": [
+        { "marker_key": "hemoglobin", "display_name": "Hemoglobin", "loinc": "718-7", "value": 15.0, "unit": "g/dL", "value_si": 150.0, "si_unit": "g/L", "reference_low": 13.5, "reference_high": 17.5, "reference_source": "demo", "flag": "normal", "note": null },
+        { "marker_key": "vitamin_d", "display_name": "Vitamin D (25-OH)", "loinc": "1989-3", "value": 40.0, "unit": "ng/mL", "value_si": 99.8, "si_unit": "nmol/L", "reference_low": 30.0, "reference_high": null, "reference_source": "demo", "flag": "normal", "note": null }
+      ]
+    }
+  ],
+  "trends": [
+    {
+      "metric": "sleep",
+      "title": "Sleep",
+      "unit": "h",
+      "reference_low": 7.0,
+      "reference_high": 9.0,
+      "points": [
+        { "date": "01-01", "value": 8.0 },
+        { "date": "01-02", "value": 7.5 },
+        { "date": "01-03", "value": 8.2 }
+      ]
+    }
+  ],
+  "insights": [],
+  "alerts": []
+}

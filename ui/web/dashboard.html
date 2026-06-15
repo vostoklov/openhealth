@@ -15,6 +15,13 @@
 <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/duotone/style.css">
 <!-- Подключение GSAP -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<!-- OpenHealth shared engine: single-source registry + chart kit (see EXTENDING.md).
+     V1 is a SKIN over this engine; Today metrics come from the registry, not a local copy. -->
+<script src="assets/oh-registry.js"></script>
+<script src="assets/oh-charts.js"></script>
+<script src="assets/oh-correlate.js"></script>
+<script src="assets/oh-provenance.js"></script>
 <style>
   :root {
     --font: "Geist", "Geist Fallback", system-ui, -apple-system, sans-serif;
@@ -4471,6 +4478,26 @@
         <i class="ph-light ph-scales"></i>
         <span>Корреляции</span>
       </a>
+      <a data-z="r-sleep" data-icon="ph-moon" onclick="go('r-sleep')">
+        <i class="ph-light ph-moon"></i>
+        <span>Сон</span>
+      </a>
+      <a data-z="r-strain" data-icon="ph-lightning" onclick="go('r-strain')">
+        <i class="ph-light ph-lightning"></i>
+        <span>Нагрузка</span>
+      </a>
+      <a data-z="r-stress" data-icon="ph-gauge" onclick="go('r-stress')">
+        <i class="ph-light ph-gauge"></i>
+        <span>Стресс</span>
+      </a>
+      <a data-z="r-body" data-icon="ph-person" onclick="go('r-body')">
+        <i class="ph-light ph-person"></i>
+        <span>Тело</span>
+      </a>
+      <a data-z="r-algos" data-icon="ph-function" onclick="go('r-algos')">
+        <i class="ph-light ph-function"></i>
+        <span>Алгоритмы</span>
+      </a>
       <a data-z="journal" data-icon="ph-notebook" onclick="go('journal')">
         <i class="ph-light ph-notebook"></i>
         <span>Журнал</span>
@@ -5693,6 +5720,39 @@
       </section>
 
       <!-- SCREEN 16: SETTINGS — хаб настроек (паттерн Linear Settings) -->
+      <!-- Registry-driven WHOOP sections (sleep/strain/stress/body) - same source as V2 -->
+      <style>
+        #z-r-sleep .oh-section, #z-r-strain .oh-section, #z-r-stress .oh-section, #z-r-body .oh-section { background: var(--card-outer); border:1px solid var(--line); border-radius:18px; padding:20px 22px; margin-bottom:16px; }
+        .oh-section__head { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+        .oh-section__icon { font-size:20px; }
+        .oh-section__title { font-size:17px; font-weight:600; margin:0; color:var(--ink); }
+        .oh-section__grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap:14px; align-items:start; }
+        .oh-tile { background: var(--card-inner); border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
+        .oh-tile__top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .oh-tile__label { font-size:11px; font-weight:600; letter-spacing:.5px; color:var(--mut); text-transform:uppercase; }
+        .oh-tile__icon { color:var(--mut); font-size:16px; }
+        .oh-tile__val { font-size:26px; font-weight:700; color:var(--ink); }
+        .oh-tile__unit { font-size:13px; font-weight:500; color:var(--mut); }
+        .oh-chart-card { grid-column: span 2; background: var(--card-inner); border:1px solid var(--line); border-radius:14px; padding:14px 16px; min-width:0; }
+        .oh-chart-card__head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+        .oh-chart-card__label { font-size:13px; font-weight:600; color:var(--ink); }
+        .oh-chip { font-size:10px; font-weight:500; color:var(--mut); background: rgba(255,255,255,.06); padding:3px 8px; border-radius:999px; display:inline-flex; align-items:center; gap:4px; margin-top:8px; }
+        .oh--demo { opacity:.7; }
+        @keyframes oh-rise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+        #z-r-sleep .oh-section, #z-r-strain .oh-section, #z-r-stress .oh-section, #z-r-body .oh-section, #z-r-algos .oh-section { animation: oh-rise .5s cubic-bezier(.16,1,.3,1) both; }
+        @media (max-width:760px){ .oh-chart-card{ grid-column:1 / -1; } }
+        @media (max-width:640px){ .oh-section__grid{ grid-template-columns:1fr; } .oh-section{ padding:16px; }
+          /* Today bento collapses to one column on phones; beats the DnD inline spans. */
+          #todayGrid{ grid-template-columns:1fr !important; }
+          #todayGrid > .today-widget, #todayGrid > .card-outer{ grid-column:1 / -1 !important; }
+        }
+      </style>
+      <section class="zone" id="z-r-sleep"><div id="oh-mount-r-sleep"></div></section>
+      <section class="zone" id="z-r-strain"><div id="oh-mount-r-strain"></div></section>
+      <section class="zone" id="z-r-stress"><div id="oh-mount-r-stress"></div></section>
+      <section class="zone" id="z-r-body"><div id="oh-mount-r-body"></div></section>
+      <section class="zone" id="z-r-algos"><div id="oh-mount-algorithms"></div></section>
+
       <section class="zone" id="z-settings">
         <div class="settings-col">
 
@@ -5797,12 +5857,15 @@
                 <div class="nav-config-note" style="margin-top:20px; font-weight:600; color: var(--ink);">Эффекты</div>
                 <div id="fxToggles"></div>
 
-                <a class="settings-link-row" href="dashboard-v2.html" target="_blank" rel="noopener">
-                  <i class="ph-light ph-flask lead"></i>
-                  <span>Экспериментальный дизайн v2</span>
-                  <span class="ver">ver 0.1</span>
-                  <i class="ph-light ph-arrow-up-right ext"></i>
-                </a>
+                <div class="nav-config-note" style="margin-top:20px; font-weight:600; color: var(--ink);">Скин интерфейса</div>
+                <div class="skin-switch" style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+                  <button type="button" class="btn-secondary" onclick="setSkin('v1')"><i class="ph-light ph-moon"></i> Классический (тёмный) · сейчас</button>
+                  <button type="button" class="btn-secondary" onclick="setSkin('v2')"><i class="ph-light ph-squares-four"></i> Bento (светлый)</button>
+                </div>
+                <p class="privacy-note" style="margin-top:10px;">
+                  <i class="ph-light ph-info"></i>
+                  <span>Скины - один движок и один реестр (<span class="mono">assets/registry.json</span>). Данные и метрики общие, отличается только оформление; выбор скина запоминается и применяется на входе.</span>
+                </p>
               </div>
             </div>
           </div>
@@ -5954,11 +6017,11 @@ const DATA = {
   ],
   
   biomarkers: [
-    { name: "Ферритин", value: 45, unit: "мкг/л", refMin: 15, refMax: 150, optMin: 60, optMax: 120, status: "low", grade: "C3", trend: [32, 35, 39, 45], discuss: "Низкий ферритин при нормальном гемоглобине указывает на латентный дефицит железа. Обсудить добавки железа (хелат) и кофакторы (вит C)." },
-    { name: "Витамин D (25-OH)", value: 28, unit: "нг/мл", refMin: 30, refMax: 100, optMin: 50, optMax: 80, status: "deficient", grade: "C4", trend: [20, 24, 25, 28], discuss: "Дефицит витамина D. Обсудить терапевтическую дозировку 5000 IU на 2 месяца с последующим контролем." },
-    { name: "ТТГ", value: 2.1, unit: "мкМЕ/мл", refMin: 0.4, refMax: 4.0, optMin: 1.0, optMax: 2.0, status: "optimal", grade: "C5", trend: [2.4, 2.3, 2.2, 2.1], discuss: "ТТГ в оптимальном диапазоне. Щитовидная железа компенсирована." },
-    { name: "Глюкоза", value: 5.2, unit: "ммоль/л", refMin: 4.1, refMax: 5.9, optMin: 4.2, optMax: 5.0, status: "normal", grade: "C3", trend: [5.4, 5.3, 5.1, 5.2], discuss: "Глюкоза в норме, но чуть выше оптимума. Обратить внимание на углеводный профиль ужина." },
-    { name: "ЛПНП (Холестерин)", value: 3.4, unit: "ммоль/л", refMin: 0.0, refMax: 3.0, optMin: 1.8, optMax: 2.6, status: "high", grade: "C2", trend: [3.6, 3.5, 3.3, 3.4], discuss: "ЛПНП повышен. Обсудить липидный профиль (АпоВ, ЛП(а)), омега-3 индекс и рацион (насыщенные жиры)." }
+    { name: "Ферритин", value: 90, unit: "мкг/л", refMin: 15, refMax: 150, optMin: 60, optMax: 120, status: "optimal", grade: "C5", trend: [86, 88, 89, 90], discuss: "Демо-значение. Реальные данные подставляются из data.local.json (вне репозитория)." },
+    { name: "Витамин D (25-OH)", value: 60, unit: "нг/мл", refMin: 30, refMax: 100, optMin: 50, optMax: 80, status: "optimal", grade: "C5", trend: [55, 57, 59, 60], discuss: "Демо-значение. Реальные данные подставляются из data.local.json (вне репозитория)." },
+    { name: "ТТГ", value: 1.5, unit: "мкМЕ/мл", refMin: 0.4, refMax: 4.0, optMin: 1.0, optMax: 2.0, status: "optimal", grade: "C5", trend: [1.6, 1.5, 1.5, 1.5], discuss: "Демо-значение. Реальные данные подставляются из data.local.json (вне репозитория)." },
+    { name: "Глюкоза", value: 4.6, unit: "ммоль/л", refMin: 4.1, refMax: 5.9, optMin: 4.2, optMax: 5.0, status: "optimal", grade: "C5", trend: [4.7, 4.6, 4.6, 4.6], discuss: "Демо-значение. Реальные данные подставляются из data.local.json (вне репозитория)." },
+    { name: "ЛПНП (Холестерин)", value: 2.2, unit: "ммоль/л", refMin: 0.0, refMax: 3.0, optMin: 1.8, optMax: 2.6, status: "optimal", grade: "C5", trend: [2.3, 2.2, 2.2, 2.2], discuss: "Демо-значение. Реальные данные подставляются из data.local.json (вне репозитория)." }
   ],
   biomarkersConnected: true,
   
@@ -6268,15 +6331,25 @@ function updateTodayScreen() {
     ? blurbParts.join('  ·  ')
     : 'За этот день в выгрузке нет метрик tracker.';
 
-  document.getElementById('board').innerHTML = [
-    ["HRV", m.hrv, "мс"],
-    ["Пульс покоя", m.rhr, "уд/мин"],
-    ["Сон", m.sleep, "ч"],
-    ["Strain", m.strain, "/21"]
-  ].map(([k, val, u]) => {
+  // Плитки Today берутся из реестра (assets/registry.json): какие метрики и их
+  // подписи/единицы. Значение - из метрик выбранного дня, иначе из OH (демо/реальное).
+  // Новая метрика-плитка в реестре появляется здесь автоматически, без правок скина.
+  const tileDefs = (window.OH && OH.registry)
+    ? OH.sectionMetrics('today').filter(x => x.chart === 'tile')
+    : [
+        { id: 'hrv', label_ru: 'HRV', unit: 'мс' },
+        { id: 'rhr', label_ru: 'Пульс покоя', unit: 'уд/мин' },
+        { id: 'sleep', label_ru: 'Сон', unit: 'ч' },
+        { id: 'strain', label_ru: 'Strain', unit: '/21' }
+      ];
+  document.getElementById('board').innerHTML = tileDefs.map(def => {
+    const k = def.label_ru || def.id;
+    const u = def.unit || '';
+    const val = (m[def.id] !== undefined && m[def.id] !== null) ? m[def.id]
+              : (window.OH ? OH.value(def.id) : undefined);
     if (!has(val)) {
       return `
-    <div class="metric-tile">
+    <div class="metric-tile" data-metric="${def.id}">
       <div class="k">${k}</div>
       <div class="v mono" style="color:var(--mut);">—</div>
       <div class="u">${u}</div>
@@ -6284,7 +6357,7 @@ function updateTodayScreen() {
     }
     const dec = Number.isInteger(val) ? 0 : 1;
     return `
-    <div class="metric-tile">
+    <div class="metric-tile" data-metric="${def.id}">
       <div class="k">${k}</div>
       <div class="v mono" data-count="${val}" data-dec="${dec}">${val}</div>
       <div class="u">${u}</div>
@@ -10821,6 +10894,13 @@ const THEME_DEFS = [
   { id: 'brutalist', label: 'Брутал', bg: '#ffffff', card: '#ffffff', line: '#000000', ink: '#000000', accent: '#0000ff' }
 ];
 
+// Skin switcher: персист выбора + переход. Точка входа index.html чтит oh.skin.
+function setSkin(id) {
+  try { localStorage.setItem('oh.skin', id); } catch (e) { /* ignore */ }
+  const files = { v1: 'dashboard.html', v2: 'dashboard-v2.html' };
+  if (files[id]) window.location.href = files[id];
+}
+
 function applyTheme(t, persist) {
   if (!THEME_DEFS.some(x => x.id === t)) return;
   document.documentElement.dataset.theme = t;
@@ -10897,6 +10977,25 @@ async function loadRealData() {
   }
 }
 
+// OpenHealth shared registry: Today metrics (recovery/hrv/rhr/sleep/strain + 30d trend)
+// come from assets/registry.json via OH, so V1 and V2 stay in parity. Real values from
+// data.local.json win over the registry demo (same as loadRealData). Override DATA so the
+// existing V1 renderers use the single source.
+function ohSeedToday() {
+  if (!window.OH || !OH.registry) return;
+  if (OH.metric('recovery')) DATA.recovery = OH.value('recovery');
+  if (OH.metric('hrv')) DATA.hrv = OH.value('hrv');
+  if (OH.metric('rhr')) DATA.rhr = OH.value('rhr');
+  if (OH.metric('sleep')) { DATA.sleep = OH.value('sleep'); DATA.sleepNeeded = OH.target('sleep'); }
+  if (OH.metric('strain')) { DATA.strain = OH.value('strain'); DATA.strainTarget = OH.target('strain'); }
+  if (OH.metric('recovery_trend_30')) DATA.trend30Rec = OH.value('recovery_trend_30');
+}
+
+// Parity manifest: what this skin renders from the registry (+ skin id). Symmetric to V2.
+window.__renderManifest = function () {
+  return Object.assign({ skin: 'v1' }, (window.OH ? OH.manifest() : { sections: [] }));
+};
+
 // Панель «Данные и bridge» в Источниках: свежесть снапшота + баннер устаревших данных.
 function updateDataPanel() {
   const meta = document.getElementById('syncDataMeta');
@@ -10945,6 +11044,23 @@ async function rebuildSnapshot(btn) {
   }
 }
 
+// WHOOP sections (sleep/strain/stress/body) rendered from the registry via the shared
+// OH.sectionView - identical source to V2, only the dark .oh-* theming differs.
+function renderRegistrySectionsV1() {
+  if (!window.OH || !OH.registry) return;
+  try { if (typeof titles === 'object') Object.assign(titles, { 'r-sleep': 'Сон', 'r-strain': 'Нагрузка', 'r-stress': 'Стресс', 'r-body': 'Тело' }); } catch (e) { /* ignore */ }
+  var accents = { sleep: '#34d399', strain: '#a78bfa', stress: '#fb923c', body: '#38bdf8' };
+  var zmap = { 'r-sleep': 'sleep', 'r-strain': 'strain', 'r-stress': 'stress', 'r-body': 'body' };
+  var text = (getComputedStyle(document.body).getPropertyValue('--ink') || '#f3f4f6').trim();
+  Object.keys(zmap).forEach(function (zid) {
+    var host = document.getElementById('oh-mount-' + zid);
+    if (host) host.innerHTML = OH.sectionView(zmap[zid], { accent: accents[zmap[zid]], textColor: text, bg: '#14171d' });
+  });
+  try { if (typeof titles === 'object') titles['r-algos'] = 'Алгоритмы'; } catch (e) { /* ignore */ }
+  var am = document.getElementById('oh-mount-algorithms');
+  if (am && OH.algorithmsView) am.innerHTML = OH.algorithmsView();
+}
+
 function renderDashboard() {
   // Жёстко фиксируем стартовый экран = Сегодня (детерминированно, без зависимости от залипшего состояния).
   document.querySelectorAll('.zone').forEach(s => s.classList.toggle('on', s.id === 'z-today'));
@@ -10955,6 +11071,7 @@ function renderDashboard() {
   initHabitsState();
   updateTodayScreen();
   exploreCorrelations();
+  renderRegistrySectionsV1();
   updateBiomarkersScreen();
   updateSyncScreen();
   updateDataPanel();
@@ -10981,9 +11098,12 @@ window.addEventListener('DOMContentLoaded', () => {
   bindTodayDrag();
   bindDaySwipe();
   updateSurveyReminder();
-  // Render immediately with whatever DATA we have, then re-render if real
-  // local data loads (keeps demo instant and avoids a blank first paint).
-  loadRealData().then(loaded => { if (loaded) renderDashboard(); });
+  // OpenHealth shared registry: Today metrics come from assets/registry.json (one source
+  // for both skins). Load registry + real data, seed Today, then re-render. The
+  // renderDashboard() below keeps the demo first paint instant.
+  (window.OH ? OH.load() : Promise.reject()).catch(() => {})
+    .then(() => loadRealData())
+    .then(() => { ohSeedToday(); renderDashboard(); });
   renderDashboard();
   // Один тихий запрос к /api/health с таймаутом 1.5 с — без спама.
   checkBridge();
@@ -13668,6 +13788,112 @@ function initResearchBadges() {
     if (slug) renderResearchBadge(slug, el);
   });
 }
+</script>
+<script>
+/* i18n: runtime RU->EN translation + language toggle (default EN).
+   Dashboard is authored in Russian; we translate the rendered DOM to English at
+   runtime via a RU->EN dictionary + a MutationObserver (catches every render
+   without editing render functions). RU mode = native source (no-op).
+   Dictionary is progressive — expand OH_I18N to cover more strings. */
+(function(){
+  const OH_I18N = {
+    "Сегодня":"Today","Пульс дня":"Day Pulse","Препараты и БАДы":"Meds & Supplements",
+    "Методологии":"Methodologies","Отчёты":"Reports","Дайджесты":"Digests",
+    "Источники данных":"Data Sources","Диагностика":"Diagnostics","Настройки":"Settings",
+    "ДАННЫЕ":"DATA","ЗНАНИЕ":"KNOWLEDGE","СИСТЕМА":"SYSTEM","Данные":"Data","Знание":"Knowledge","Система":"System",
+    "Журнал":"Journal","Тренды":"Trends","Состав тела":"Body Composition","Timeline":"Timeline",
+    "Тренировки":"Workouts","ДНК":"DNA","Вакцинация":"Vaccination","Протоколы":"Protocols",
+    "Корреляции":"Correlations","Обзор показателей":"Vitals Overview","Лента дней":"Day Feed",
+    "Каскад целей":"Goal Cascade","Biomarkers (Анализы)":"Biomarkers","Research":"Research",
+    "Что сделано сегодня":"What you did today","набор целевых привычек":"your target habits",
+    "Прогресс":"Progress","Лечь до 23:30":"Lights out by 23:30","Свет утром 15 мин":"Morning light, 15 min",
+    "Прогулка 10к шагов":"Walk 10k steps","Вода 2.5л":"Water, 2.5 L","Без кофе после 15:00":"No coffee after 15:00",
+    "Настроение / энергия":"Mood / energy","Усталость":"Fatigue","Энергия":"Energy",
+    "Физиологическое восстановление":"Physiological recovery","ИЗ ЧЕГО СЛОЖИЛСЯ":"HOW IT'S BUILT",
+    "Редактировать":"Edit","Жёлтая зона — умеренный режим":"Yellow zone — moderate mode",
+    "ПУЛЬС ПОКОЯ":"RESTING HR","СОН":"SLEEP","мс":"ms","уд/мин":"bpm","ч":"h",
+    "Локально · твои данные не уходят с устройства":"Local · your data never leaves your device",
+    "Данные и bridge":"Data & bridge","Пересобрать":"Rebuild","Обнови WHOOP":"Update WHOOP",
+    "Снапшот данных":"Data snapshot","онлайн":"online","офлайн":"offline","данные на":"data as of",
+    "recovery сегодня из твоих данных tracker":"today's recovery from your tracker data",
+    "Биохимическая панель":"Biochemistry panel","НАЗВАНИЕ":"NAME","РЕЗУЛЬТАТ":"RESULT",
+    "РЕФЕРЕНС":"REFERENCE","ОПТИМУМ":"OPTIMUM","СТАТУС":"STATUS","ДОВЕРИЕ":"CONFIDENCE",
+    "Оптимально":"Optimal","Повышен":"High","Понижен":"Low","В норме":"Normal","Анализы не загружены":"No labs loaded",
+    "записей пока нет":"no records yet","Список пуст":"List is empty","Добавить":"Add",
+    "Принял":"Taken","Удалить":"Delete","Название":"Name","Тип":"Type","Доза":"Dose","Пауза":"Pause",
+    "Расписание":"Schedule","Дата начала":"Start date","Источник":"Source","лекарство":"medication","БАД":"supplement",
+    "Профиль":"Profile","Профиль тела":"Body profile","Возраст":"Age","Пол":"Sex",
+    "Рост, см":"Height, cm","Вес, кг":"Weight, kg","Город и локации":"City & locations",
+    "Параметры расчётов":"Calculation parameters","Цель по здоровью":"Health goal","Обо мне":"About me",
+    "Скачать как файлы":"Download as files","Определить":"Detect","Отметить":"Mark",
+    "Замеры веса":"Weight measurements","Добавить замер":"Add measurement","не указан":"not set",
+    "Тема":"Theme","Тёмная":"Dark","Светлая":"Light","Брутал":"Brutalist","Оформление":"Appearance",
+    "Дип-ресёрч агентом":"Deep research by agent","Сгенерировать инсайт":"Generate insight",
+    "Анализ трендов агентом":"Trend analysis by agent","Пересчитать корреляции агентом":"Recompute correlations by agent",
+    "Подключить источник":"Connect a source","Запусти анализ":"Run analysis","К биомаркерам":"To biomarkers",
+    "Погода сегодня":"Weather today","Календарь сегодня":"Calendar today","Циркадное колесо":"Circadian wheel",
+    "Энергия дня":"Energy of the day","Эмоции":"Emotions","Загрузка…":"Loading…","Готово":"Done","Ошибка":"Error"
+  };
+  const SKIP = {SCRIPT:1,STYLE:1,TEXTAREA:1,NOSCRIPT:1};
+  function lang(){ return localStorage.getItem('oh_lang') || 'en'; }
+  function trNode(node){
+    const v = node.nodeValue; if(!v) return;
+    const k = v.trim(); if(!k) return;
+    const en = OH_I18N[k];
+    if(en && en !== k) node.nodeValue = v.replace(k, en);
+  }
+  function trEl(root){
+    if(lang() !== 'en' || !root) return;
+    if(root.nodeType === 3){ trNode(root); return; }
+    if(root.nodeType !== 1) return;
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: n => (n.parentNode && SKIP[n.parentNode.nodeName]) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+    });
+    const nodes=[]; let n; while(n=w.nextNode()) nodes.push(n);
+    nodes.forEach(trNode);
+    root.querySelectorAll && root.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el=>{
+      ['placeholder','title','aria-label'].forEach(a=>{
+        const val = el.getAttribute(a); if(val && OH_I18N[val.trim()]) el.setAttribute(a, OH_I18N[val.trim()]);
+      });
+    });
+  }
+  function injectToggle(){
+    if(document.getElementById('oh-lang-toggle')) return;
+    const footer = document.querySelector('footer');
+    if(!footer) return; // footer not ready yet — start()'s timers retry
+    const right = footer.querySelector('span:nth-child(2)') || footer;
+    const cur = lang();
+    const seg = document.createElement('span');
+    seg.id = 'oh-lang-toggle';
+    seg.title = 'Interface language';
+    seg.style.cssText = 'display:inline-flex;align-items:center;border:1px solid var(--line,rgba(0,0,0,.14));'
+      + 'border-radius:5px;overflow:hidden;font:600 10px/1 var(--font-mono,ui-monospace,monospace);letter-spacing:.1em;';
+    [['EN','en'],['RU','ru']].forEach(([txt,code]) => {
+      const b = document.createElement('button');
+      b.textContent = txt;
+      const active = code === cur;
+      b.style.cssText = 'padding:4px 7px;border:0;cursor:pointer;font:inherit;letter-spacing:inherit;'
+        + (active ? 'background:var(--accent,#1f7d57);color:#fff;' : 'background:transparent;color:var(--muted,#8a8a8a);');
+      if(!active) b.onclick = () => { localStorage.setItem('oh_lang', code); location.reload(); };
+      seg.appendChild(b);
+    });
+    right.insertBefore(seg, right.firstChild);
+  }
+  function start(){
+    injectToggle();
+    if(lang() === 'en'){
+      trEl(document.body);
+      [400, 1000, 2200].forEach(ms => setTimeout(() => { trEl(document.body); injectToggle(); }, ms)); // catch animation-deferred renders
+      new MutationObserver(muts => {
+        for(const m of muts){ m.addedNodes && m.addedNodes.forEach(node => {
+          if(node.nodeType===1 || node.nodeType===3) trEl(node);
+        }); }
+      }).observe(document.body, {childList:true, subtree:true});
+    }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
 </script>
 </body>
 </html>

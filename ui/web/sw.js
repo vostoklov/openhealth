@@ -1,7 +1,8 @@
 // OpenHealth PWA service worker: офлайн-оболочка.
-// Статика — cache-first; данные (data.local.json, /api/) — network-first,
-// чтобы реальные значения не залипали в кэше.
-const CACHE = 'openhealth-shell-v6';
+// Статика — cache-first; данные (data.local.json, /api/), реестр (registry.json) и
+// движковые скрипты (assets/oh-*.js) — network-first, чтобы значения, определения
+// метрик и код движка не залипали в кэше.
+const CACHE = 'openhealth-shell-v9';
 const SHELL = [
   './',
   './index.html',
@@ -29,6 +30,23 @@ self.addEventListener('fetch', (e) => {
   // Данные всегда свежие; офлайн — без фолбэка на кэш (честный fail → demo в приложении).
   if (url.pathname.endsWith('data.local.json') || url.pathname.startsWith('/api/')) {
     e.respondWith(fetch(e.request).catch(() => new Response('{}', { status: 503, headers: { 'Content-Type': 'application/json' } })));
+    return;
+  }
+
+  // Реестр и движковые скрипты (oh-registry.js / oh-charts.js) — источник правды
+  // определений и кода: всегда свежие, но с офлайн-фолбэком на кэш.
+  if (url.pathname.endsWith('/registry.json') || /\/oh-[\w-]+\.js$/.test(url.pathname)) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          if (res.ok && url.origin === location.origin) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(e.request, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
     return;
   }
 

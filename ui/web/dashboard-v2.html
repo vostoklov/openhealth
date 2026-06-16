@@ -59,6 +59,10 @@
 
     html {
       scroll-behavior: smooth;
+      /* overflow-x lives on <html>, NOT <body>: putting it on body forces
+         body's overflow-y to `auto`, which hijacks the scroll container and
+         breaks window.scrollTo / window.scrollY (rail nav + scroll-spy). */
+      overflow-x: hidden;
     }
 
     body {
@@ -67,7 +71,12 @@
       font-family: var(--font-sans);
       padding: 32px;
       min-height: 100dvh;
-      overflow-x: hidden;
+    }
+
+    /* Air above a section when the rail scrolls it to the top. */
+    #sec-today, #sec-habits, #sec-trends, #sec-biomarkers, #sec-correlations,
+    #sec-settings, #ohAlgorithms, .oh-section {
+      scroll-margin-top: 28px;
     }
 
     /* Scrollbar styling */
@@ -953,6 +962,8 @@
     .rail-logo {
       width: 48px;
       height: 48px;
+      aspect-ratio: 1 / 1;
+      flex: 0 0 auto;
       border-radius: 50%;
       background: var(--color-dark);
       color: var(--color-yellow);
@@ -972,6 +983,8 @@
     .rail-btn {
       width: 44px;
       height: 44px;
+      aspect-ratio: 1 / 1;
+      flex: 0 0 auto;
       border-radius: 50%;
       border: none;
       background: transparent;
@@ -1409,7 +1422,7 @@
       <!-- WIDE BOTTOM CARDS -->
       
       <!-- 30-Day Recovery Trend Chart -->
-      <div class="bento-card trend-card" id="sec-trends">
+      <div class="bento-card trend-card" id="sec-trends" data-metric="recovery_trend_30">
         <div class="bento-card-header">
           <span class="bento-card-title">Тренд восстановления (30 дней)</span>
           <div class="card-icon-wrapper"><i class="ph ph-chart-line-up"></i></div>
@@ -1993,8 +2006,8 @@
                 </div>
                 <p class="rec-text">${b.discuss}</p>
                 <div class="rec-actions">
-                  <button class="btn-action" onclick="alert('Добавлено в блокнот врача')">Добавить в вопросы врачу</button>
-                  <button class="btn-action" style="opacity:0.7;" onclick="alert('История изменений маркера')">Показать историю</button>
+                  <button class="btn-action" onclick="ohQueueDoctorQuestion(${idx})">Добавить в вопросы врачу</button>
+                  <button class="btn-action" style="opacity:0.7;" onclick="ohMarkerHistory(${idx})">Показать историю</button>
                 </div>
               </div>
             </div>
@@ -2069,6 +2082,38 @@
 
     // WHOOP sections (sleep/strain/stress/body) rendered from the registry via the
     // shared OH.sectionView - identical source to V1, only the .oh-* theming differs.
+    // Lightweight non-blocking toast (replaces native alert popups).
+    function ohToast(msg) {
+      const t = document.createElement('div');
+      t.className = 'oh-toast';
+      t.textContent = msg;
+      t.style.cssText = 'position:fixed;left:50%;bottom:120px;transform:translateX(-50%) translateY(8px);background:var(--color-dark,#1a1a1a);color:#fff;padding:12px 18px;border-radius:12px;font:600 13px var(--font-sans,system-ui,sans-serif);box-shadow:0 12px 40px rgba(0,0,0,.25);z-index:100050;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;max-width:80vw;text-align:center;';
+      document.body.appendChild(t);
+      requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)'; });
+      setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(8px)'; setTimeout(() => t.remove(), 300); }, 2400);
+    }
+    function ohMarkerName(idx) {
+      const el = document.querySelector('#biomarker-item-' + idx + ' .biomarker-name-txt');
+      return el ? el.textContent.trim() : ('маркер #' + idx);
+    }
+    // "Doctor questions" persist locally (never leaves the device) so the list
+    // survives reloads - a real action instead of a throwaway alert.
+    function ohQueueDoctorQuestion(idx) {
+      const name = ohMarkerName(idx), key = 'oh.doctorQuestions';
+      let list = [];
+      try { list = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) {}
+      if (list.indexOf(name) === -1) {
+        list.push(name);
+        try { localStorage.setItem(key, JSON.stringify(list)); } catch (e) {}
+        ohToast('Добавлено в вопросы врачу: ' + name + ' (' + list.length + ')');
+      } else {
+        ohToast(name + ' уже в списке вопросов (' + list.length + ')');
+      }
+    }
+    function ohMarkerHistory(idx) {
+      ohToast('История ' + ohMarkerName(idx) + ' появится после загрузки нескольких панелей анализов.');
+    }
+
     function renderRegistrySections() {
       const host = document.getElementById('registrySections');
       if (!host || !window.OH || !OH.registry) return;
@@ -2140,9 +2185,10 @@
 
             const targetSection = document.getElementById(targetId);
             if (targetSection) {
-              const yOffset = -40; // small header offset
-              const y = targetSection.getBoundingClientRect().top + window.scrollY + yOffset;
-              window.scrollTo({ top: y, behavior: 'smooth' });
+              // scrollIntoView resolves the real scroll container itself - robust
+              // even when <html> overflow is computed `auto`, where a manual
+              // window.scrollTo({behavior:'smooth'}) silently no-ops in some engines.
+              targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
           }
         });
@@ -2150,32 +2196,31 @@
 
       // Scroll to top button
       document.getElementById('scrollTopBtn').addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const top = document.getElementById('sec-today');
+        if (top) top.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        else (document.scrollingElement || document.documentElement).scrollTo({ top: 0, behavior: 'smooth' });
       });
 
-      // Highlight active rail button on scroll
-      window.addEventListener('scroll', () => {
-        const sections = ['sec-today', 'sec-habits', 'sec-trends', 'sec-biomarkers', 'sec-correlations', 'sec-settings'];
-        const scrollPos = window.scrollY + 120;
-
-        sections.forEach(id => {
+      // Highlight active rail button on scroll. Targets are derived from the rail
+      // buttons themselves, so registry sections (oh-sec-sleep/strain/stress/body)
+      // and algorithms light up too - not just the hand-listed bento cards.
+      const spyTargets = Array.from(railButtons)
+        .map(btn => btn.getAttribute('data-target'))
+        .filter(Boolean);
+      const onScrollSpy = () => {
+        const scrollPos = window.scrollY + 140;
+        let activeId = null;
+        spyTargets.forEach(id => {
           const el = document.getElementById(id);
-          if (el) {
-            const top = el.offsetTop;
-            const bottom = top + el.offsetHeight;
-
-            if (scrollPos >= top && scrollPos < bottom) {
-              railButtons.forEach(btn => {
-                if (btn.getAttribute('data-target') === id) {
-                  btn.classList.add('active');
-                } else {
-                  btn.classList.remove('active');
-                }
-              });
-            }
-          }
+          if (el && scrollPos >= el.offsetTop) activeId = id; // last section whose top we passed
         });
-      });
+        if (!activeId) return;
+        railButtons.forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-target') === activeId);
+        });
+      };
+      window.addEventListener('scroll', onScrollSpy, { passive: true });
+      onScrollSpy();
 
     });
   </script>

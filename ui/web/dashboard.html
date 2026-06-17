@@ -402,6 +402,31 @@
     border: 1px solid var(--line);
     background: var(--card-outer);
   }
+
+  /* Right cluster: keeps sync + recovery pill as ONE grid cell (topbar is a
+     3-col grid 1fr/auto/1fr; a 4th child would wrap the pill to a new row). */
+  .topbar-right { display: inline-flex; align-items: center; gap: 10px; justify-self: end; }
+
+  /* Sync button — classic V1 round icon, themed via tokens (dark/light/brutalist) */
+  .topbar-sync {
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--card-outer);
+    color: var(--ink);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .topbar-sync:hover { border-color: var(--line2); background: var(--card-inner); }
+  .topbar-sync:disabled { opacity: .55; cursor: default; }
+  .topbar-sync.syncing i { animation: oh-spin-v1 .9s linear infinite; }
+  @keyframes oh-spin-v1 { to { transform: rotate(360deg); } }
   
   .pill .d {
     width: 7px;
@@ -4600,10 +4625,13 @@
       <span class="day-label" id="dayLabel">Сегодня</span>
       <button type="button" id="dayNextBtn" aria-label="Следующий день" onclick="shiftSelectedDay(-1)" disabled><i class="ph-light ph-caret-right"></i></button>
     </div>
-    <span class="pill" id="topPill">
-      <span class="d" id="pillDot"></span>
-      <span id="pillTxt">Восстановление: —</span>
-    </span>
+    <div class="topbar-right">
+      <button type="button" id="syncBtnV1" class="topbar-sync" title="Синхронизировать WHOOP" aria-label="Синхронизировать данные WHOOP" onclick="ohSyncV1()"><i class="ph-light ph-arrows-clockwise"></i></button>
+      <span class="pill" id="topPill">
+        <span class="d" id="pillDot"></span>
+        <span id="pillTxt">Восстановление: —</span>
+      </span>
+    </div>
   </div>
   <div class="past-day-banner" id="pastDayBanner" style="display:none;">
     <i class="ph-light ph-clock-counter-clockwise"></i>
@@ -11044,6 +11072,35 @@ async function rebuildSnapshot(btn) {
     showToast('Bridge недоступен — пересборка не выполнена', false);
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+  }
+}
+
+// Sync button (topbar): WHOOP sync + snapshot rebuild + re-render, one click.
+async function ohSyncV1() {
+  const btn = document.getElementById('syncBtnV1');
+  if (btn && btn.disabled) return;
+  if (btn) { btn.disabled = true; btn.classList.add('syncing'); }
+  showToast('Синхронизация WHOOP…', true);
+  try {
+    const r = await fetchWithTimeout('/api/sync', 185000, { method: 'POST' });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.status === 'ok') {
+      try { await OH.load(); } catch (e) { /* keep going on registry hiccup */ }
+      await loadRealData();
+      if (typeof ohSeedToday === 'function') ohSeedToday();
+      renderDashboard();
+      if (typeof refreshDataInfoRow === 'function') refreshDataInfoRow();
+      showToast('Синхронизировано' + (d.synced ? ': ' + d.synced + ' записей' : '') +
+                ' · ' + ((d.summary && d.summary.dataDate) || DATA.date || ''), true);
+    } else if (d.status === 'auth') {
+      showToast('WHOOP: нужна повторная авторизация (whoop-auth-url в терминале)', false);
+    } else {
+      showToast('Синк не удался: ' + (d.message || 'ошибка'), false);
+    }
+  } catch (e) {
+    showToast('Bridge недоступен — синк не выполнен', false);
+  } finally {
+    if (btn) { btn.disabled = false; btn.classList.remove('syncing'); }
   }
 }
 

@@ -20,6 +20,7 @@
      V1 is a SKIN over this engine; Today metrics come from the registry, not a local copy. -->
 <script src="assets/oh-registry.js"></script>
 <script src="assets/oh-charts.js?v=2"></script>
+<script src="assets/oh-charts-v1.js?v=2"></script>
 <script src="assets/oh-correlate.js"></script>
 <script src="assets/oh-provenance.js"></script>
 <style>
@@ -11127,6 +11128,54 @@ function renderRegistrySectionsV1() {
   try { if (typeof titles === 'object') titles['r-algos'] = 'Алгоритмы'; } catch (e) { /* ignore */ }
   var am = document.getElementById('oh-mount-algorithms');
   if (am && OH.algorithmsView) am.innerHTML = OH.algorithmsView();
+  // V1 chart FX: draw-in animation + hover crosshair on the area charts.
+  requestAnimationFrame(function () { attachOhV1ChartFx(); });
+}
+
+// Draw-in + hover crosshair on V1 area charts (from oh-charts-v1.js). Reuses the
+// legacy drawPath (line animation) and attachCrosshair (tooltip on the date),
+// feeding geometry from the svg's data-pts and values from the registry metric.
+function attachOhV1ChartFx(scope) {
+  scope = scope || document;
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  scope.querySelectorAll('.oh-v1-area[data-v1area]').forEach(function (svg) {
+    if (svg._ohFx) return; svg._ohFx = true;
+    var line = svg.querySelector('.oh-v1-area-line');
+    var fill = svg.querySelector('.oh-v1-area-fill');
+    // CSS-transition draw-in. The END state (offset 0 / opacity 1) is written to
+    // the inline style, so the chart is VISIBLE even if the transition can't play
+    // (e.g. background tab) — animation enhances, never gates visibility.
+    if (line) {
+      var len = 0; try { len = line.getTotalLength(); } catch (e) {}
+      if (len && !reduced) {
+        line.style.strokeDasharray = len;
+        line.style.strokeDashoffset = len;
+        line.getBoundingClientRect(); // reflow so the transition has a start
+        line.style.transition = 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)';
+      }
+      requestAnimationFrame(function () { line.style.strokeDashoffset = '0'; });
+    }
+    if (fill) {
+      if (!reduced) { fill.style.opacity = '0'; fill.style.transition = 'opacity .6s ease .35s'; }
+      requestAnimationFrame(function () { fill.style.opacity = '1'; });
+    }
+    // Safety net: guarantee the visible end state even if rAF/transition are throttled.
+    setTimeout(function () { if (line) line.style.strokeDashoffset = '0'; if (fill) fill.style.opacity = '1'; }, 1600);
+    var pts = null; try { pts = JSON.parse(svg.getAttribute('data-pts')); } catch (e) { /* no geometry */ }
+    var card = svg.closest('[data-metric]');
+    var mid = card && card.getAttribute('data-metric');
+    var raw = (mid && window.OH) ? OH.value(mid) : null;
+    var nums = Array.isArray(raw) ? raw.map(function (x) { return (x && typeof x === 'object') ? Number(x.value != null ? x.value : x.h) : Number(x); }).filter(function (x) { return !isNaN(x); }) : null;
+    var m = (mid && OH.metric) ? OH.metric(mid) : null;
+    var color = (line && line.getAttribute('stroke')) || '#60a5fa';
+    if (pts && pts.length >= 2 && nums && nums.length === pts.length && typeof attachCrosshair === 'function') {
+      var unit = (m && m.unit) ? ' ' + m.unit : '';
+      attachCrosshair(svg, {
+        labels: pts.map(function (_, i) { return 'Точка ' + (i + 1); }),
+        series: [{ pts: pts, values: nums, color: color, label: (m && m.label_ru) || '', fmt: function (v) { return (Math.round(v * 10) / 10) + unit; } }]
+      });
+    }
+  });
 }
 
 function renderDashboard() {

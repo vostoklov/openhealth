@@ -147,7 +147,7 @@
           }
           return '<div class="oh-tile' + (demo ? ' oh--demo' : '') + '" data-metric="' + m.id + '">' +
             '<div class="oh-tile__top"><span class="oh-tile__label">' + (m.label_ru || m.id) + '</span>' +
-            '<span class="oh-tile__icon"><button class="oh-q" data-prov="' + m.id + '" title="Как это считается">?</button><i class="ph ' + (m.icon || 'ph-circle') + '" style="margin-left:6px"></i></span></div>' +
+            '<span class="oh-tile__icon"><button class="oh-q" data-prov="' + m.id + '" title="Как это считается">?</button><i class="ph ' + (m.icon || 'ph-circle') + '"></i></span></div>' +
             '<div class="oh-tile__val">' + v + (m.unit ? ' <span class="oh-tile__unit">' + m.unit + '</span>' : '') + ind + '</div>' + chip + '</div>';
         }
         var svg = OH.renderChart(m.id, { color: accent, labelColor: textColor, colorHours: accent, colorNeed: 'rgba(127,127,127,0.45)', highlightColor: accent, bg: opts.bg });

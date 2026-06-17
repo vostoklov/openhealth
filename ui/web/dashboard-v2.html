@@ -230,7 +230,10 @@
       gap: 24px;
     }
 
-    /* Bento Card */
+    /* Bento Card. NOTE: no opacity entry-animation — any opacity tween (GSAP or
+       CSS) can stall before completing (background/automated tabs) and leave the
+       card faded or blank, which is exactly the bug we hit. Cards are visible by
+       default; a subtle lift on hover is the only motion. */
     .bento-card {
       background: var(--bg-card);
       border-radius: var(--radius-lg);
@@ -2106,7 +2109,8 @@
       const doneHabits = DATA.habits.filter(h => h.done).length;
       const percent = totalHabits > 0 ? Math.round((doneHabits / totalHabits) * 100) : 0;
 
-      document.getElementById('statsDonutValueText').textContent = `${percent}%`;
+      // Show "3/5" (not "60%") so the habit donut isn't misread as recovery %.
+      document.getElementById('statsDonutValueText').textContent = `${doneHabits}/${totalHabits}`;
       document.getElementById('statsHabitsSummaryText').textContent = `${doneHabits} из ${totalHabits} выполнено`;
 
       const statsDonutFg = document.getElementById('statsDonutFg');
@@ -2261,14 +2265,11 @@
       // 2. Render everything from the seeded DATA.
       renderUI();
 
-      // 3. GSAP Entry Animation for bento cards
-      gsap.from(".bento-card", {
-        opacity: 0,
-        y: 24,
-        stagger: 0.08,
-        duration: 0.8,
-        ease: "power3.out"
-      });
+      // 3. Entry animation is CSS-driven (see .bento-card animation) — its end
+      //    state is opacity:1, so cards never get stuck faded/blank if the
+      //    animation can't play. (Was gsap.from opacity:0, which left later
+      //    staggered cards — trends/biomarkers/correlations/settings — invisible
+      //    when the tween didn't finish: looked like blank sections.)
 
       // 4. Setup navigation click handlers
       const railButtons = document.querySelectorAll('.rail-btn');

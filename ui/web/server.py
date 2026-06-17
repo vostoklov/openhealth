@@ -1768,6 +1768,61 @@ _DEFAULT_INDEX = Path("~/health-os/data/index/health_os.sqlite3").expanduser()
 _BUILD_SCRIPT = Path(__file__).resolve().with_name("build_dashboard_data.py")
 
 
+WHOOP_SYNC_TIMEOUT_S = 180
+
+
+def handle_sync(base_dir: Path, days_back: int = 7) -> "tuple":
+    """POST /api/sync -> refresh WHOOP, pull recent data into the index, then
+    rebuild data.local.json so the dashboard shows fresh numbers in one click.
+
+    Credentials come from the SERVER's environment (OPENHEALTH_WHOOP_*), never
+    from the request — start the bridge with `.env.whoop.local` sourced. The
+    WHOOP repo-root is derived from the discovered index (its grandparent),
+    so the engine reads/writes the real private DB and tokens. Never logs
+    tokens or data, only the outcome. Returns {status:"ok"|"auth"|"error",
+    synced:<count>, summary:{recovery, dataDate}}.
+    """
+    db_path = find_journal_db(base_dir) or _DEFAULT_INDEX
+    if not db_path.is_file():
+        return 200, {"status": "error", "synced": False,
+                     "message": "индекс не найден ({}); подключи источник".format(db_path)}
+    if not os.getenv("OPENHEALTH_WHOOP_CLIENT_ID"):
+        return 200, {"status": "error", "synced": False,
+                     "message": "WHOOP не настроен на сервере: запусти bridge с .env.whoop.local"}
+    sync_root = db_path.parents[2]  # <root>/data/index/<db>.sqlite3 -> <root>
+    cmd = [sys.executable, "-m", "openhealth", "--repo-root", str(sync_root),
+           "whoop-sync", "--days-back", str(int(days_back))]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True,
+                              timeout=WHOOP_SYNC_TIMEOUT_S, cwd=str(_REPO_ROOT),
+                              stdin=subprocess.DEVNULL)
+    except subprocess.TimeoutExpired:
+        return 200, {"status": "error", "synced": False,
+                     "message": "синк превысил {}с".format(WHOOP_SYNC_TIMEOUT_S)}
+    except OSError as exc:
+        return 200, {"status": "error", "synced": False,
+                     "message": "не удалось запустить синк: {}".format(exc.__class__.__name__)}
+    if proc.returncode != 0:
+        tail = ((proc.stderr or "").strip() or (proc.stdout or "").strip())[-MAX_STDERR_TAIL:]
+        low = tail.lower()
+        if any(s in low for s in ("401", "403", "unauthorized", "invalid_grant", "invalid_token")):
+            return 200, {"status": "auth", "synced": False,
+                         "message": "WHOOP требует повторной авторизации (токен отозван). "
+                                    "Запусти whoop-auth-url в терминале и залогинься заново."}
+        return 200, {"status": "error", "synced": False,
+                     "message": "синк завершился с ошибкой: {}".format(tail or "no output")}
+    synced = None
+    try:
+        state = json.loads((sync_root / "data" / "index" / "whoop_sync_state.json").read_text("utf-8"))
+        synced = state.get("last_record_count")
+    except Exception:
+        pass
+    # Rebuild the snapshot so the freshly synced numbers reach the dashboard.
+    status, body = handle_rebuild(base_dir)
+    body["synced"] = synced
+    return status, body
+
+
 def handle_rebuild(base_dir: Path) -> "tuple":
     """POST /api/rebuild -> пересобрать <base_dir>/data.local.json из индекса.
 
@@ -1964,7 +2019,8 @@ class BridgeHandler(SimpleHTTPRequestHandler):
                         "/api/journal/day", "/api/journal/focus",
                         "/api/params", "/api/params/reset",
                         "/api/methodology/save", "/api/profile", "/api/missions",
-                        "/api/locations", "/api/weather/location", "/api/rebuild"):
+                        "/api/locations", "/api/weather/location", "/api/rebuild",
+                        "/api/sync"):
             self._send_json({"status": "error", "message": "not found"}, status=404)
             return
 
@@ -1973,6 +2029,19 @@ class BridgeHandler(SimpleHTTPRequestHandler):
             status, body = handle_rebuild(self.base_dir)
             log("POST /api/rebuild -> {} (rebuilt={})".format(
                 body.get("status"), body.get("rebuilt", "-")))
+            self._send_json(body, status=status)
+            return
+
+        # /api/sync (WHOOP -> index -> snapshot) is bodyless; optional ?days=N.
+        if path == "/api/sync":
+            query = parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}
+            try:
+                days = max(1, min(120, int((query.get("days") or ["7"])[0])))
+            except (ValueError, TypeError):
+                days = 7
+            status, body = handle_sync(self.base_dir, days)
+            log("POST /api/sync -> {} (synced={})".format(
+                body.get("status"), body.get("synced", "-")))
             self._send_json(body, status=status)
             return
 

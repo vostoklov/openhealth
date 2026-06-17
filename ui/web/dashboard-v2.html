@@ -1587,7 +1587,6 @@
 
   <!-- RIGHT Vertical / BOTTOM Horizontal Icon Rail -->
   <div class="icon-rail">
-    <div class="rail-logo">OH</div>
     <div class="rail-nav">
       <button class="rail-btn active" data-target="sec-today" data-tooltip="Сегодня"><i class="ph ph-house"></i></button>
       <button class="rail-btn" data-target="sec-habits" data-tooltip="Привычки"><i class="ph ph-check-square"></i></button>
@@ -1601,7 +1600,6 @@
       <button class="rail-btn" data-target="ohAlgorithms" data-tooltip="Алгоритмы"><i class="ph ph-function"></i></button>
       <button class="rail-btn" data-target="sec-settings" data-tooltip="Настройки"><i class="ph ph-gear"></i></button>
     </div>
-    <button class="rail-btn" id="scrollTopBtn" data-tooltip="Наверх" style="opacity:0.6;"><i class="ph ph-arrow-up"></i></button>
   </div>
 
   <!-- BOTTOM Statistics Strip (Floating / Sticky Panel) -->
@@ -2291,13 +2289,6 @@
             }
           }
         });
-      });
-
-      // Scroll to top button
-      document.getElementById('scrollTopBtn').addEventListener('click', () => {
-        const top = document.getElementById('sec-today');
-        if (top) top.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        else (document.scrollingElement || document.documentElement).scrollTo({ top: 0, behavior: 'smooth' });
       });
 
       // Sync button (header)

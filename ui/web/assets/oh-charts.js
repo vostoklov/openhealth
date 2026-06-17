@@ -202,7 +202,20 @@
       (opts.sub ? '<text x="' + cx + '" y="' + (cy + 12) + '" text-anchor="middle" font-size="11" letter-spacing="1.5" opacity="0.6" fill="' + lc + '">' + opts.sub + '</text>' : '') + '</svg>';
   }
 
-  var OHCharts = { ring: ring, sparkline: sparkline, weekBars: weekBars, lineDots: lineDots, hypnogram: hypnogram, sleepStages: sleepStages, hoursVsNeed: hoursVsNeed, hrZones: hrZones, gauge: gauge };
+  // Per-skin chart renderer registry. The functions above are the BASE (default)
+  // implementations; a skin may override any of them by name via
+  // OHCharts.skins[skinId][name]. setActiveSkin(id) selects which set is used.
+  // sectionView markup is untouched — only the SVG body differs per skin, so
+  // DnD / provenance / parity stay intact.
+  var BASE = { ring: ring, sparkline: sparkline, weekBars: weekBars, lineDots: lineDots, hypnogram: hypnogram, sleepStages: sleepStages, hoursVsNeed: hoursVsNeed, hrZones: hrZones, gauge: gauge };
+  var OHCharts = { skins: {}, activeSkin: 'v1', base: BASE, setActiveSkin: function (id) { OHCharts.activeSkin = id || 'v1'; } };
+  Object.keys(BASE).forEach(function (name) {
+    OHCharts[name] = function () {
+      var sk = OHCharts.skins[OHCharts.activeSkin];
+      var fn = (sk && typeof sk[name] === 'function') ? sk[name] : BASE[name];
+      return fn.apply(null, arguments);
+    };
+  });
   if (typeof module !== 'undefined' && module.exports) module.exports = OHCharts;
   global.OHCharts = OHCharts;
 })(typeof window !== 'undefined' ? window : this);

@@ -19,7 +19,7 @@
 <!-- OpenHealth shared engine: single-source registry + chart kit (see EXTENDING.md).
      V1 is a SKIN over this engine; Today metrics come from the registry, not a local copy. -->
 <script src="assets/oh-registry.js"></script>
-<script src="assets/oh-charts.js"></script>
+<script src="assets/oh-charts.js?v=2"></script>
 <script src="assets/oh-correlate.js"></script>
 <script src="assets/oh-provenance.js"></script>
 <style>
@@ -11108,6 +11108,7 @@ async function ohSyncV1() {
 // OH.sectionView - identical source to V2, only the dark .oh-* theming differs.
 function renderRegistrySectionsV1() {
   if (!window.OH || !OH.registry) return;
+  if (window.OHCharts) OHCharts.setActiveSkin('v1'); // V1 chart renderers (area+animation)
   try { if (typeof titles === 'object') Object.assign(titles, { 'r-sleep': 'Сон', 'r-strain': 'Нагрузка', 'r-stress': 'Стресс', 'r-body': 'Тело' }); } catch (e) { /* ignore */ }
   var accents = { sleep: '#34d399', strain: '#a78bfa', stress: '#fb923c', body: '#38bdf8' };
   var zmap = { 'r-sleep': 'sleep', 'r-strain': 'strain', 'r-stress': 'stress', 'r-body': 'body' };

@@ -21,7 +21,7 @@
   <!-- OpenHealth shared engine: single-source registry + chart kit (see EXTENDING.md).
        V2 is a SKIN over this engine; it renders Today from OH, never from a local copy. -->
   <script src="assets/oh-registry.js"></script>
-  <script src="assets/oh-charts.js"></script>
+  <script src="assets/oh-charts.js?v=2"></script>
   <script src="assets/oh-correlate.js"></script>
   <script src="assets/oh-provenance.js"></script>
 
@@ -2215,6 +2215,7 @@
     function renderRegistrySections() {
       const host = document.getElementById('registrySections');
       if (!host || !window.OH || !OH.registry) return;
+      if (window.OHCharts) OHCharts.setActiveSkin('v2'); // V2 chart renderers (bento)
       const accents = { sleep: '#3FA9F5', strain: '#8B6CF0', stress: '#FF7A59', body: '#27C28A' };
       const text = (getComputedStyle(document.body).getPropertyValue('--text-primary') || '#121316').trim();
       host.innerHTML = ['sleep', 'strain', 'stress', 'body']

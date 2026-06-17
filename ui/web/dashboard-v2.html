@@ -942,6 +942,11 @@
       gap: 16px;
     }
 
+    /* Honest insufficient-data state (no fabricated effects) */
+    .corr-empty { grid-column: 1 / -1; padding: 4px 2px; }
+    .corr-empty-title { font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .corr-empty-sub { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; max-width: 60ch; }
+
     .correlation-mini-card {
       display: flex;
       align-items: center;
@@ -1684,13 +1689,11 @@
       ],
       biomarkersConnected: true,
       
-      correlations: [
-        { label: "Алкоголь вечером", delta: -21, dir: "down", grade: "C3", icon: "ph-wine" },
-        { label: "Свет утром 15 мин", delta: 9, dir: "up", grade: "C3", icon: "ph-sun" },
-        { label: "Экран после 23:00", delta: -12, dir: "down", grade: "C2", icon: "ph-device-mobile" },
-        { label: "Тренировка днём", delta: 6, dir: "up", grade: "C2", icon: "ph-barbell" },
-        { label: "Медитация 10 мин", delta: 4, dir: "up", grade: "C2", icon: "ph-brain" }
-      ],
+      // No seed correlations: showing fabricated effects (−21% etc.) as if real
+      // is dishonest. Empty -> the block renders the honest "insufficient_data"
+      // state (condition + action), never made-up numbers. Real correlations
+      // arrive via data.local.json once the journal has enough overlap with recovery.
+      correlations: [],
       
       readiness: "Recovery 64% (жёлтая зона) + три встречи в календаре + цель «стабильная энергия» — умеренный день, тяжёлую тренировку лучше перенести на завтра.",
       action: {
@@ -2082,6 +2085,16 @@
     function updateCorrelationsBlock() {
       const container = document.getElementById('correlationsGridContainer');
       container.innerHTML = '';
+
+      // Honest insufficient-data state — never fabricated effects.
+      if (!Array.isArray(DATA.correlations) || DATA.correlations.length === 0) {
+        container.innerHTML =
+          '<div class="corr-empty">' +
+            '<div class="corr-empty-title"><i class="ph ph-scales"></i> Пока недостаточно данных</div>' +
+            '<div class="corr-empty-sub">Чтобы посчитать влияние на восстановление, нужно ≥5 дней с отметкой привычки и ≥5 без неё, при наличии recovery в те же дни. Отмечай привычки в чек-ине — здесь появится реальная корреляция, а не пример.</div>' +
+          '</div>';
+        return;
+      }
 
       DATA.correlations.forEach(c => {
         const isPositive = c.delta >= 0;

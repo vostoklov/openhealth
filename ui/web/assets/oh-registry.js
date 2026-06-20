@@ -67,13 +67,42 @@
       return (OH.registry && OH.registry.biomarkers) || [];
     },
 
+    // Единый контракт состояния данных блока. БЕЗ metric.status/eligibility
+    // поведение прежнее (real/demo) — обратная совместимость.
+    //   real          — есть реальное значение
+    //   insufficient  — данные есть, но ниже порога eligibility (рано считать)
+    //   empty         — источник не подключён / раздел не наполнен (status:"soon")
+    //   demo          — реальных нет, показан ПОМЕЧЕННЫЙ пример
     state: function (id) {
       var m = OH.metric(id);
       if (!m) return 'unknown';
+      if (m.status === 'soon' || m.status === 'empty') return 'empty';
+      if (m.eligibility && !OH.eligibility(id).ok) return 'insufficient';
       var v = OH.data[OH._key(m)];
       if (v === undefined || v === null || (Array.isArray(v) && v.length === 0)) return 'demo';
       return 'real';
     },
+
+    // Порог пригодности для вычисляемых метрик (корреляции/паттерны n=1).
+    // metric.eligibility: { need, have_key, label_ru } — have из data[have_key].
+    // Без eligibility -> {ok:true}.
+    eligibility: function (id) {
+      var m = OH.metric(id); if (!m || !m.eligibility) return { ok: true };
+      var need = m.eligibility.need || 0;
+      var have = Number((m.eligibility.have_key && OH.data[m.eligibility.have_key]) || 0);
+      return { ok: have >= need, have: have, need: need, label: m.eligibility.label_ru || '' };
+    },
+
+    // Доказательность утверждения: { confidence: C1-C5, type, sources }.
+    // Личные n=1 паттерны cap <= C3 (правило проекта). Без evidence -> null.
+    evidence: function (id) {
+      var m = OH.metric(id); if (!m) return null;
+      return m.evidence || null;
+    },
+
+    // demo-режим: примеры показываются только при ЯВНОМ включении (по умолчанию off).
+    demoMode: (function () { try { return localStorage.getItem('oh.demoMode') === 'on'; } catch (e) { return false; } })(),
+    setDemoMode: function (on) { OH.demoMode = !!on; try { localStorage.setItem('oh.demoMode', on ? 'on' : 'off'); } catch (e) {} },
 
     // Parity manifest: what any skin must render from the registry, with current
     // state. Skins also expose window.__renderManifest() built from this, so a
@@ -135,8 +164,10 @@
       var s = OH.section(sectionId); if (!s) return '';
       var accent = opts.accent || 'currentColor', textColor = opts.textColor || 'currentColor';
       var cards = OH.sectionMetrics(sectionId).map(function (m) {
-        var demo = OH.state(m.id) === 'demo', si = OH.sourceInfo(m.source);
-        var chip = demo ? '<span class="oh-chip" title="Нет данных - показан пример"><i class="ph ' + si.icon + '"></i> демо · ' + si.label + '</span>' : '';
+        var st = OH.state(m.id), si = OH.sourceInfo(m.source);
+        var dim = (st === 'demo' || st === 'empty' || st === 'insufficient');
+        var chipText = st === 'insufficient' ? 'мало данных' : (st === 'empty' ? 'нет данных · ' + si.label : (st === 'demo' ? 'демо · ' + si.label : ''));
+        var chip = chipText ? '<span class="oh-chip" title="Состояние данных"><i class="ph ' + si.icon + '"></i> ' + chipText + '</span>' : '';
         if (m.chart === 'tile') {
           var val = OH.value(m.id);
           var v = (typeof val === 'number' && !Number.isInteger(val)) ? val.toFixed(1) : val;
@@ -145,13 +176,13 @@
             var last = ser[ser.length - 1], mean = ser.reduce(function (s2, x) { return s2 + x; }, 0) / ser.length, d = last - mean, up = d >= 0;
             ind = ' <span class="oh-ind" style="color:' + (up ? '#27C28A' : '#E0706A') + ';font-size:12px;font-weight:600">' + (up ? '▲' : '▼') + ' ' + Math.abs(d).toFixed(Math.abs(d) % 1 ? 1 : 0) + '</span>';
           }
-          return '<div class="oh-tile' + (demo ? ' oh--demo' : '') + '" data-metric="' + m.id + '">' +
+          return '<div class="oh-tile' + (dim ? ' oh--demo' : '') + '" data-metric="' + m.id + '">' +
             '<div class="oh-tile__top"><span class="oh-tile__label">' + (m.label_ru || m.id) + '</span>' +
             '<span class="oh-tile__icon"><button class="oh-q" data-prov="' + m.id + '" title="Как это считается">?</button><i class="ph ' + (m.icon || 'ph-circle') + '"></i></span></div>' +
             '<div class="oh-tile__val">' + v + (m.unit ? ' <span class="oh-tile__unit">' + m.unit + '</span>' : '') + ind + '</div>' + chip + '</div>';
         }
         var svg = OH.renderChart(m.id, { color: accent, labelColor: textColor, colorHours: accent, colorNeed: 'rgba(127,127,127,0.45)', highlightColor: accent, bg: opts.bg });
-        return '<div class="oh-chart-card' + (demo ? ' oh--demo' : '') + '" data-metric="' + m.id + '">' +
+        return '<div class="oh-chart-card' + (dim ? ' oh--demo' : '') + '" data-metric="' + m.id + '">' +
           '<div class="oh-chart-card__head"><span class="oh-chart-card__label">' + (m.label_ru || m.id) + '</span>' + chip + '<button class="oh-q" data-prov="' + m.id + '" title="Как это считается">?</button></div>' +
           '<div class="oh-chart-card__svg">' + svg + '</div></div>';
       }).join('');

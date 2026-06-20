@@ -190,9 +190,22 @@
     // Tile metrics -> value cards; chart metrics -> renderChart. Demo metrics (no real
     // data yet) are dimmed with a "демо · <source>" chip = the empty-state preview.
     // opts: accent (chart line color), textColor (labels), bg (dot fill).
+    // Honest "coming soon" stub for not-yet-migrated sections (status:'soon').
+    // Neutral markup; both skins theme it. Keeps the section anchor id so nav can
+    // scroll to it. No fake data — just the section title + a clear note.
+    sectionStub: function (sectionId) {
+      var s = OH.section(sectionId); if (!s) return '';
+      return '<section class="oh-section oh-section--stub" id="oh-sec-' + sectionId + '" data-section="' + sectionId + '">' +
+        '<div class="oh-section__head"><span class="oh-section__icon"><i class="ph ' + (s.icon || 'ph-circle') + '"></i></span>' +
+        '<h2 class="oh-section__title">' + (s.label_ru || sectionId) + '</h2></div>' +
+        '<div class="oh-stub" style="opacity:.7;font-size:13px;line-height:1.5;padding:6px 2px;">' +
+        '<i class="ph ph-sparkle"></i> Раздел скоро — данные ещё не подключены к реестру.</div></section>';
+    },
+
     sectionView: function (sectionId, opts) {
       opts = opts || {};
       var s = OH.section(sectionId); if (!s) return '';
+      if (s.status === 'soon' || s.status === 'empty') return OH.sectionStub(sectionId);
       var accent = opts.accent || 'currentColor', textColor = opts.textColor || 'currentColor';
       var cards = OH.sectionMetrics(sectionId).map(function (m) {
         var st = OH.state(m.id), si = OH.sourceInfo(m.source);

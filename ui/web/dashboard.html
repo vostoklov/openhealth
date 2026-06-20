@@ -5086,7 +5086,7 @@
             <div class="card-inner">
               <div class="card-header">
                 <div class="card-title-group">
-                  <h3>Влияние привычек на Восстановление<span class="src-badge">демо-данные</span></h3>
+                  <h3>Влияние привычек на Восстановление</h3>
                   <div class="sub">разница baseline в дни «да» против «нет»</div>
                 </div>
                 <i class="ph-light ph-scales card-header-icon"></i>
@@ -6047,12 +6047,14 @@ const DATA = {
   // этот ключ, чтобы отчёт не смешивал реальный HRV с демо-пульсом.
   trend30Rhr: [58, 57, 59, 60, 56, 55, 57, 58, 56, 54, 55, 57, 56, 55, 53, 54, 56, 55, 54, 53, 52, 54, 55, 53, 52, 53, 54, 52, 53, 56],
 
+  // Habits = manual daily check-in. Default UNCHECKED (honest) + no fabricated
+  // %-recovery per habit; real effect appears only in correlations.
   habits: [
-    { id: "sleep", label: "Лечь до 23:30", done: true, delta: 8, icon: "ph-moon" },
-    { id: "light", label: "Свет утром 15 мин", done: true, delta: 9, icon: "ph-sun" },
-    { id: "walk", label: "Прогулка 10к шагов", done: false, delta: 5, icon: "ph-footprints" },
-    { id: "water", label: "Вода 2.5л", done: false, delta: 3, icon: "ph-drop" },
-    { id: "nocoffee", label: "Без кофе после 15:00", done: true, delta: 12, icon: "ph-coffee" }
+    { id: "sleep", label: "Лечь до 23:30", done: false, icon: "ph-moon" },
+    { id: "light", label: "Свет утром 15 мин", done: false, icon: "ph-sun" },
+    { id: "walk", label: "Прогулка 10к шагов", done: false, icon: "ph-footprints" },
+    { id: "water", label: "Вода 2.5л", done: false, icon: "ph-drop" },
+    { id: "nocoffee", label: "Без кофе после 15:00", done: false, icon: "ph-coffee" }
   ],
   
   biomarkers: [
@@ -6064,13 +6066,9 @@ const DATA = {
   ],
   biomarkersConnected: true,
   
-  correlations: [
-    { label: "Алкоголь вечером", delta: -21, dir: "down", grade: "C3", icon: "ph-wine" },
-    { label: "Свет утром 15 мин", delta: 9, dir: "up", grade: "C3", icon: "ph-sun" },
-    { label: "Экран после 23:00", delta: -12, dir: "down", grade: "C2", icon: "ph-device-mobile" },
-    { label: "Тренировка днём", delta: 6, dir: "up", grade: "C2", icon: "ph-barbell" },
-    { label: "Медитация 10 мин", delta: 4, dir: "up", grade: "C2", icon: "ph-brain" }
-  ],
+  // No seed correlations — fabricated effects (−21% etc.) must not look real.
+  // Empty -> the correlations view renders the honest insufficient_data state.
+  correlations: [],
   
   readiness: "Recovery 64% (жёлтая зона) + три встречи в календаре + цель «стабильная энергия» — умеренный день, тяжёлую тренировку лучше перенести на завтра.",
   action: {
@@ -7820,8 +7818,8 @@ function updateCorrelationsScreen() {
   const list = document.getElementById('corrList');
   if (!list) return;
   const corrs = Array.isArray(DATA.correlations) ? DATA.correlations : [];
-  // В реальном режиме без достаточных данных — честный empty-state, НЕ демо-числа.
-  if (REAL_DATA_META.loaded && !corrs.length) {
+  // Нет корреляций — ВСЕГДА честный empty-state, НЕ демо-числа (даже без загрузки данных).
+  if (!corrs.length) {
     const note = REAL_DATA_META.correlationsStatus === 'insufficient_data'
       ? 'Нужны дни журнала с отметками привычек, на которые есть recovery в те же даты (≈5 дней «делал» и ≈5 «нет»). Сейчас журнал и recovery не пересекаются по датам.'
       : 'Появятся, когда журнал и recovery пересекутся по датам и наберётся порог наблюдений.';

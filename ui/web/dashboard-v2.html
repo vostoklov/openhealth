@@ -1672,12 +1672,15 @@
       trendSleep: [7.0, 7.5, 6.8, 6.2, 7.8, 8.1, 7.2, 7.4, 6.9, 7.1, 8.0, 7.8, 7.2, 7.2],
       trendStrain: [12.1, 14.5, 11.2, 8.5, 13.0, 16.2, 12.8, 14.2, 10.5, 12.0, 15.8, 13.2, 11.0, 14.2],
 
+      // Habits = manual daily check-in. Default UNCHECKED (honest: the user marks
+      // them; we don't pre-fill "done"). No fabricated %-recovery per habit — the
+      // real effect appears only in correlations once eligibility (≥5/5 days) is met.
       habits: [
-        { id: "sleep", label: "Лечь до 23:30", done: true, delta: 8, icon: "ph-moon" },
-        { id: "light", label: "Свет утром 15 мин", done: true, delta: 9, icon: "ph-sun" },
-        { id: "walk", label: "Прогулка 10к шагов", done: false, delta: 5, icon: "ph-footprints" },
-        { id: "water", label: "Вода 2.5л", done: false, delta: 3, icon: "ph-drop" },
-        { id: "nocoffee", label: "Без кофе после 15:00", done: true, delta: 12, icon: "ph-coffee" }
+        { id: "sleep", label: "Лечь до 23:30", done: false, icon: "ph-moon" },
+        { id: "light", label: "Свет утром 15 мин", done: false, icon: "ph-sun" },
+        { id: "walk", label: "Прогулка 10к шагов", done: false, icon: "ph-footprints" },
+        { id: "water", label: "Вода 2.5л", done: false, icon: "ph-drop" },
+        { id: "nocoffee", label: "Без кофе после 15:00", done: false, icon: "ph-coffee" }
       ],
       
       biomarkers: [
@@ -1848,7 +1851,7 @@
               <div class="urgent-icon-circle" style="color: var(--color-purple);"><i class="ph ph-footprints"></i></div>
               <div class="urgent-text-content">
                 <span class="urgent-card-title">${walkHabit.label}</span>
-                <span class="urgent-card-why">${walkHabit.done ? 'Цель шагов выполнена' : 'Пройдено около 5к из 10к шагов'}</span>
+                <span class="urgent-card-why">${walkHabit.done ? 'Отмечено как выполнено' : 'Цель: 10к шагов за день'}</span>
               </div>
             </div>
             <div class="urgent-card-arrow"><i class="ph ph-arrow-right"></i></div>
@@ -1873,9 +1876,9 @@
       DATA.habits.forEach((h, idx) => {
         if (h.done) doneCount++;
 
-        const badgeSign = h.delta >= 0 ? '+' : '';
-        const badgeColorClass = h.delta >= 0 ? 'corr-val-positive' : 'corr-val-negative';
-
+        // No fabricated "+N% recovery" badge — a habit's real effect lives in
+        // correlations (shown only once eligibility is met). Here it's a plain
+        // check-in: done or not.
         const itemHtml = `
           <div class="habit-item ${h.done ? 'checked' : ''}" onclick="toggleHabit(${idx})">
             <div class="habit-item-left">
@@ -1884,7 +1887,6 @@
               </div>
               <span class="habit-name">${h.label}</span>
             </div>
-            <span class="habit-impact-badge ${badgeColorClass}">${badgeSign}${h.delta}% recovery</span>
           </div>
         `;
         container.insertAdjacentHTML('beforeend', itemHtml);

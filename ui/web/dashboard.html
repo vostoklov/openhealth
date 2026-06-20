@@ -4476,7 +4476,7 @@
     <span>OpenHealth</span>
   </div>
   
-  <div class="nav-scroll">
+  <div class="nav-scroll" id="navScroll">
     <div class="navsec">Сегодня</div>
     <nav>
       <a data-z="today" data-icon="ph-pulse" class="active" onclick="go('today')">
@@ -11110,6 +11110,41 @@ async function ohSyncV1() {
   }
 }
 
+// V1 sidebar built from OH.nav.groups() — same single source as V2's rail. Maps
+// registry section ids -> existing V1 zone ids; sections without a zone are skipped
+// (no orphan links). Preserves go()/active + #navRec (today) and #surveyRemindDot.
+var SIDEBAR_ZONE = {
+  today: 'today', pulse: 'pulse', sleep: 'r-sleep', strain: 'r-strain', workouts: 'workouts',
+  stress: 'r-stress', body: 'r-body', body_composition: 'body', biomarkers: 'biomarkers',
+  dna: 'dna', vitals: 'whoop-overview', trends: 'trends', timeline: 'timeline',
+  correlations: 'whoop-correlations', algorithms: 'r-algos', journal: 'journal',
+  protocols: 'protocols', research: 'research', methodology: 'methodology', cascade: 'cascade',
+  medications: 'medications', vaccination: 'vaccination', diagnostics: 'diagnostics',
+  reports: 'reports', digests: 'digests', sync: 'sync'
+};
+function buildSidebarV1() {
+  var host = document.getElementById('navScroll');
+  if (!host || !window.OH || !OH.nav) return;
+  var activeEl = document.querySelector('aside nav a.active');
+  var active = activeEl ? activeEl.getAttribute('data-z') : 'today';
+  var html = '';
+  OH.nav.groups().forEach(function (g) {
+    var items = g.sections.map(function (s) {
+      return SIDEBAR_ZONE[s.id] ? { zone: SIDEBAR_ZONE[s.id], label: s.label_ru, icon: s.icon } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    html += '<div class="navsec">' + g.label_ru + '</div><nav>';
+    items.forEach(function (it) {
+      var extra = it.zone === 'today' ? '<span class="tag mono" id="navRec">—</span>' : '';
+      var act = it.zone === active ? ' class="active"' : '';
+      html += '<a data-z="' + it.zone + '" data-icon="' + it.icon + '"' + act + ' onclick="go(\'' + it.zone + '\')"><i class="ph-light ' + it.icon + '"></i><span>' + it.label + '</span>' + extra + '</a>';
+    });
+    html += '</nav>';
+  });
+  html += '<div class="navsec">Система</div><nav><a data-z="settings" data-icon="ph-gear-six"' + (active === 'settings' ? ' class="active"' : '') + ' onclick="go(\'settings\')"><i class="ph-light ph-gear-six"></i><span>Настройки</span><span class="nav-remind" id="surveyRemindDot" style="display:none;" title="Пора пройти мини-опросник самочувствия" aria-hidden="true"></span></a></nav>';
+  host.innerHTML = html;
+}
+
 // WHOOP sections (sleep/strain/stress/body) rendered from the registry via the shared
 // OH.sectionView - identical source to V2, only the dark .oh-* theming differs.
 function renderRegistrySectionsV1() {
@@ -11218,7 +11253,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // renderDashboard() below keeps the demo first paint instant.
   (window.OH ? OH.load() : Promise.reject()).catch(() => {})
     .then(() => loadRealData())
-    .then(() => { ohSeedToday(); renderDashboard(); });
+    .then(() => { buildSidebarV1(); ohSeedToday(); renderDashboard(); applyNavVisibility(); updateSurveyReminder(); });
   renderDashboard();
   // Один тихий запрос к /api/health с таймаутом 1.5 с — без спама.
   checkBridge();

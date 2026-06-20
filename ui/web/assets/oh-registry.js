@@ -125,6 +125,27 @@
       return map[level] || { label: String(level || '—'), cls: 'mid' };
     },
 
+    // Аудиторные пресеты (registry.personas): под кого перестраивается OpenHealth.
+    // Чисто данные + ОПЦИОНАЛЬНОЕ применение. По умолчанию пресет НЕ активен —
+    // скины не меняются, пока пользователь явно не выберет персону.
+    personas: function () { return (OH.registry && OH.registry.personas) || []; },
+    persona: function (id) { return OH.personas().find(function (p) { return p.id === id; }) || null; },
+    personaActive: (function () { try { return localStorage.getItem('oh.persona') || null; } catch (e) { return null; } })(),
+    setPersona: function (id) { OH.personaActive = id || null; try { id ? localStorage.setItem('oh.persona', id) : localStorage.removeItem('oh.persona'); } catch (e) {} },
+    // Группы навигации, переупорядоченные по priority_groups активной персоны
+    // (остальные дописываются по обычному порядку). Без активной персоны это
+    // ровно OH.nav.groups() — поведение по умолчанию неизменно.
+    personaGroups: function () {
+      var base = OH.nav.groups();
+      var p = OH.persona(OH.personaActive); if (!p) return base;
+      var pri = p.priority_groups || [];
+      return base.slice().sort(function (a, b) {
+        var ia = pri.indexOf(a.id), ib = pri.indexOf(b.id);
+        if (ia < 0) ia = 999; if (ib < 0) ib = 999;
+        return ia - ib || (a.order || 0) - (b.order || 0);
+      });
+    },
+
     // demo-режим: примеры показываются только при ЯВНОМ включении (по умолчанию off).
     demoMode: (function () { try { return localStorage.getItem('oh.demoMode') === 'on'; } catch (e) { return false; } })(),
     setDemoMode: function (on) { OH.demoMode = !!on; try { localStorage.setItem('oh.demoMode', on ? 'on' : 'off'); } catch (e) {} },

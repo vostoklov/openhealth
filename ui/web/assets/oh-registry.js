@@ -17,9 +17,14 @@
 (function (global) {
   'use strict';
 
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
   var OH = {
     registry: null,
     data: {},
+    knowledge: null,
     loaded: false,
     real: false,
 
@@ -98,6 +103,26 @@
     evidence: function (id) {
       var m = OH.metric(id); if (!m) return null;
       return m.evidence || null;
+    },
+
+    // Курируемый слой знаний (assets/knowledge.json): девайсы, источники-протоколы,
+    // короткие видео к метрикам. У каждой записи есть провенанс (source_url/url +
+    // checked_at) и честный evidence_level. Ничего не выдумываем — нет данных -> [].
+    devices: function () { return (OH.knowledge && OH.knowledge.devices) || []; },
+    protocolSources: function () { return (OH.knowledge && OH.knowledge.protocol_sources) || []; },
+    videosFor: function (metricId) {
+      if (!OH.knowledge || !OH.knowledge.video_refs) return [];
+      return OH.knowledge.video_refs.filter(function (v) { return v.metric_id === metricId; });
+    },
+    // Единая шкала доказательности для UI. Принимает уровни знаний (high/medium/low)
+    // и C1-C5; возвращает { label, cls } — скины красят через .oh-ev--<cls>.
+    evidenceLabel: function (level) {
+      var map = {
+        high: { label: 'высокая', cls: 'high' }, C1: { label: 'C1 мета-анализ', cls: 'high' }, C2: { label: 'C2 RCT', cls: 'high' },
+        medium: { label: 'средняя', cls: 'mid' }, C3: { label: 'C3 наблюдательное', cls: 'mid' }, C4: { label: 'C4 мнение эксперта', cls: 'mid' },
+        low: { label: 'низкая', cls: 'low' }, C5: { label: 'C5 n=1 / частное', cls: 'low' }
+      };
+      return map[level] || { label: String(level || '—'), cls: 'mid' };
     },
 
     // demo-режим: примеры показываются только при ЯВНОМ включении (по умолчанию off).
@@ -186,6 +211,72 @@
       return map[src] || { label: src || '', icon: 'ph-database' };
     },
 
+    // Раздел «Девайсы и источники» из knowledge.json. Нейтральная разметка
+    // (.oh-k*), оба скина тематизируют. У каждой карточки: уровень доказательности,
+    // ссылка-источник (провенанс) и кнопка «перепроверить» (handoff в oh-provenance).
+    // kind: 'devices' | 'sources'. Ничего не выдумываем — пусто -> честная заглушка.
+    _devCats: [
+      { id: 'hrv-recovery', label: 'HRV и восстановление', icon: 'ph-heartbeat' },
+      { id: 'sleep', label: 'Сон', icon: 'ph-moon' },
+      { id: 'metabolism-cgm', label: 'Метаболизм (CGM)', icon: 'ph-drop' },
+      { id: 'training-power', label: 'Тренировки и мощность', icon: 'ph-lightning' },
+      { id: 'vagus-neuro', label: 'Вагус · нейро · восстановление', icon: 'ph-brain' },
+      { id: 'lactate', label: 'Лактат', icon: 'ph-flask' }
+    ],
+    knowledgeView: function (kind, opts) {
+      opts = opts || {};
+      var accent = opts.accent || 'currentColor';
+      var sec = OH.section(kind) || {};
+      function head(title, icon, intro) {
+        return '<div class="oh-section__head"><span class="oh-section__icon" style="color:' + accent + '"><i class="ph ' + (icon || 'ph-circle') + '"></i></span>' +
+          '<h2 class="oh-section__title">' + esc(title) + '</h2></div>' +
+          (intro ? '<p class="oh-k-intro">' + esc(intro) + '</p>' : '');
+      }
+      function evBadge(level) { var e = OH.evidenceLabel(level); return '<span class="oh-ev oh-ev--' + e.cls + '" title="Доказательность">' + esc(e.label) + '</span>'; }
+      var html;
+      if (kind === 'sources') {
+        var list = OH.protocolSources();
+        if (!list.length) return OH.sectionStub('sources');
+        var rows = list.map(function (s) {
+          return '<div class="oh-kcard" data-kind="source" data-id="' + esc(s.id) + '">' +
+            '<div class="oh-kcard__top"><span class="oh-kcard__name">' + esc(s.name) + '</span>' + evBadge(s.evidence_level) + '</div>' +
+            '<div class="oh-kcard__area">' + esc(s.area) + '</div>' +
+            '<div class="oh-kcard__meta">' + esc(s.content_type) + ' · ' + esc(s.format) + '</div>' +
+            (s.caveat ? '<div class="oh-kcard__caveat"><i class="ph ph-warning"></i> ' + esc(s.caveat) + '</div>' : '') +
+            '<div class="oh-kcard__actions">' +
+              '<a class="oh-kbtn" href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer"><i class="ph ph-link"></i> Источник</a>' +
+              '<button class="oh-kbtn oh-kverify" data-kind="source" data-id="' + esc(s.id) + '"><i class="ph ph-arrows-clockwise"></i> Перепроверить</button>' +
+              '<span class="oh-kcard__checked">сверено ' + esc(s.checked_at) + '</span></div></div>';
+        }).join('');
+        html = head(sec.label_ru || 'Источники протоколов', sec.icon || 'ph-graduation-cap',
+          'Авторитетные источники протоколов уровня Attia/Huberman. Уровень доказательности и оговорки показаны честно — не все одинаково доказательны.');
+        return '<section class="oh-section oh-section--knowledge" id="oh-sec-sources" data-section="sources">' + html + '<div class="oh-kgrid">' + rows + '</div></section>';
+      }
+      // devices
+      var devs = OH.devices();
+      if (!devs.length) return OH.sectionStub('devices');
+      var byCat = OH._devCats.map(function (c) {
+        var items = devs.filter(function (d) { return d.category === c.id; });
+        if (!items.length) return '';
+        var cards = items.map(function (d) {
+          return '<div class="oh-kcard" data-kind="device" data-id="' + esc(d.id) + '">' +
+            '<div class="oh-kcard__top"><span class="oh-kcard__name">' + esc(d.name) + '</span>' + evBadge(d.evidence_level) + '</div>' +
+            '<div class="oh-kcard__area">' + esc(d.measures) + '</div>' +
+            '<div class="oh-kcard__meta"><b>' + esc(d.key_metric) + '</b> · ' + esc(d.price_tier) + '</div>' +
+            '<div class="oh-kcard__use">' + esc(d.useful_for) + '</div>' +
+            (d.alternatives && d.alternatives.length ? '<div class="oh-kcard__alt">альтернативы: ' + esc(d.alternatives.join(', ')) + '</div>' : '') +
+            '<div class="oh-kcard__actions">' +
+              '<a class="oh-kbtn" href="' + esc(d.source_url) + '" target="_blank" rel="noopener noreferrer"><i class="ph ph-link"></i> Источник</a>' +
+              '<button class="oh-kbtn oh-kverify" data-kind="device" data-id="' + esc(d.id) + '"><i class="ph ph-arrows-clockwise"></i> Перепроверить</button>' +
+              '<span class="oh-kcard__checked">сверено ' + esc(d.checked_at) + '</span></div></div>';
+        }).join('');
+        return '<h3 class="oh-kcat"><i class="ph ' + c.icon + '"></i> ' + esc(c.label) + '</h3><div class="oh-kgrid">' + cards + '</div>';
+      }).join('');
+      html = head(sec.label_ru || 'Девайсы', sec.icon || 'ph-watch',
+        'Что устройство реально измеряет (не маркетинг), зачем в n=1 самоконтроле и насколько подтверждено. Уровень доказательности показан честно.');
+      return '<section class="oh-section oh-section--knowledge" id="oh-sec-devices" data-section="devices">' + html + byCat + '</section>';
+    },
+
     // Render a whole registry section as neutral HTML (skins theme the .oh-* classes).
     // Tile metrics -> value cards; chart metrics -> renderChart. Demo metrics (no real
     // data yet) are dimmed with a "демо · <source>" chip = the empty-state preview.
@@ -205,6 +296,7 @@
     sectionView: function (sectionId, opts) {
       opts = opts || {};
       var s = OH.section(sectionId); if (!s) return '';
+      if (s.kind === 'knowledge') return OH.knowledgeView(s.knowledge_view || sectionId, opts);
       if (s.status === 'soon' || s.status === 'empty') return OH.sectionStub(sectionId);
       var accent = opts.accent || 'currentColor', textColor = opts.textColor || 'currentColor';
       var cards = OH.sectionMetrics(sectionId).map(function (m) {
@@ -243,6 +335,13 @@
         .then(function (r) { if (!r.ok) throw new Error('registry.json ' + r.status); return r.json(); })
         .then(function (reg) {
           OH.registry = reg;
+          // Curated knowledge layer (non-fatal if absent): devices/sources/videos.
+          return fetch(base + 'knowledge.json', { cache: 'no-store' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .catch(function () { return null; })
+            .then(function (k) { if (k) OH.knowledge = k; });
+        })
+        .then(function () {
           return fetch((opts.dataUrl || 'data.local.json'), { cache: 'no-store' })
             .then(function (r) { return r.ok ? r.json() : null; })
             .catch(function () { return null; });

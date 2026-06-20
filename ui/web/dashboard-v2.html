@@ -20,10 +20,10 @@
 
   <!-- OpenHealth shared engine: single-source registry + chart kit (see EXTENDING.md).
        V2 is a SKIN over this engine; it renders Today from OH, never from a local copy. -->
-  <script src="assets/oh-registry.js?v=4"></script>
+  <script src="assets/oh-registry.js?v=5"></script>
   <script src="assets/oh-charts.js?v=2"></script>
   <script src="assets/oh-correlate.js"></script>
-  <script src="assets/oh-provenance.js"></script>
+  <script src="assets/oh-provenance.js?v=2"></script>
 
   <style>
     :root {
@@ -2249,15 +2249,17 @@
       // stubs give every nav group a real anchor (oh-sec-<id>) to scroll to.
       const ready = ['sleep', 'strain', 'stress', 'body'];
       const bespoke = new Set(['today', 'habits', 'biomarkers', 'correlations', 'trends', 'settings', 'algorithms']);
-      const soon = (OH.registry.sections || [])
-        .filter(s => s.status === 'soon' && !bespoke.has(s.id) && ready.indexOf(s.id) < 0)
+      // Knowledge sections (devices/sources) render their curated content; the rest
+      // of the not-yet-migrated sections fall through to honest "coming soon" stubs.
+      const rest = (OH.registry.sections || [])
+        .filter(s => (s.status === 'soon' || s.kind === 'knowledge') && !bespoke.has(s.id) && ready.indexOf(s.id) < 0)
         .sort((a, b) => (a.order || 0) - (b.order || 0))
         .map(s => s.id);
       host.innerHTML = ready
         .map(id => OH.sectionView(id, { accent: accents[id], textColor: text, bg: '#ffffff' }))
         .join('')
         + '<div id="ohAlgorithms">' + (OH.algorithmsView ? OH.algorithmsView() : '') + '</div>'
-        + soon.map(id => OH.sectionView(id, { textColor: text })).join(''); // sectionView -> stub for status:soon
+        + rest.map(id => OH.sectionView(id, { accent: '#8B6CF0', textColor: text })).join(''); // knowledge -> content, status:soon -> stub
     }
 
     // ----------------------------------------------------

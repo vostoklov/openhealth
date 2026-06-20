@@ -18,11 +18,11 @@
 
 <!-- OpenHealth shared engine: single-source registry + chart kit (see EXTENDING.md).
      V1 is a SKIN over this engine; Today metrics come from the registry, not a local copy. -->
-<script src="assets/oh-registry.js?v=4"></script>
+<script src="assets/oh-registry.js?v=5"></script>
 <script src="assets/oh-charts.js?v=2"></script>
 <script src="assets/oh-charts-v1.js?v=2"></script>
 <script src="assets/oh-correlate.js"></script>
-<script src="assets/oh-provenance.js"></script>
+<script src="assets/oh-provenance.js?v=2"></script>
 <style>
   :root {
     --font: "Geist", "Geist Fallback", system-ui, -apple-system, sans-serif;
@@ -5630,6 +5630,16 @@
         </div>
       </section>
 
+      <!-- KNOWLEDGE: Девайсы (курируемый справочник из knowledge.json, рендер через OH.sectionView) -->
+      <section class="zone" id="z-devices">
+        <div class="bento-grid"><div class="card-outer col-12"><div class="card-inner" id="oh-mount-devices"></div></div></div>
+      </section>
+
+      <!-- KNOWLEDGE: Источники протоколов (Attia/Huberman-уровень, со шкалой доказательности) -->
+      <section class="zone" id="z-sources">
+        <div class="bento-grid"><div class="card-outer col-12"><div class="card-inner" id="oh-mount-sources"></div></div></div>
+      </section>
+
       <!-- SCREEN 14: REPORTS — месячный отчёт (эталон: WHOOP Monthly Performance Assessment) -->
       <section class="zone" id="z-reports">
         <div class="bento-grid">
@@ -11120,7 +11130,7 @@ var SIDEBAR_ZONE = {
   correlations: 'whoop-correlations', algorithms: 'r-algos', journal: 'journal',
   protocols: 'protocols', research: 'research', methodology: 'methodology', cascade: 'cascade',
   medications: 'medications', vaccination: 'vaccination', diagnostics: 'diagnostics',
-  reports: 'reports', digests: 'digests', sync: 'sync'
+  reports: 'reports', digests: 'digests', sync: 'sync', devices: 'devices', sources: 'sources'
 };
 function buildSidebarV1() {
   var host = document.getElementById('navScroll');
@@ -11157,6 +11167,13 @@ function renderRegistrySectionsV1() {
   Object.keys(zmap).forEach(function (zid) {
     var host = document.getElementById('oh-mount-' + zid);
     if (host) host.innerHTML = OH.sectionView(zmap[zid], { accent: accents[zmap[zid]], textColor: text, bg: '#14171d' });
+  });
+  // Knowledge sections (devices/sources) — curated reference from knowledge.json,
+  // rendered via the same OH.sectionView (dispatches to knowledgeView).
+  try { if (typeof titles === 'object') Object.assign(titles, { devices: 'Девайсы', sources: 'Источники' }); } catch (e) { /* ignore */ }
+  ['devices', 'sources'].forEach(function (kid) {
+    var kh = document.getElementById('oh-mount-' + kid);
+    if (kh) kh.innerHTML = OH.sectionView(kid, { accent: '#a78bfa', textColor: text, bg: '#14171d' });
   });
   try { if (typeof titles === 'object') titles['r-algos'] = 'Алгоритмы'; } catch (e) { /* ignore */ }
   var am = document.getElementById('oh-mount-algorithms');

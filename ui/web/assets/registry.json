@@ -68,9 +68,6 @@
       "metric_ids": [
         "day_strain",
         "average_hr",
-        "active_calories",
-        "strength_activity_time",
-        "recovery_time_in_bed",
         "hr_zones"
       ]
     },
@@ -96,12 +93,9 @@
       "icon": "ph-person",
       "order": 40,
       "metric_ids": [
-        "weight",
-        "lean_body_mass",
-        "body_fat",
-        "steps",
         "vo2max",
-        "fitness_age"
+        "fitness_age",
+        "steps"
       ]
     },
     {
@@ -128,8 +122,11 @@
       "label_en": "Workouts",
       "icon": "ph-barbell",
       "order": 25,
-      "status": "soon",
-      "metric_ids": []
+      "metric_ids": [
+        "active_calories",
+        "strength_activity_time",
+        "recovery_time_in_bed"
+      ]
     },
     {
       "id": "body_composition",
@@ -137,8 +134,11 @@
       "label_en": "Body Composition",
       "icon": "ph-chart-pie",
       "order": 41,
-      "status": "soon",
-      "metric_ids": []
+      "metric_ids": [
+        "weight",
+        "lean_body_mass",
+        "body_fat"
+      ]
     },
     {
       "id": "biomarkers",

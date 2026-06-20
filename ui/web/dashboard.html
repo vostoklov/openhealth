@@ -11161,12 +11161,18 @@ function renderRegistrySectionsV1() {
   if (!window.OH || !OH.registry) return;
   if (window.OHCharts) OHCharts.setActiveSkin('v1'); // V1 chart renderers (area+animation)
   try { if (typeof titles === 'object') Object.assign(titles, { 'r-sleep': 'Сон', 'r-strain': 'Нагрузка', 'r-stress': 'Стресс', 'r-body': 'Тело' }); } catch (e) { /* ignore */ }
-  var accents = { sleep: '#34d399', strain: '#a78bfa', stress: '#fb923c', body: '#38bdf8' };
-  var zmap = { 'r-sleep': 'sleep', 'r-strain': 'strain', 'r-stress': 'stress', 'r-body': 'body' };
+  var accents = { sleep: '#34d399', strain: '#a78bfa', workouts: '#a78bfa', stress: '#fb923c', body: '#38bdf8', body_composition: '#38bdf8' };
+  // Each native V1 zone renders the UNION of its group's metric sections, so the
+  // classic screens stay whole while the registry splits coarse sections into
+  // finer ones (activity -> strain+workouts, body -> body+body_composition).
+  var zsecs = { 'r-sleep': ['sleep'], 'r-strain': ['strain', 'workouts'], 'r-stress': ['stress'], 'r-body': ['body', 'body_composition'] };
   var text = (getComputedStyle(document.body).getPropertyValue('--ink') || '#f3f4f6').trim();
-  Object.keys(zmap).forEach(function (zid) {
+  Object.keys(zsecs).forEach(function (zid) {
     var host = document.getElementById('oh-mount-' + zid);
-    if (host) host.innerHTML = OH.sectionView(zmap[zid], { accent: accents[zmap[zid]], textColor: text, bg: '#14171d' });
+    if (!host) return;
+    host.innerHTML = zsecs[zid].map(function (sid) {
+      return OH.sectionView(sid, { accent: accents[sid] || '#a78bfa', textColor: text, bg: '#14171d' });
+    }).join('');
   });
   // Knowledge sections (devices/sources) — curated reference from knowledge.json,
   // rendered via the same OH.sectionView (dispatches to knowledgeView).

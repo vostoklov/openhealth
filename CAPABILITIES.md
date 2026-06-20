@@ -26,11 +26,11 @@
 | `pulse` | Пульс дня | `ph-heart` | 2 | — |
 | `habits` | Привычки | `ph-check-square` | 3 | — |
 | `sleep` | Сон | `ph-moon` | 10 | `sleep_duration_h`, `time_in_bed_h`, `sleep_efficiency_pct`, `sleep_consistency_pct`, `sleep_performance_pct`, `sleep_debt_h`, `restorative_h`, `restorative_pct`, `sleep_stages`, `sleep_hours_vs_need`, `sleep_duration_trend_7` |
-| `strain` | Нагрузка | `ph-lightning` | 20 | `day_strain`, `average_hr`, `active_calories`, `strength_activity_time`, `recovery_time_in_bed`, `hr_zones` |
-| `workouts` | Тренировки | `ph-barbell` | 25 | — |
+| `strain` | Нагрузка | `ph-lightning` | 20 | `day_strain`, `average_hr`, `hr_zones` |
+| `workouts` | Тренировки | `ph-barbell` | 25 | `active_calories`, `strength_activity_time`, `recovery_time_in_bed` |
 | `stress` | Стресс | `ph-gauge` | 30 | `stress_monitor`, `sleep_stress`, `non_activity_stress`, `respiratory_rate`, `blood_oxygen`, `skin_temperature` |
-| `body` | Тело | `ph-person` | 40 | `weight`, `lean_body_mass`, `body_fat`, `steps`, `vo2max`, `fitness_age` |
-| `body_composition` | Состав тела | `ph-chart-pie` | 41 | — |
+| `body` | Тело | `ph-person` | 40 | `vo2max`, `fitness_age`, `steps` |
+| `body_composition` | Состав тела | `ph-chart-pie` | 41 | `weight`, `lean_body_mass`, `body_fat` |
 | `biomarkers` | Анализы | `ph-flask` | 42 | — |
 | `dna` | ДНК | `ph-dna` | 43 | — |
 | `vitals` | Обзор показателей | `ph-chart-line-up` | 44 | — |

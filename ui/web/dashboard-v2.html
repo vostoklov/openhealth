@@ -2242,24 +2242,21 @@
       const host = document.getElementById('registrySections');
       if (!host || !window.OH || !OH.registry) return;
       if (window.OHCharts) OHCharts.setActiveSkin('v2'); // V2 chart renderers (bento)
-      const accents = { sleep: '#3FA9F5', strain: '#8B6CF0', stress: '#FF7A59', body: '#27C28A' };
+      const accents = { sleep: '#3FA9F5', strain: '#8B6CF0', workouts: '#8B6CF0', stress: '#FF7A59', body: '#27C28A', body_composition: '#27C28A' };
       const text = (getComputedStyle(document.body).getPropertyValue('--text-primary') || '#121316').trim();
-      // Ready registry sections + algorithms, then honest "coming soon" stubs for
-      // the rest (excluding sections that already have a bespoke bento card) — the
-      // stubs give every nav group a real anchor (oh-sec-<id>) to scroll to.
-      const ready = ['sleep', 'strain', 'stress', 'body'];
+      // Render EVERY non-bespoke registry section straight from the single source:
+      // sectionView dispatches ready->metric grid, knowledge->curated content,
+      // status:soon->honest stub. Bespoke sections have their own bento cards above,
+      // so they're excluded here. Migration is now a pure registry edit (flip status
+      // + assign metric_ids) — no V2 code change needed per section.
       const bespoke = new Set(['today', 'habits', 'biomarkers', 'correlations', 'trends', 'settings', 'algorithms']);
-      // Knowledge sections (devices/sources) render their curated content; the rest
-      // of the not-yet-migrated sections fall through to honest "coming soon" stubs.
-      const rest = (OH.registry.sections || [])
-        .filter(s => (s.status === 'soon' || s.kind === 'knowledge') && !bespoke.has(s.id) && ready.indexOf(s.id) < 0)
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .map(s => s.id);
-      host.innerHTML = ready
-        .map(id => OH.sectionView(id, { accent: accents[id], textColor: text, bg: '#ffffff' }))
+      const secs = (OH.registry.sections || [])
+        .filter(s => !bespoke.has(s.id))
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+      host.innerHTML = secs
+        .map(s => OH.sectionView(s.id, { accent: accents[s.id] || '#8B6CF0', textColor: text, bg: '#ffffff' }))
         .join('')
-        + '<div id="ohAlgorithms">' + (OH.algorithmsView ? OH.algorithmsView() : '') + '</div>'
-        + rest.map(id => OH.sectionView(id, { accent: '#8B6CF0', textColor: text })).join(''); // knowledge -> content, status:soon -> stub
+        + '<div id="ohAlgorithms">' + (OH.algorithmsView ? OH.algorithmsView() : '') + '</div>';
     }
 
     // ----------------------------------------------------

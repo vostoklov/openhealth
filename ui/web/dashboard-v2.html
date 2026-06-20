@@ -1595,19 +1595,7 @@
 
   <!-- RIGHT Vertical / BOTTOM Horizontal Icon Rail -->
   <div class="icon-rail">
-    <div class="rail-nav">
-      <button class="rail-btn active" data-target="sec-today" data-tooltip="Сегодня"><i class="ph ph-house"></i></button>
-      <button class="rail-btn" data-target="sec-habits" data-tooltip="Привычки"><i class="ph ph-check-square"></i></button>
-      <button class="rail-btn" data-target="sec-trends" data-tooltip="Тренды"><i class="ph ph-chart-line-up"></i></button>
-      <button class="rail-btn" data-target="sec-biomarkers" data-tooltip="Анализы"><i class="ph ph-flask"></i></button>
-      <button class="rail-btn" data-target="sec-correlations" data-tooltip="Влияние"><i class="ph ph-scales"></i></button>
-      <button class="rail-btn" data-target="oh-sec-sleep" data-tooltip="Сон"><i class="ph ph-moon"></i></button>
-      <button class="rail-btn" data-target="oh-sec-strain" data-tooltip="Нагрузка"><i class="ph ph-lightning"></i></button>
-      <button class="rail-btn" data-target="oh-sec-stress" data-tooltip="Стресс"><i class="ph ph-gauge"></i></button>
-      <button class="rail-btn" data-target="oh-sec-body" data-tooltip="Тело"><i class="ph ph-person"></i></button>
-      <button class="rail-btn" data-target="ohAlgorithms" data-tooltip="Алгоритмы"><i class="ph ph-function"></i></button>
-      <button class="rail-btn" data-target="sec-settings" data-tooltip="Настройки"><i class="ph ph-gear"></i></button>
-    </div>
+    <div class="rail-nav" id="railNav"><!-- built from OH.nav.groups(): Дом + ≤9 групп + Настройки --></div>
   </div>
 
   <!-- BOTTOM Statistics Strip (Floating / Sticky Panel) -->
@@ -2229,15 +2217,47 @@
       }
     }
 
+    // Rail nav from OH.nav.groups(): Дом + ≤9 групп + Настройки. Each group
+    // scrolls to its first section's anchor (bespoke sec-<id> or oh-sec-<id> stub).
+    function buildRailNav() {
+      const rail = document.getElementById('railNav');
+      if (!rail || !window.OH || !OH.nav) return;
+      const btn = (target, icon, tip, active) =>
+        '<button class="rail-btn' + (active ? ' active' : '') + '" data-target="' + target + '" data-tooltip="' + tip + '"><i class="ph ' + icon + '"></i></button>';
+      const anchorFor = (g) => {
+        const first = g.sections[0];
+        if (!first) return 'sec-today';
+        return document.getElementById('sec-' + first.id) ? 'sec-' + first.id : 'oh-sec-' + first.id;
+      };
+      let html = btn('sec-today', 'ph-house', 'Сегодня', true);
+      OH.nav.groups().forEach(g => {
+        if (g.id === 'today') return;
+        html += btn(anchorFor(g), g.icon || 'ph-circle', g.label_ru, false);
+      });
+      html += btn('sec-settings', 'ph-gear', 'Настройки', false);
+      rail.innerHTML = html;
+    }
+
     function renderRegistrySections() {
       const host = document.getElementById('registrySections');
       if (!host || !window.OH || !OH.registry) return;
       if (window.OHCharts) OHCharts.setActiveSkin('v2'); // V2 chart renderers (bento)
       const accents = { sleep: '#3FA9F5', strain: '#8B6CF0', stress: '#FF7A59', body: '#27C28A' };
       const text = (getComputedStyle(document.body).getPropertyValue('--text-primary') || '#121316').trim();
-      host.innerHTML = ['sleep', 'strain', 'stress', 'body']
+      // Ready registry sections + algorithms, then honest "coming soon" stubs for
+      // the rest (excluding sections that already have a bespoke bento card) — the
+      // stubs give every nav group a real anchor (oh-sec-<id>) to scroll to.
+      const ready = ['sleep', 'strain', 'stress', 'body'];
+      const bespoke = new Set(['today', 'habits', 'biomarkers', 'correlations', 'trends', 'settings', 'algorithms']);
+      const soon = (OH.registry.sections || [])
+        .filter(s => s.status === 'soon' && !bespoke.has(s.id) && ready.indexOf(s.id) < 0)
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .map(s => s.id);
+      host.innerHTML = ready
         .map(id => OH.sectionView(id, { accent: accents[id], textColor: text, bg: '#ffffff' }))
-        .join('') + '<div id="ohAlgorithms">' + (OH.algorithmsView ? OH.algorithmsView() : '') + '</div>';
+        .join('')
+        + '<div id="ohAlgorithms">' + (OH.algorithmsView ? OH.algorithmsView() : '') + '</div>'
+        + soon.map(id => OH.sectionView(id, { textColor: text })).join(''); // sectionView -> stub for status:soon
     }
 
     // ----------------------------------------------------
@@ -2280,11 +2300,9 @@
       // 2. Render everything from the seeded DATA.
       renderUI();
 
-      // 3. Entry animation is CSS-driven (see .bento-card animation) — its end
-      //    state is opacity:1, so cards never get stuck faded/blank if the
-      //    animation can't play. (Was gsap.from opacity:0, which left later
-      //    staggered cards — trends/biomarkers/correlations/settings — invisible
-      //    when the tween didn't finish: looked like blank sections.)
+      // 3. Build the rail nav from OH.nav groups (after sections render, so group
+      //    anchors — incl. coming-soon stubs — exist for scroll targets).
+      buildRailNav();
 
       // 4. Setup navigation click handlers
       const railButtons = document.querySelectorAll('.rail-btn');

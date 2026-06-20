@@ -104,6 +104,37 @@
     demoMode: (function () { try { return localStorage.getItem('oh.demoMode') === 'on'; } catch (e) { return false; } })(),
     setDemoMode: function (on) { OH.demoMode = !!on; try { localStorage.setItem('oh.demoMode', on ? 'on' : 'off'); } catch (e) {} },
 
+    // Single source of navigation for BOTH skins: groups (<=9) -> subsections,
+    // ordered, filtered by user visibility prefs (openhealth.nav.hidden — the
+    // same key V1 already uses). Each skin renders this in its own layout.
+    nav: {
+      _hidden: function () {
+        try { var a = JSON.parse(localStorage.getItem('openhealth.nav.hidden') || '[]'); var o = {}; (a || []).forEach(function (k) { o[k] = 1; }); return o; }
+        catch (e) { return {}; }
+      },
+      isHidden: function (id) { return !!OH.nav._hidden()[id]; },
+      setHidden: function (id, on) {
+        var h = OH.nav._hidden(); if (on) h[id] = 1; else delete h[id];
+        try { localStorage.setItem('openhealth.nav.hidden', JSON.stringify(Object.keys(h))); } catch (e) {}
+      },
+      // [{id,label_ru,icon,order, sections:[{id,label_ru,icon,status}]}], settings excluded (pinned by skins)
+      groups: function () {
+        if (!OH.registry || !OH.registry.groups) return [];
+        var hidden = OH.nav._hidden();
+        return OH.registry.groups.slice()
+          .sort(function (a, b) { return (a.order || 0) - (b.order || 0); })
+          .map(function (g) {
+            return {
+              id: g.id, label_ru: g.label_ru, icon: g.icon, order: g.order,
+              sections: (g.section_ids || []).map(OH.section).filter(Boolean)
+                .filter(function (s) { return !hidden[s.id]; })
+                .map(function (s) { return { id: s.id, label_ru: s.label_ru, icon: s.icon, status: s.status || 'ready' }; })
+            };
+          })
+          .filter(function (g) { return !hidden['group:' + g.id] && g.sections.length; });
+      }
+    },
+
     // Parity manifest: what any skin must render from the registry, with current
     // state. Skins also expose window.__renderManifest() built from this, so a
     // headless check can assert V1 and V2 render the same thing.

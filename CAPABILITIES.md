@@ -23,10 +23,34 @@
 | id | Название | Иконка | Порядок | Метрики |
 | --- | --- | --- | --- | --- |
 | `today` | Сегодня | `ph-house` | 1 | `recovery`, `hrv`, `rhr`, `sleep`, `strain`, `recovery_trend_30` |
+| `pulse` | Пульс дня | `ph-heart` | 2 | — |
+| `habits` | Привычки | `ph-check-square` | 3 | — |
 | `sleep` | Сон | `ph-moon` | 10 | `sleep_duration_h`, `time_in_bed_h`, `sleep_efficiency_pct`, `sleep_consistency_pct`, `sleep_performance_pct`, `sleep_debt_h`, `restorative_h`, `restorative_pct`, `sleep_stages`, `sleep_hours_vs_need`, `sleep_duration_trend_7` |
 | `strain` | Нагрузка | `ph-lightning` | 20 | `day_strain`, `average_hr`, `active_calories`, `strength_activity_time`, `recovery_time_in_bed`, `hr_zones` |
+| `workouts` | Тренировки | `ph-barbell` | 25 | — |
 | `stress` | Стресс | `ph-gauge` | 30 | `stress_monitor`, `sleep_stress`, `non_activity_stress`, `respiratory_rate`, `blood_oxygen`, `skin_temperature` |
 | `body` | Тело | `ph-person` | 40 | `weight`, `lean_body_mass`, `body_fat`, `steps`, `vo2max`, `fitness_age` |
+| `body_composition` | Состав тела | `ph-chart-pie` | 41 | — |
+| `biomarkers` | Анализы | `ph-flask` | 42 | — |
+| `dna` | ДНК | `ph-dna` | 43 | — |
+| `vitals` | Обзор показателей | `ph-chart-line-up` | 44 | — |
+| `trends` | Тренды | `ph-calendar` | 50 | — |
+| `timeline` | Хронология | `ph-footprints` | 51 | — |
+| `correlations` | Влияние | `ph-scales` | 52 | — |
+| `algorithms` | Алгоритмы | `ph-function` | 53 | — |
+| `journal` | Журнал | `ph-notebook` | 60 | — |
+| `protocols` | Протоколы | `ph-book-open` | 70 | — |
+| `research` | Research | `ph-microscope` | 71 | — |
+| `methodology` | Методологии | `ph-function` | 72 | — |
+| `cascade` | Каскад целей | `ph-compass` | 73 | — |
+| `devices` | Девайсы | `ph-watch` | 74 | — |
+| `sources` | Источники | `ph-graduation-cap` | 75 | — |
+| `medications` | Препараты и БАДы | `ph-pill` | 80 | — |
+| `vaccination` | Вакцинация | `ph-syringe` | 81 | — |
+| `diagnostics` | Диагностика | `ph-pulse` | 82 | — |
+| `reports` | Отчёты | `ph-file-text` | 83 | — |
+| `digests` | Дайджесты | `ph-bell` | 84 | — |
+| `sync` | Источники данных | `ph-plugs-connected` | 85 | — |
 | `settings` | Настройки | `ph-gear` | 99 | — |
 
 ## Метрики

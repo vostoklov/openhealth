@@ -33,7 +33,7 @@ from pathlib import Path
 GREEN, YELLOW = 67, 34
 
 
-def _load_whoop_by_date(con: sqlite3.Connection) -> dict[str, dict[str, float]]:
+def _load_recovery_by_date(con: sqlite3.Connection) -> dict[str, dict[str, float]]:
     """metric_name -> value, grouped by ISO date, for the recovery sources.
 
     Reads the live wearable sources that share the recovery metric vocabulary
@@ -105,7 +105,7 @@ def _hrv_minutes(value):
 
 
 def build_recovery_block(con: sqlite3.Connection) -> dict:
-    by_date = _load_whoop_by_date(con)
+    by_date = _load_recovery_by_date(con)
     dates = sorted(by_date)
     if not dates:
         return {}
@@ -382,7 +382,7 @@ def build_insights_block(con: sqlite3.Connection) -> dict:
     except Exception:
         return {"insights": [], "protocols": []}
 
-    daily = _daily_from_whoop(_load_whoop_by_date(con))
+    daily = _daily_from_whoop(_load_recovery_by_date(con))
     try:
         found = _insights.detect_insights(daily, {"sleep_h": _sleep_goal_h()})
         protos = _protocols.build_protocols(found, correlations=[])

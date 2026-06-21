@@ -105,8 +105,8 @@ CAPABILITIES = {
             "endpoint": "/sleep",
         },
         "daily_spo2": {
-            "scope": "daily",
-            "description": "Daily average blood oxygen (SpO2) percentage.",
+            "scope": "spo2",
+            "description": "Daily average blood oxygen (SpO2) percentage. Needs the separate 'spo2' OAuth scope.",
             "endpoint": "/daily_spo2",
         },
         "workout": {

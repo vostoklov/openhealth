@@ -34,11 +34,20 @@ GREEN, YELLOW = 67, 34
 
 
 def _load_whoop_by_date(con: sqlite3.Connection) -> dict[str, dict[str, float]]:
-    """metric_name -> value, grouped by ISO date, for the whoop-live source."""
+    """metric_name -> value, grouped by ISO date, for the recovery sources.
+
+    Reads the live wearable sources that share the recovery metric vocabulary
+    (recovery_score / hrv_rmssd_milli / resting_heart_rate / sleep_performance_
+    percentage). Oura (oura-live) is applied first and WHOOP (whoop-live) second,
+    so on any date both cover, WHOOP wins — it carries the native strain and
+    sleep-performance the dashboard was built around. With only Oura connected,
+    Oura's readiness/HRV/RHR/sleep fill the same tiles.
+    """
     by_date: dict[str, dict[str, float]] = defaultdict(dict)
     rows = con.execute(
         "SELECT payload_json FROM records "
-        "WHERE record_type='Observation' AND source_id='whoop-live'"
+        "WHERE record_type='Observation' AND source_id IN ('oura-live', 'whoop-live') "
+        "ORDER BY CASE source_id WHEN 'oura-live' THEN 0 ELSE 1 END"
     ).fetchall()
     for (payload,) in rows:
         p = json.loads(payload)
@@ -258,11 +267,15 @@ def build_connections(con: sqlite3.Connection) -> dict:
         ).fetchall()
     }
     has_whoop = any(s["type"] == "whoop" for s in srcs.values())
+    has_oura = any(s["type"] == "oura" and sid == "oura-live" for sid, s in srcs.items())
     has_labs = any("microbiota" in sid or "pdf" in sid for sid in srcs)
     has_dna = any("genotype" in sid for sid in srcs)
 
     whoop_cend = next(
         (s["cend"] for s in srcs.values() if s["type"] == "whoop"), None
+    )
+    oura_cend = next(
+        (s["cend"] for sid, s in srcs.items() if s["type"] == "oura" and sid == "oura-live"), None
     )
 
     return {
@@ -271,7 +284,8 @@ def build_connections(con: sqlite3.Connection) -> dict:
                   "icon": "ph-activity"},
         "apple": {"label": "Apple Health", "connected": False, "lastSync": None,
                   "icon": "ph-heart"},
-        "oura": {"label": "Oura Ring", "connected": False, "lastSync": None,
+        "oura": {"label": "Oura Ring", "connected": has_oura,
+                 "lastSync": _human_date(oura_cend) if oura_cend else None,
                  "icon": "ph-shield"},
         "garmin": {"label": "Garmin Connect", "connected": False, "lastSync": None,
                    "icon": "ph-barbell"},

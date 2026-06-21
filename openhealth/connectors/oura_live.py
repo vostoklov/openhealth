@@ -53,7 +53,12 @@ from ..storage import ensure_repo_structure, now_utc, slugify, write_json
 from . import oura as oura_export
 
 AUTHORIZATION_URL = "https://cloud.ouraring.com/oauth/authorize"
-TOKEN_URL = "https://api.ouraring.com/oauth/token"
+# Oura migrated OAuth to its Ory-backed identity server: the redirect carries
+# iss=moi.ouraring.com/oauth/v2/... and the token endpoint lives there now. The
+# legacy api.ouraring.com/oauth/token returns 400 invalid_request. Confirmed via
+# the issuer's .well-known/openid-configuration. The DATA API (API_BASE_URL)
+# stays on api.ouraring.com/v2 with the Bearer token.
+TOKEN_URL = "https://moi.ouraring.com/oauth/v2/ext/oauth-token"
 API_BASE_URL = "https://api.ouraring.com/v2/usercollection"
 OURA_SOURCE_ID = "oura-live"
 
@@ -405,7 +410,15 @@ def sync_oura(
             notes.append("Unknown collection skipped: %s" % name)
             continue
         endpoint, field_map, kind_label = spec
-        pages = client.list_collection(endpoint, start_value, end_value)
+        try:
+            pages = client.list_collection(endpoint, start_value, end_value)
+        except OuraApiError as exc:
+            # A collection the granted token can't reach (e.g. daily_spo2 without
+            # the spo2 scope) must not abort the whole sync — skip it with a note
+            # so the collections that DID authorize still get saved.
+            notes.append("%s skipped: %s" % (name, exc))
+            raw_counts[name] = 0
+            continue
         collection_records: List[Dict[str, Any]] = []
         for page in pages:
             for item in _items(page):

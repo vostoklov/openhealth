@@ -59,7 +59,8 @@ def _load_recovery_by_date(con: sqlite3.Connection) -> dict[str, dict[str, float
         by_date[d][mn] = v
         # Recovery payloads also carry rhr/hrv inside metadata.score; mirror them
         # so a recovery-score record alone is enough to populate the daily row.
-        score = (p.get("metadata") or {}).get("score") or {}
+        _score = (p.get("metadata") or {}).get("score")
+        score = _score if isinstance(_score, dict) else {}
         if "resting_heart_rate" in score and score["resting_heart_rate"] is not None:
             by_date[d].setdefault("resting_heart_rate", score["resting_heart_rate"])
         if "hrv_rmssd_milli" in score and score["hrv_rmssd_milli"] is not None:
@@ -546,7 +547,8 @@ def _all_records(con: sqlite3.Connection) -> list[dict]:
             "date": p.get("date") or p.get("start_date"),
         })
         # Mirror rhr / hrv carried inside a recovery score sub-object.
-        score = (p.get("metadata") or {}).get("score") or {}
+        _score = (p.get("metadata") or {}).get("score")
+        score = _score if isinstance(_score, dict) else {}
         d = p.get("date") or p.get("start_date")
         for sk, alias in (("resting_heart_rate", "rhr"), ("hrv_rmssd_milli", "hrv")):
             if score.get(sk) is not None:

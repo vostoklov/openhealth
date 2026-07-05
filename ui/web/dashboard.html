@@ -5911,6 +5911,10 @@
                   <button type="button" class="btn-secondary" onclick="setSkin('v1')"><i class="ph-light ph-moon"></i> Классический (тёмный) · сейчас</button>
                   <button type="button" class="btn-secondary" onclick="setSkin('v2')"><i class="ph-light ph-squares-four"></i> Bento (светлый)</button>
                 </div>
+
+                <div class="nav-config-note" style="margin-top:20px; font-weight:600; color: var(--ink);">Профиль (пресет)</div>
+                <div class="sub" style="margin:4px 0 8px;">Переставляет разделы под твою цель. По умолчанию выключено — навигация не меняется.</div>
+                <select id="personaPickerV1" onchange="ohSetPersonaV1(this.value)" class="btn-secondary" style="width:100%; max-width:340px; display:block; cursor:pointer;"></select>
                 <p class="privacy-note" style="margin-top:10px;">
                   <i class="ph-light ph-info"></i>
                   <span>Скины - один движок и один реестр (<span class="mono">assets/registry.json</span>). Данные и метрики общие, отличается только оформление; выбор скина запоминается и применяется на входе.</span>
@@ -11138,7 +11142,9 @@ function buildSidebarV1() {
   var activeEl = document.querySelector('aside nav a.active');
   var active = activeEl ? activeEl.getAttribute('data-z') : 'today';
   var html = '';
-  OH.nav.groups().forEach(function (g) {
+  // personaGroups() == nav.groups() when no persona is active (default), so the
+  // sidebar is unchanged unless a preset is chosen in Settings — opt-in only.
+  (OH.personaGroups ? OH.personaGroups() : OH.nav.groups()).forEach(function (g) {
     var items = g.sections.map(function (s) {
       return SIDEBAR_ZONE[s.id] ? { zone: SIDEBAR_ZONE[s.id], label: s.label_ru, icon: s.icon } : null;
     }).filter(Boolean);
@@ -11153,6 +11159,24 @@ function buildSidebarV1() {
   });
   html += '<div class="navsec">Система</div><nav><a data-z="settings" data-icon="ph-gear-six"' + (active === 'settings' ? ' class="active"' : '') + ' onclick="go(\'settings\')"><i class="ph-light ph-gear-six"></i><span>Настройки</span><span class="nav-remind" id="surveyRemindDot" style="display:none;" title="Пора пройти мини-опросник самочувствия" aria-hidden="true"></span></a></nav>';
   host.innerHTML = html;
+}
+
+// Persona picker (opt-in): fill from OH.personas(), select the active one.
+function ohPopulatePersonaPickerV1() {
+  var sel = document.getElementById('personaPickerV1');
+  if (!sel || !window.OH || !OH.personas) return;
+  var active = OH.personaActive || '';
+  var html = '<option value="">Без профиля (по умолчанию)</option>';
+  OH.personas().forEach(function (p) {
+    html += '<option value="' + p.id + '"' + (p.id === active ? ' selected' : '') + '>' + p.label_ru + '</option>';
+  });
+  sel.innerHTML = html;
+}
+// Choosing a persona reorders the sidebar via OH.personaGroups(); empty resets.
+function ohSetPersonaV1(id) {
+  if (!window.OH || !OH.setPersona) return;
+  OH.setPersona(id || null);
+  buildSidebarV1();
 }
 
 // WHOOP sections (sleep/strain/stress/body) rendered from the registry via the shared
@@ -11276,7 +11300,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // renderDashboard() below keeps the demo first paint instant.
   (window.OH ? OH.load() : Promise.reject()).catch(() => {})
     .then(() => loadRealData())
-    .then(() => { buildSidebarV1(); ohSeedToday(); renderDashboard(); applyNavVisibility(); updateSurveyReminder(); });
+    .then(() => { buildSidebarV1(); ohPopulatePersonaPickerV1(); ohSeedToday(); renderDashboard(); applyNavVisibility(); updateSurveyReminder(); });
   renderDashboard();
   // Один тихий запрос к /api/health с таймаутом 1.5 с — без спама.
   checkBridge();

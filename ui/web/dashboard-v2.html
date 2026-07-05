@@ -1583,6 +1583,11 @@
             </div>
           </div>
           <div>
+            <div style="font-weight:600; margin-bottom:6px;">Профиль (пресет)</div>
+            <span class="metric-subtitle">Переставляет разделы под твою цель. По умолчанию выключено — навигация не меняется.</span>
+            <select id="personaPickerV2" onchange="ohSetPersona(this.value)" style="margin-top:8px; padding:10px 12px; border-radius:var(--radius-md); border:1px solid rgba(0,0,0,0.12); background:var(--bg-card); color:var(--text-primary); font:inherit; width:100%; max-width:340px; display:block;"></select>
+          </div>
+          <div>
             <div style="font-weight:600; margin-bottom:6px;">Тема</div>
             <span class="metric-subtitle">Тема bento (светлая). Тёмная и brutalist живут в классическом скине.</span>
           </div>
@@ -2230,13 +2235,34 @@
         return document.getElementById('sec-' + first.id) ? 'sec-' + first.id : 'oh-sec-' + first.id;
       };
       let html = btn('sec-today', 'ph-house', 'Сегодня', true);
-      OH.nav.groups().forEach(g => {
+      // personaGroups() == nav.groups() when no persona is active (default) —
+      // opt-in reordering only, so the rail is unchanged unless a preset is chosen.
+      (OH.personaGroups ? OH.personaGroups() : OH.nav.groups()).forEach(g => {
         if (g.id === 'today') return;
         html += btn(anchorFor(g), g.icon || 'ph-circle', g.label_ru, false);
       });
       html += btn('sec-settings', 'ph-gear', 'Настройки', false);
       rail.innerHTML = html;
     }
+
+    // Persona picker (opt-in): fill from OH.personas(), select the active one.
+    function ohPopulatePersonaPicker() {
+      const sel = document.getElementById('personaPickerV2');
+      if (!sel || !window.OH || !OH.personas) return;
+      const active = OH.personaActive || '';
+      let html = '<option value="">Без профиля (по умолчанию)</option>';
+      OH.personas().forEach(p => {
+        html += '<option value="' + p.id + '"' + (p.id === active ? ' selected' : '') + '>' + p.label_ru + '</option>';
+      });
+      sel.innerHTML = html;
+    }
+    // Choosing a persona reorders the nav via OH.personaGroups(); empty resets to default.
+    function ohSetPersona(id) {
+      if (!window.OH || !OH.setPersona) return;
+      OH.setPersona(id || null);
+      buildRailNav();
+    }
+    window.ohSetPersona = ohSetPersona;
 
     function renderRegistrySections() {
       const host = document.getElementById('registrySections');
@@ -2302,49 +2328,39 @@
       // 3. Build the rail nav from OH.nav groups (after sections render, so group
       //    anchors — incl. coming-soon stubs — exist for scroll targets).
       buildRailNav();
+      ohPopulatePersonaPicker();
 
-      // 4. Setup navigation click handlers
-      const railButtons = document.querySelectorAll('.rail-btn');
-      railButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-          const targetId = btn.getAttribute('data-target');
-          if (targetId) {
-            // Remove active classes
-            railButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-
-            const targetSection = document.getElementById(targetId);
-            if (targetSection) {
-              // scrollIntoView resolves the real scroll container itself - robust
-              // even when <html> overflow is computed `auto`, where a manual
-              // window.scrollTo({behavior:'smooth'}) silently no-ops in some engines.
-              targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }
-        });
+      // 4. Navigation click handlers — DELEGATED on the rail container so they
+      //    survive rail rebuilds (the persona picker re-renders the buttons).
+      const rail = document.getElementById('railNav');
+      if (rail) rail.addEventListener('click', (e) => {
+        const btn = e.target.closest('.rail-btn'); if (!btn) return;
+        const targetId = btn.getAttribute('data-target'); if (!targetId) return;
+        rail.querySelectorAll('.rail-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const targetSection = document.getElementById(targetId);
+        // scrollIntoView resolves the real scroll container itself - robust even
+        // when <html> overflow is computed `auto`, where window.scrollTo no-ops.
+        if (targetSection) targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
 
       // Sync button (header)
       const syncBtn = document.getElementById('syncBtnV2');
       if (syncBtn) syncBtn.addEventListener('click', ohSync);
 
-      // Highlight active rail button on scroll. Targets are derived from the rail
-      // buttons themselves, so registry sections (oh-sec-sleep/strain/stress/body)
-      // and algorithms light up too - not just the hand-listed bento cards.
-      const spyTargets = Array.from(railButtons)
-        .map(btn => btn.getAttribute('data-target'))
-        .filter(Boolean);
+      // Highlight active rail button on scroll. Buttons are queried FRESH each
+      // call, so a rebuilt rail (persona reorder) still lights up correctly.
       const onScrollSpy = () => {
+        const buttons = document.querySelectorAll('.rail-btn');
         const scrollPos = window.scrollY + 140;
         let activeId = null;
-        spyTargets.forEach(id => {
-          const el = document.getElementById(id);
+        buttons.forEach(btn => {
+          const id = btn.getAttribute('data-target');
+          const el = id && document.getElementById(id);
           if (el && scrollPos >= el.offsetTop) activeId = id; // last section whose top we passed
         });
         if (!activeId) return;
-        railButtons.forEach(btn => {
-          btn.classList.toggle('active', btn.getAttribute('data-target') === activeId);
-        });
+        buttons.forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-target') === activeId));
       };
       window.addEventListener('scroll', onScrollSpy, { passive: true });
       onScrollSpy();

@@ -23,6 +23,7 @@ def oh_home(tmp_path, monkeypatch):
     """Isolate every test from the real ~/.openhealth (config + memory)."""
     home = tmp_path / "oh-home"
     monkeypatch.setenv("OPENHEALTH_HOME", str(home))
+    monkeypatch.delenv("OPENHEALTH_LLM_BASE_URL", raising=False)
     return home
 
 
@@ -248,7 +249,7 @@ def test_handle_agent_request_runs_insight_with_data(tmp_path, monkeypatch):
 
 def test_load_agent_config_defaults_when_missing():
     cfg = server.load_agent_config()
-    assert cfg == {"agent": "auto", "model": None, "extra_args": []}
+    assert cfg == {"agent": "auto", "model": None, "extra_args": [], "base_url": None}
 
 
 def test_save_and_load_agent_config_roundtrip(oh_home):
@@ -256,7 +257,7 @@ def test_save_and_load_agent_config_roundtrip(oh_home):
     assert path == oh_home / "agent.json"
     assert stat.S_IMODE(path.stat().st_mode) == 0o600
     cfg = server.load_agent_config()
-    assert cfg == {"agent": "codex", "model": "gpt-5.2-codex", "extra_args": ["--foo"]}
+    assert cfg == {"agent": "codex", "model": "gpt-5.2-codex", "extra_args": ["--foo"], "base_url": None}
 
 
 def test_load_agent_config_sanitizes_broken_values(oh_home):
@@ -265,7 +266,7 @@ def test_load_agent_config_sanitizes_broken_values(oh_home):
         json.dumps({"agent": "rm -rf /", "model": "bad model name!", "extra_args": "not-a-list"}),
         encoding="utf-8",
     )
-    assert server.load_agent_config() == {"agent": "auto", "model": None, "extra_args": []}
+    assert server.load_agent_config() == {"agent": "auto", "model": None, "extra_args": [], "base_url": None}
     (oh_home / "agent.json").write_text("{broken", encoding="utf-8")
     assert server.load_agent_config()["agent"] == "auto"
 
@@ -281,8 +282,12 @@ def test_sanitize_model():
 
 
 def test_handle_config_request_validates_and_persists(oh_home):
-    status, body = server.handle_config_request({"agent": "hermes"})
+    status, body = server.handle_config_request({"agent": "openclaw"})
     assert status == 400  # detected but not selectable
+
+    status, body = server.handle_config_request({"agent": "hermes"})
+    assert status == 200  # hermes is now a first-class selectable agent
+    assert body["config"]["agent"] == "hermes"
 
     status, body = server.handle_config_request({"agent": "codex", "model": "o4-mini"})
     assert status == 200
@@ -296,7 +301,7 @@ def test_handle_config_request_validates_and_persists(oh_home):
 
     status, body = server.handle_config_request({"model": None})  # reset model
     assert status == 200
-    assert server.load_agent_config() == {"agent": "codex", "model": None, "extra_args": []}
+    assert server.load_agent_config() == {"agent": "codex", "model": None, "extra_args": [], "base_url": None}
 
 
 def test_agents_status_reports_availability(monkeypatch):
@@ -307,6 +312,7 @@ def test_agents_status_reports_availability(monkeypatch):
     assert rows["antigravity"]["available"] is True  # via the agy binary
     assert rows["codex"]["available"] is False
     assert rows["openclaw"]["selectable"] is False
+    assert rows["hermes"]["selectable"] is True  # first-class selectable agent
     assert rows["codex"]["selectable"] is True
 
 
@@ -474,3 +480,13 @@ def test_build_prompt_places_preamble_before_task():
     )
     assert prompt.index("КОНТЕКСТ ПОЛЬЗОВАТЕЛЯ") < prompt.index("Память прошлых разборов") < prompt.index("Задача:")
     assert "не врач" in prompt
+
+
+# --- /api/health build stamp -----------------------------------------------------
+
+
+def test_health_exposes_build_stamp():
+    # The UI and the Hermes gateway detect a stale still-running bridge process
+    # by this field; a missing build means "restart the bridge".
+    import re
+    assert re.match(r"^\d{4}-\d{2}-\d{2}$", server.BUILD)

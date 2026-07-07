@@ -34,13 +34,16 @@
     var s = document.createElement('style');
     s.id = 'oh-prov-style';
     s.textContent =
-      '.oh-q{all:unset;cursor:pointer;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font:700 11px system-ui,sans-serif;color:var(--mut,var(--text-muted,#888));border:1px solid currentColor;opacity:.55;flex:0 0 auto}' +
+      // 18px visual circle, but a ~30px hit-area via an invisible ::after pad so
+      // a finger can actually tap it; same trick on both overlay close buttons.
+      '.oh-q{all:unset;cursor:pointer;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font:700 11px system-ui,sans-serif;color:var(--mut,var(--text-muted,#888));border:1px solid currentColor;opacity:.55;flex:0 0 auto;position:relative}' +
+      '.oh-q::after{content:"";position:absolute;inset:-6px}' +
       '.oh-q:hover{opacity:1}' +
       '#oh-prov-pop{position:fixed;inset:0;z-index:100002;display:none}' +
       '#oh-prov-pop .oh-prov-back{position:absolute;inset:0;background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}' +
       '#oh-prov-pop .oh-prov-card{position:relative;max-width:min(560px,calc(100vw - 24px));margin:8vh auto 0;max-height:84vh;overflow:auto;background:var(--card-inner,var(--bg-card,#fff));color:var(--ink,var(--text-primary,#111));border-radius:18px;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.4)}' +
       '.oh-prov-head{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:16px;margin-bottom:12px}' +
-      '.oh-prov-x{all:unset;cursor:pointer;opacity:.6;font-size:18px}' +
+      '.oh-prov-x{all:unset;cursor:pointer;opacity:.6;font-size:18px;padding:10px;margin:-10px}' +
       '.oh-prov-row{margin-bottom:10px}.oh-prov-row b{display:block;font-size:11px;letter-spacing:.5px;text-transform:uppercase;opacity:.55;margin-bottom:2px}.oh-prov-row p{margin:0;font-size:14px;line-height:1.45}' +
       '.oh-prov-meta{font-size:12px;opacity:.7;margin:10px 0}.oh-prov-meta code{background:rgba(127,127,127,.18);padding:1px 6px;border-radius:6px}' +
       '.oh-prov-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}' +
@@ -205,7 +208,21 @@
       var act = t.getAttribute('data-act');
       if (act === 'ask') ask(t.getAttribute('data-id'), 'ask');
       else if (act === 'recheck') ask(t.getAttribute('data-id'), 'recheck');
-      else if (act === 'copy') { var ta = document.querySelector('.oh-prov-prompt'); if (ta) { ta.select(); try { document.execCommand('copy'); t.innerHTML = '<i class="ph ph-check"></i> Скопировано'; } catch (x) {} } }
+      else if (act === 'copy') {
+        // Honest feedback: say "Скопировано" only when the copy actually worked
+        // (iOS Safari can reject both paths); otherwise leave the text selected.
+        var ta = document.querySelector('.oh-prov-prompt'); if (!ta) return;
+        var done = function () { t.innerHTML = '<i class="ph ph-check"></i> Скопировано'; };
+        var legacy = function () {
+          ta.removeAttribute('readonly'); ta.focus(); ta.setSelectionRange(0, ta.value.length);
+          var ok = false; try { ok = document.execCommand('copy'); } catch (x) {}
+          ta.setAttribute('readonly', '');
+          if (ok) done(); else t.innerHTML = '<i class="ph ph-copy"></i> Выдели и скопируй вручную';
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(ta.value).then(done, legacy);
+        } else legacy();
+      }
       else if (act === 'algos') {
         var pop = document.getElementById('oh-prov-pop'); if (pop) { pop.style.display = 'none'; pop.innerHTML = ''; }
         var target = document.getElementById('oh-mount-algorithms') || document.getElementById('ohAlgorithms') || document.getElementById('z-r-algos');

@@ -2,7 +2,7 @@
 // Статика — cache-first; данные (data.local.json, /api/), реестр (registry.json) и
 // движковые скрипты (assets/oh-*.js) — network-first, чтобы значения, определения
 // метрик и код движка не залипали в кэше.
-const CACHE = 'openhealth-shell-v11';
+const CACHE = 'openhealth-shell-v12';
 const SHELL = [
   './',
   './index.html',

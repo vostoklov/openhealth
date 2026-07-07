@@ -196,7 +196,20 @@
     var frac = Math.max(0, Math.min(1, val / max)), zoneArcs = '', prev = 0;
     for (var i = 0; i < zones.length; i++) { var to = Math.min(frac, zones[i].to); zoneArcs += arc(prev, to, zones[i].color); prev = zones[i].to; if (zones[i].to >= frac) break; }
     var needle = pt(frac), label = opts.label != null ? opts.label : val.toFixed(1);
-    return '<svg class="oh-gauge" viewBox="0 0 ' + w + ' ' + h + '" width="100%" height="' + h + '" role="img">' + track + zoneArcs +
+    // Риски границ зон + подписи концов шкалы: при близких значениях (0.8 / 1.1
+    // / 1.4) дуги почти неотличимы — деления дают точку отсчёта.
+    function ptR(fr, rad) { var a2 = Math.PI * (1 - fr); return { x: cx + rad * Math.cos(a2), y: cy - rad * Math.sin(a2) }; }
+    var ticks = '';
+    for (var ti = 0; ti < zones.length - 1; ti++) {
+      var tf = zones[ti].to;
+      var tIn = ptR(tf, r - stroke / 2 - 2), tOut = ptR(tf, r + stroke / 2 + 2), tLbl = ptR(tf, r + stroke / 2 + 11);
+      var tv = tf * max;
+      ticks += '<line x1="' + tIn.x.toFixed(1) + '" y1="' + tIn.y.toFixed(1) + '" x2="' + tOut.x.toFixed(1) + '" y2="' + tOut.y.toFixed(1) + '" stroke="' + lc + '" stroke-width="1" opacity="0.35"/>' +
+        '<text x="' + tLbl.x.toFixed(1) + '" y="' + tLbl.y.toFixed(1) + '" text-anchor="middle" font-size="9" opacity="0.55" fill="' + lc + '">' + (tv % 1 ? tv.toFixed(1) : tv) + '</text>';
+    }
+    ticks += '<text x="' + (cx - r) + '" y="' + (cy + 12) + '" text-anchor="middle" font-size="9" opacity="0.55" fill="' + lc + '">0</text>' +
+      '<text x="' + (cx + r) + '" y="' + (cy + 12) + '" text-anchor="middle" font-size="9" opacity="0.55" fill="' + lc + '">' + max + '</text>';
+    return '<svg class="oh-gauge" viewBox="0 0 ' + w + ' ' + h + '" width="100%" height="' + h + '" role="img">' + track + zoneArcs + ticks +
       '<circle cx="' + needle.x.toFixed(1) + '" cy="' + needle.y.toFixed(1) + '" r="' + (stroke / 2 + 3) + '" fill="' + (opts.bg || '#fff') + '" stroke="' + (opts.markerColor || '#131416') + '" stroke-width="2"/>' +
       '<text x="' + cx + '" y="' + (cy - 8) + '" text-anchor="middle" font-size="' + (r * 0.42).toFixed(1) + '" font-weight="700" fill="' + lc + '">' + label + '</text>' +
       (opts.sub ? '<text x="' + cx + '" y="' + (cy + 12) + '" text-anchor="middle" font-size="11" letter-spacing="1.5" opacity="0.6" fill="' + lc + '">' + opts.sub + '</text>' : '') + '</svg>';

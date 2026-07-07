@@ -320,9 +320,11 @@
       if (s.kind === 'knowledge') return OH.knowledgeView(s.knowledge_view || sectionId, opts);
       if (s.status === 'soon' || s.status === 'empty') return OH.sectionStub(sectionId);
       var accent = opts.accent || 'currentColor', textColor = opts.textColor || 'currentColor';
+      var dimCount = 0, totalCount = 0;
       var cards = OH.sectionMetrics(sectionId).map(function (m) {
         var st = OH.state(m.id), si = OH.sourceInfo(m.source);
         var dim = (st === 'demo' || st === 'empty' || st === 'insufficient');
+        totalCount++; if (dim) dimCount++;
         var chipText = st === 'insufficient' ? 'мало данных' : (st === 'empty' ? 'нет данных · ' + si.label : (st === 'demo' ? 'демо · ' + si.label : ''));
         var chip = chipText ? '<span class="oh-chip" title="Состояние данных"><i class="ph ' + si.icon + '"></i> ' + chipText + '</span>' : '';
         if (m.chart === 'tile') {
@@ -343,9 +345,16 @@
           '<div class="oh-chart-card__head"><span class="oh-chart-card__label">' + (m.label_ru || m.id) + '</span>' + chip + '<button class="oh-q" data-prov="' + m.id + '" title="Как это считается">?</button></div>' +
           '<div class="oh-chart-card__svg">' + svg + '</div></div>';
       }).join('');
+      // Целиком демо-секция получает один честный баннер вместо тихих чипов:
+      // демо не должно читаться как реальные показатели.
+      var demoBanner = (totalCount > 0 && dimCount === totalCount)
+        ? '<div class="oh-demo-banner"><i class="ph ph-flask"></i><span>Раздел на демо-данных — реальные появятся после подключения источника. ' +
+          '<a onclick="if(typeof go===\'function\')go(\'sync\');else location.href=\'dashboard.html\'">Источники данных</a></span></div>'
+        : '';
       return '<section class="oh-section" id="oh-sec-' + sectionId + '" data-section="' + sectionId + '">' +
         '<div class="oh-section__head"><span class="oh-section__icon" style="color:' + accent + '"><i class="ph ' + (s.icon || 'ph-circle') + '"></i></span>' +
         '<h2 class="oh-section__title">' + (s.label_ru || sectionId) + '</h2></div>' +
+        demoBanner +
         '<div class="oh-section__grid">' + cards + '</div></section>';
     },
 

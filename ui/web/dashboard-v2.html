@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>OpenHealth v2 Dashboard</title>
   
   <!-- Fonts Geist and Geist Mono -->
@@ -20,10 +20,12 @@
 
   <!-- OpenHealth shared engine: single-source registry + chart kit (see EXTENDING.md).
        V2 is a SKIN over this engine; it renders Today from OH, never from a local copy. -->
-  <script src="assets/oh-registry.js?v=6"></script>
-  <script src="assets/oh-charts.js?v=2"></script>
-  <script src="assets/oh-correlate.js"></script>
-  <script src="assets/oh-provenance.js?v=2"></script>
+  <script src="assets/oh-registry.js?v=7"></script>
+  <script src="assets/oh-charts.js?v=3"></script>
+  <script src="assets/oh-correlate.js?v=2"></script>
+  <script src="assets/oh-provenance.js?v=3"></script>
+  <script src="assets/oh-i18n.js?v=4"></script>
+  <script src="assets/oh-notify.js?v=1"></script>
 
   <style>
     :root {
@@ -220,7 +222,9 @@
     /* Bento Grid Layout */
     .bento-grid {
       display: grid;
-      grid-template-columns: 1.2fr 1.8fr;
+      /* minmax(0,·): треки не имеют права раздуваться под min-content контента
+         (nowrap-строка внутри карточки иначе распирает весь лейаут). */
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.8fr);
       gap: 24px;
     }
 
@@ -363,7 +367,7 @@
     /* Metric Colored Bento Cards Grid */
     .metrics-bento-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 20px;
     }
 
@@ -485,6 +489,9 @@
       display: flex;
       align-items: center;
       gap: 16px;
+      /* min-width:0 по всей flex-цепочке: nowrap-текст внутри иначе задаёт
+         min-content ~520px и распирает ВЕСЬ мобильный лейаут до гор. скролла. */
+      min-width: 0;
     }
 
     .urgent-icon-circle {
@@ -503,6 +510,7 @@
       display: flex;
       flex-direction: column;
       gap: 2px;
+      min-width: 0;
     }
 
     .urgent-card-title {
@@ -513,7 +521,8 @@
     .urgent-card-why {
       font-size: 0.85rem;
       color: var(--text-muted);
-      max-width: 400px;
+      /* 400px на десктопе, но не шире доступного места на телефоне */
+      max-width: min(400px, 100%);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -1278,17 +1287,21 @@
         border-radius: var(--radius-lg);
         padding: 0 32px;
       }
+
+      /* Плавающий бар не должен перекрывать низ контента. */
+      body { padding-bottom: 140px; }
     }
 
     /* Tablet & Mobile (Collapse sidebar and bottom panel) */
     @media (max-width: 1023px) {
       body {
         padding: 20px;
-        padding-bottom: 96px; /* Space for the bottom rail */
+        /* Space for the bottom rail + the iPhone home-indicator zone. */
+        padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
       }
 
       .bento-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
       }
 
       .trend-card, .biomarkers-card {
@@ -1300,16 +1313,23 @@
         bottom: 0;
         left: 0;
         right: 0;
-        height: 72px;
+        /* Safe area: keep the 44px buttons above the iPhone home indicator. */
+        height: calc(72px + env(safe-area-inset-bottom, 0px));
         width: 100%;
         border-radius: 20px 20px 0 0;
         display: flex;
         flex-direction: row;
         align-items: center;
-        justify-content: space-around;
-        padding: 0 16px;
+        justify-content: flex-start;
+        padding: 0 16px env(safe-area-inset-bottom, 0px);
         box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.05);
+        /* 10 nav buttons don't fit a 375px bar: scroll instead of clipping the
+           edges (clipped buttons = unreachable sections). */
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
       }
+      .icon-rail::-webkit-scrollbar { display: none; }
 
       .rail-logo {
         display: none; /* Hide logo inside mobile bottom bar */
@@ -1317,8 +1337,10 @@
 
       .rail-nav {
         flex-direction: row;
-        width: 100%;
+        width: max-content;   /* content-sized so every button stays reachable */
+        min-width: 100%;      /* ...but still fills wide phones/tablets */
         justify-content: space-around;
+        gap: 8px;
       }
 
       /* Disable tooltips on mobile */
@@ -1370,7 +1392,7 @@
         margin-top: 4px;
       }
       .metrics-bento-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
       }
       .header-info h1 {
         font-size: 1.8rem;
@@ -1411,7 +1433,7 @@
     </header>
 
     <!-- Bento Grid Container (padding-bottom clears the fixed bottom stats strip) -->
-    <div class="bento-grid" style="padding-bottom:140px;">
+    <div class="bento-grid">
       
       <!-- LEFT COLUMN -->
       <div class="grid-column" id="sec-today">
@@ -1560,7 +1582,10 @@
            across a row; sit the chip just under the value, left-aligned. */
         .oh-tile .oh-chip { margin-top:auto; }
         .oh-chip { font:500 10px var(--font-sans); color: var(--text-muted); background: rgba(0,0,0,.05); padding:3px 8px; border-radius:999px; display:inline-flex; align-items:center; gap: var(--space-1); margin-top: var(--space-2); align-self:flex-start; }
-        .oh--demo { opacity:.72; }
+        .oh--demo { opacity:.55; filter: saturate(.25); }
+        .oh-demo-banner { display:flex; align-items:center; gap:8px; font:500 12px var(--font-sans); color: var(--text-muted);
+          border:1px dashed rgba(0,0,0,.18); border-radius:10px; padding:8px 12px; margin:6px 0 10px; }
+        .oh-demo-banner a { color:inherit; cursor:pointer; text-decoration:underline; }
         @keyframes oh-rise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
         .oh-section { animation: oh-rise .5s cubic-bezier(.16,1,.3,1) both; }
         @media (max-width:760px){ .oh-chart-card{ grid-column:1 / -1; } }
@@ -1738,9 +1763,14 @@
       const col = getRecoveryColor(rec);
       const zoneText = getRecoveryZoneText(rec);
 
-      // Update Header Pill
+      // Update Header Pill. Honesty: without real data the number is the
+      // registry demo — say so right in the capsule and dim the hero card,
+      // never present a fabricated "recovery 78%" as the user's own.
+      const isDemo = !(window.OH && OH.state && OH.state('recovery') === 'real');
       document.getElementById('headerCapsuleDot').style.background = col;
-      document.getElementById('headerCapsuleText').textContent = `recovery ${rec}%`;
+      document.getElementById('headerCapsuleText').textContent = `recovery ${rec}%` + (isDemo ? ' · демо' : '');
+      const heroCard = document.querySelector('.hero-recovery-card');
+      if (heroCard) heroCard.classList.toggle('oh--demo', isDemo);
 
       // Recovery ring via the SHARED chart kit (OHCharts.ring) - same kit V1 uses.
       const ringHost = document.querySelector('.recovery-ring-container');
@@ -1939,7 +1969,10 @@
       const marker = document.getElementById('chartMarkerDot');
       const tooltip = document.getElementById('chartTooltip');
 
-      overlay.addEventListener('mousemove', (e) => {
+      // pointermove covers mouse AND touch scrubbing (mousemove alone left the
+      // tooltip unreachable on phones — and a tap's synthetic mousemove showed a
+      // marker that never hid, because touch fires no mouseleave).
+      overlay.addEventListener('pointermove', (e) => {
         const rect = svg.getBoundingClientRect();
         // project client cursor relative coordinate to SVG coordinates
         const scaleX = width / rect.width;
@@ -1970,10 +2003,14 @@
         tooltip.textContent = `День ${closestIndex + 1}: ${p.val}%`;
       });
 
-      overlay.addEventListener('mouseleave', () => {
+      const hideMarker = () => {
         marker.style.opacity = '0';
         tooltip.style.opacity = '0';
-      });
+      };
+      overlay.addEventListener('pointerleave', hideMarker);
+      // On touch there is no pointerleave after a tap — hide on lift/cancel.
+      overlay.addEventListener('pointerup', (e) => { if (e.pointerType !== 'mouse') hideMarker(); });
+      overlay.addEventListener('pointercancel', hideMarker);
     }
 
     function toggleBiomarkerRow(idx) {
@@ -2143,7 +2180,8 @@
       // Single data-apply pass from DATA. Header date was hardcoded "вторник,
       // сегодня" and never refreshed — keep it in sync with the footer/cards.
       const hd = document.getElementById('headerDate');
-      if (hd && DATA.date) hd.textContent = DATA.date;
+      // «данные за …»: дата выгрузки не должна читаться как сегодняшняя.
+      if (hd && DATA.date) hd.textContent = 'данные за ' + DATA.date;
       updateRecoveryWidget();
       updateMetricCards();
       updateUrgentTodayBlock();

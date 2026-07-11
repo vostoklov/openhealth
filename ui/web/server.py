@@ -156,7 +156,7 @@ MAX_SUMMARY_CHARS = 1500
 MAX_STDERR_TAIL = 500
 AGENT_TIMEOUT_S = 120
 
-ALLOWED_TASKS = frozenset({"insight", "correlations", "research", "transcript"})
+ALLOWED_TASKS = frozenset({"insight", "correlations", "research", "transcript", "visit-prep"})
 AGENT_BINARIES = ("claude", "codex", "openhealth")
 
 # --- agent selection config (~/.openhealth/agent.json) ----------------------
@@ -224,6 +224,23 @@ TASK_INSTRUCTIONS = {
         "Задача: сделай краткий обзор доказательной базы по теме «{topic}» "
         "применительно к recovery/HRV/сну: 3-5 пунктов, каждый с C-grade (качество "
         "доказательств) и одной строкой сути."
+    ),
+    # Doctor-ready visit prep — the strongest recurring JTBD across the field
+    # (Ideabrowser signals). Organizes the user's OWN data for a visit; framed
+    # explicitly as not-a-diagnosis, honest about gaps, evidence-graded.
+    "visit-prep": (
+        "Задача: собери короткий doctor-ready отчёт К ПРИЁМУ ВРАЧА из блока ДАННЫЕ и моего "
+        "контекста. Это НЕ диагноз и НЕ медсовет — ты организуешь МОИ данные, чтобы я пришёл "
+        "подготовленным. Структура ровно такая, по разделам:\n"
+        "1) Что изменилось за период — 2-4 факта по трендам (recovery/HRV/сон/strain, "
+        "биомаркеры) с направлением и, где есть, датой.\n"
+        "2) На что обратить внимание врача — значения вне нормы/оптимума и заметные сдвиги, "
+        "БЕЗ интерпретации причины.\n"
+        "3) Контекст и симптомы из журнала, если есть.\n"
+        "4) 3-5 вопросов врачу, вытекающих из моих данных.\n"
+        "Каждый фактический пункт — с уровнем C1-C5 и источником (какой трекер/анализ). "
+        "Ничего не выдумывай: где данных нет — пиши «нет данных». Заверши строкой: "
+        "«Это организованная выжимка моих данных для обсуждения с врачом, не медицинское заключение.»"
     ),
 }
 
@@ -492,6 +509,20 @@ def summarize_data(data: "dict | None") -> str:
             if isinstance(b, dict)
         )
         parts.append("Биомаркеры ({} шт.): {}".format(len(biomarkers), items))
+        # Flag out-of-range labs explicitly — the doctor-relevant subset for
+        # visit-prep (and useful context for any task).
+        flagged = [
+            b for b in biomarkers
+            if isinstance(b, dict) and str(b.get("status") or "").lower() not in ("optimal", "normal", "ok", "оптимально", "в норме", "")
+        ]
+        if flagged:
+            fitems = "; ".join(
+                "{} {}{} ({})".format(
+                    b.get("name", "?"), _fmt_num(b.get("value", "?")), b.get("unit") or "", b.get("status")
+                )
+                for b in flagged[:12]
+            )
+            parts.append("Вне нормы/оптимума ({} шт.): {}".format(len(flagged), fitems))
 
     connections = data.get("connections")
     if isinstance(connections, dict):

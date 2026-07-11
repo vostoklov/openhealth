@@ -490,3 +490,38 @@ def test_health_exposes_build_stamp():
     # by this field; a missing build means "restart the bridge".
     import re
     assert re.match(r"^\d{4}-\d{2}-\d{2}$", server.BUILD)
+
+
+# --- visit-prep: doctor-ready report task (Ideabrowser signal) -------------------
+
+
+def test_visit_prep_is_whitelisted(tmp_path, monkeypatch):
+    assert "visit-prep" in server.ALLOWED_TASKS
+    # Accepted (not a 400 "unknown task"); mock away agent CLIs so it resolves
+    # to a fast no_agent instead of spawning a real claude/codex process.
+    monkeypatch.setattr(server.shutil, "which", lambda name: None)
+    status, body = server.handle_agent_request({"task": "visit-prep"}, tmp_path)
+    assert status != 400
+    assert body.get("status") == "no_agent"
+
+
+def test_visit_prep_prompt_is_safe_and_structured():
+    p = server.build_prompt("visit-prep", data_summary="- Recovery: 60%")
+    assert "не врач" in p                       # safety block prepended
+    assert "не медицинское заключение" in p      # explicit not-a-diagnosis framing
+    assert "вопросов врачу" in p                 # questions-for-doctor section
+    assert "C1-C5" in p                          # evidence grading required
+
+
+def test_summarize_data_flags_out_of_range_labs():
+    data = {
+        "date": "7 июля", "recovery": 60,
+        "biomarkers": [
+            {"name": "RBC", "value": 5.79, "unit": "", "status": "high"},
+            {"name": "INR", "value": 1.07, "status": "optimal"},
+        ],
+    }
+    dg = server.summarize_data(data)
+    assert "Вне нормы" in dg and "RBC" in dg
+    # optimal labs never appear in the flagged line
+    assert "INR" not in dg.split("Вне нормы", 1)[1]

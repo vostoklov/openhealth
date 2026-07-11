@@ -5691,6 +5691,25 @@
             </div>
           </div>
 
+          <!-- Отчёт к приёму врача (Ideabrowser: сильнейший общий JTBD) -->
+          <div class="card-outer col-12">
+            <div class="card-inner">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Отчёт к приёму врача</h3>
+                  <div class="sub">агент собирает твои данные в doctor-ready выжимку: что изменилось, значения вне нормы, вопросы врачу · организует твои данные, не медсовет</div>
+                </div>
+                <i class="ph-light ph-first-aid-kit card-header-icon"></i>
+              </div>
+              <div class="rep-print-hide" style="display:flex; justify-content:flex-end; margin-top:6px;">
+                <button class="btn-primary agent-btn" id="visitPrepBtn" onclick="generateVisitPrep()">
+                  <i class="ph-light ph-clipboard-text"></i> Собрать отчёт к приёму
+                </button>
+              </div>
+              <div class="agent-box" id="visitPrepBox" style="margin-top:12px; display:none;"></div>
+            </div>
+          </div>
+
           <!-- Сравнение периодов -->
           <div class="card-outer col-12">
             <div class="card-inner">
@@ -10746,6 +10765,11 @@ function runAgentTask(opts) {
 // Конкретные агент-кнопки (каждая со своим контейнером и retry).
 function generateInsight() {
   runAgentTask({ boxId: 'insightBox', btnId: 'insightBtn', task: 'insight', param: '', retryCall: 'generateInsight()' });
+}
+
+// Doctor-ready отчёт к приёму — сильнейший общий JTBD (сигналы Ideabrowser).
+function generateVisitPrep() {
+  runAgentTask({ boxId: 'visitPrepBox', btnId: 'visitPrepBtn', task: 'visit-prep', param: '', retryCall: 'generateVisitPrep()' });
 }
 
 function runTrendsAgent() {

@@ -78,10 +78,10 @@ OpenHealth ходит в Hermes-proxy как в OpenAI-совместимый э
 
 ## Что уже есть и что дальше
 
-Фаза 0 (сделано): `--host` у моста, `POST /api/intake` (шов «одна база»), режим LLM через hermes-proxy, этот deploy-скелет.
+Фаза 0 (сделано и проверено): `--host` у моста, `POST /api/intake` (шов «одна база») — round-trip проверен: telegram-конверт ложится в health-индекс как `ContextNote` (`indexed: true`); режим LLM через hermes-proxy; этот deploy-скелет (`docker compose config` валиден). Telegram-бот движка (`python3 -m openhealth.telegram_bot run`) уже несёт `/checkin`, `/today`, `/ask`; с `--bridge-url http://openhealth:8770` plain-intake индексируется в реальном времени. Для живого запуска нужны: bot-токен (`~/.openhealth/telegram.token`), запущенный Docker для `up`, и рабочий LLM-провайдер (для `/ask`).
 
 Дальше по фазам:
-1. Telegram end-to-end через Hermes gateway: входящее → `/api/intake`; команды `/today`, `/ask` → data/agent API OpenHealth → ответ в чат.
+1. Telegram через Hermes-gateway как альтернатива своему боту: входящее → `/api/intake`; команды `/today`, `/ask` → data/agent API OpenHealth → ответ в чат (нужен bot-токен + конфиг gateway).
 2. cron через Hermes: ежедневный rebuild/sync и утренний инсайт в Telegram.
 3. Мост identity/pairing (пользователь Hermes → контекст OpenHealth) + audit-лог доступа.
 4. Полировка: backup/restore, healthchecks, one-command installer.

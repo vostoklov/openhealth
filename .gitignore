@@ -75,3 +75,8 @@ ui/web/assets/bg/
 # Личный медиа-воркспейс для слайдов (фото из Photos, скрины WHOOP, заметки
 # к нарезке) — локально, НЕ для публичного репо.
 ui/web/assets/slides/
+
+# Runtime intake envelopes (personal data) — written by POST /api/intake when the
+# bridge serves ui/web. Never commit intake content to the public repo.
+ui/web/data/
+data/intake/

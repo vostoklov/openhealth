@@ -57,6 +57,26 @@ docker compose -f deploy/docker-compose.yml up -d
 
 Открой `https://<домен>`, введи Basic-Auth логин и пароль. Готово.
 
+### Локальный тест на Mac (без Docker Desktop)
+
+Реальный сервер под self-host это Linux (VPS): там Docker (или Podman) с `docker compose` работают нативно, ничего ставить сверх пакета не нужно. Docker Desktop и подобное для сервера не требуются.
+
+Если просто хочешь прогнать образ OpenHealth локально на Mac перед выкатыванием, Docker Desktop тоже не обязателен, бери лёгкий рантайм:
+
+- **colima** (`brew install colima docker`) - обычный Docker-демон в лёгкой VM;
+- **Apple `container`** (open source с WWDC 2025) - энергоэффективнее на Apple Silicon, отдельная лёгкая VM на контейнер.
+
+Пример прогона одного образа (colima):
+
+```bash
+colima start
+docker build -f deploy/openhealth.Dockerfile -t openhealth-bridge .
+docker run --rm -p 8770:8770 -v "$PWD/oh-data:/data" openhealth-bridge
+# открой http://localhost:8770  (health: http://localhost:8770/api/health)
+```
+
+Оговорка: Apple `container` хорошо гоняет одиночные OCI-образы; полный многосервисный `docker compose` (Caddy + OpenHealth + Hermes) держится на Docker/Podman, то есть на том же рантайме, что и на Linux-сервере. Локальный прогон одного образа OpenHealth без внешнего TLS-домена и LLM-провайдера ожидаемо не поднимет Caddy и Hermes целиком, это нормально: те два сервиса настраиваются под конкретный сервер.
+
 ## Безопасность (читать обязательно)
 
 Это медицинские данные. Модель безопасности простая и жёсткая:
@@ -78,7 +98,7 @@ OpenHealth ходит в Hermes-proxy как в OpenAI-совместимый э
 
 ## Что уже есть и что дальше
 
-Фаза 0 (сделано и проверено): `--host` у моста, `POST /api/intake` (шов «одна база») — round-trip проверен: telegram-конверт ложится в health-индекс как `ContextNote` (`indexed: true`); режим LLM через hermes-proxy; этот deploy-скелет (`docker compose config` валиден). Telegram-бот движка (`python3 -m openhealth.telegram_bot run`) уже несёт `/checkin`, `/today`, `/ask`; с `--bridge-url http://openhealth:8770` plain-intake индексируется в реальном времени. Для живого запуска нужны: bot-токен (`~/.openhealth/telegram.token`), запущенный Docker для `up`, и рабочий LLM-провайдер (для `/ask`).
+Фаза 0 (сделано и проверено): `--host` у моста, `POST /api/intake` (шов «одна база») — round-trip проверен: telegram-конверт ложится в health-индекс как `ContextNote` (`indexed: true`); режим LLM через hermes-proxy; этот deploy-скелет (`docker compose config` валиден). Образ OpenHealth (`deploy/openhealth.Dockerfile`) собирается чисто и, поднятый контейнером со смонтированным томом `/data`, реально отдаёт веб-UI (`<title>OpenHealth</title>`), статику и `/api/*` (health возвращает build-штамп) — смоук-тест пройден локально. Telegram-бот движка (`python3 -m openhealth.telegram_bot run`) уже несёт `/checkin`, `/today`, `/ask`; с `--bridge-url http://openhealth:8770` plain-intake индексируется в реальном времени. Для живого запуска нужны: bot-токен (`~/.openhealth/telegram.token`), запущенный Docker для `up`, и рабочий LLM-провайдер (для `/ask`).
 
 Дальше по фазам:
 1. Telegram через Hermes-gateway как альтернатива своему боту: входящее → `/api/intake`; команды `/today`, `/ask` → data/agent API OpenHealth → ответ в чат (нужен bot-токен + конфиг gateway).

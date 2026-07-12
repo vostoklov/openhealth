@@ -76,10 +76,16 @@ if ! port_up; then
   exit 1
 fi
 
-# App-mode window (own Dock entry, no browser chrome) when Chrome exists;
-# otherwise the default browser. Both land on the skin router (index.html).
+# Standalone app window: a DEDICATED Chrome profile (--user-data-dir) makes this
+# a separate Chrome instance, so it opens its own chromeless window with its own
+# Dock entry even when the main Chrome is already running (plain --app is dropped
+# when Chrome is live). Falls back to the default browser without Chrome.
 if [ -d "/Applications/Google Chrome.app" ]; then
-  open -na "Google Chrome" --args --app="$URL"
+  PROFILE="$HOME/Library/Application Support/OpenHealth/chrome-profile"
+  mkdir -p "$PROFILE"
+  open -na "Google Chrome" --args \
+    --app="$URL" --user-data-dir="$PROFILE" \
+    --no-first-run --no-default-browser-check
 else
   open "$URL"
 fi

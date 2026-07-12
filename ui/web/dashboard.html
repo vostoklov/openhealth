@@ -18,7 +18,7 @@
 
 <!-- OpenHealth shared engine: single-source registry + chart kit (see EXTENDING.md).
      V1 is a SKIN over this engine; Today metrics come from the registry, not a local copy. -->
-<script src="assets/oh-registry.js?v=7"></script>
+<script src="assets/oh-registry.js?v=8"></script>
 <script src="assets/oh-charts.js?v=3"></script>
 <script src="assets/oh-charts-v1.js?v=2"></script>
 <script src="assets/oh-correlate.js?v=2"></script>
@@ -5855,6 +5855,25 @@
       <section class="zone" id="z-settings">
         <div class="settings-col">
 
+          <!-- Сборка приложения (онбординг) -->
+          <div class="settings-sec">
+            <h2 class="settings-sec-head">Сборка приложения</h2>
+            <div class="card-outer">
+              <div class="card-inner">
+                <div class="card-header">
+                  <div class="card-title-group">
+                    <h3>Настройка OpenHealth</h3>
+                    <div class="sub">пошаговая сборка под вашу цель: какие модули показывать, какая палитра — как настройка нового телефона</div>
+                  </div>
+                  <i class="ph-light ph-magic-wand card-header-icon"></i>
+                </div>
+                <button class="btn-secondary" onclick="try{OHOnboarding.open({rerun:true})}catch(e){}">
+                  <i class="ph-light ph-arrows-clockwise"></i> Перезапустить настройку
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Профиль -->
           <div class="settings-sec">
             <h2 class="settings-sec-head">Профиль</h2>
@@ -11487,7 +11506,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // renderDashboard() below keeps the demo first paint instant.
   (window.OH ? OH.load() : Promise.reject()).catch(() => {})
     .then(() => loadRealData())
-    .then(() => { buildSidebarV1(); ohPopulatePersonaPickerV1(); ohSeedToday(); renderDashboard(); applyNavVisibility(); updateSurveyReminder(); });
+    .then(() => { buildSidebarV1(); ohPopulatePersonaPickerV1(); ohSeedToday(); renderDashboard(); applyNavVisibility(); updateSurveyReminder(); })
+    .then(() => { try { if (window.OHOnboarding) OHOnboarding.maybeAutoStart(); } catch (e) {} });
   renderDashboard();
   // Один тихий запрос к /api/health с таймаутом 1.5 с — без спама.
   checkBridge();
@@ -14276,5 +14296,6 @@ function initResearchBadges() {
 </script>
 <script src="assets/oh-i18n.js?v=4"></script>
 <script src="assets/oh-notify.js?v=1"></script>
+<script src="assets/oh-onboarding.js?v=7"></script>
 </body>
 </html>

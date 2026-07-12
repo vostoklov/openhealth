@@ -317,6 +317,10 @@
     sectionView: function (sectionId, opts) {
       opts = opts || {};
       var s = OH.section(sectionId); if (!s) return '';
+      // Onboarding assembles the app: a section the user turned off is hidden in
+      // BOTH skins at once here (this is the single body choke point). Nav already
+      // filters the same 'openhealth.nav.hidden' key. Core screens stay pinned.
+      if (OH.nav && OH.nav.isHidden(sectionId) && sectionId !== 'today' && sectionId !== 'pulse' && sectionId !== 'sync') return '';
       if (s.kind === 'knowledge') return OH.knowledgeView(s.knowledge_view || sectionId, opts);
       if (s.status === 'soon' || s.status === 'empty') return OH.sectionStub(sectionId);
       var accent = opts.accent || 'currentColor', textColor = opts.textColor || 'currentColor';

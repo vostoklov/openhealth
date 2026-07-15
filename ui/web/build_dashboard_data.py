@@ -909,10 +909,64 @@ _DNA_SPEC = [
 ]
 
 
+def _genotypes_from_23andme(fh, want: set[str]) -> dict[str, str]:
+    """Raw 23andMe / AncestryDNA export: rsid<TAB>chromosome<TAB>position<TAB>genotype."""
+    found: dict[str, str] = {}
+    for line in fh:
+        if not line or line[0] != "r":
+            continue
+        parts = line.rstrip("\n").split("\t")
+        if len(parts) < 4:
+            continue
+        if parts[0] in want:
+            found[parts[0]] = parts[3].strip()
+            if len(found) == len(want):
+                break
+    return found
+
+
+def _genotypes_from_vcf(fh, want: set[str]) -> dict[str, str]:
+    """Single-sample VCF (Genotek, and array/WGS labs generally): decode GT plus
+    REF/ALT into the same two-base call the 23andMe path yields.
+
+    Alleles are taken on the reference's forward strand, which is the convention
+    23andMe reports on too, so both paths feed _DNA_SPEC the same way. Only
+    diploid bi-allelic SNV calls are used; indels, no-calls (./.) and anything
+    non-single-base are skipped — the curated set is all SNVs.
+    """
+    found: dict[str, str] = {}
+    for line in fh:
+        if not line or line[0] == "#":
+            continue
+        parts = line.rstrip("\n").split("\t")
+        if len(parts) < 10:  # CHROM..FORMAT + at least one sample column
+            continue
+        rsid = parts[2]
+        if rsid not in want:
+            continue
+        idx = parts[9].split(":")[0].replace("|", "/").split("/")
+        if len(idx) != 2 or not all(i.isdigit() for i in idx):
+            continue
+        alleles = [parts[3]] + parts[4].split(",")
+        try:
+            bases = [alleles[int(i)] for i in idx]
+        except IndexError:
+            continue
+        if not all(len(b) == 1 for b in bases):
+            continue
+        found[rsid] = "".join(bases)
+        if len(found) == len(want):
+            break
+    return found
+
+
 def build_dna(con: sqlite3.Connection) -> list[dict]:
     """Read the raw genotype file (local) and surface real genotypes for a
     curated set of well-established lifestyle variants. Factual call + cautious
-    note + C-grade. Never a diagnosis; strand-ambiguous loci show no direction."""
+    note + C-grade. Never a diagnosis; strand-ambiguous loci show no direction.
+
+    Accepts either a raw 23andMe-style export or a single-sample VCF — the
+    format is detected from the first line."""
     row = con.execute(
         "SELECT payload_json FROM sources WHERE source_id LIKE '%genotype%' LIMIT 1"
     ).fetchone()
@@ -923,19 +977,11 @@ def build_dna(con: sqlite3.Connection) -> list[dict]:
     if not path or not os.path.exists(path):
         return []
     want = {s[0] for s in _DNA_SPEC}
-    found: dict[str, str] = {}
     try:
         with open(path, encoding="utf-8", errors="replace") as fh:
-            for line in fh:
-                if not line or line[0] != "r":
-                    continue
-                parts = line.rstrip("\n").split("\t")
-                if len(parts) < 4:
-                    continue
-                if parts[0] in want:
-                    found[parts[0]] = parts[3].strip()
-                    if len(found) == len(want):
-                        break
+            is_vcf = fh.readline().startswith("##fileformat=VCF")
+            fh.seek(0)
+            found = (_genotypes_from_vcf if is_vcf else _genotypes_from_23andme)(fh, want)
     except OSError:
         return []
     out = []
